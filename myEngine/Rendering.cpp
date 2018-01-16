@@ -121,6 +121,29 @@ bool App::InitWindow()
 
 HRESULT App::CreateDirect3DContext()
 {
+	UINT createDeviceFlags = 0;
+
+#ifdef _DEBUG
+	createDeviceFlags |= D3D11_CREATE_DEVICE_DEBUG;
+#endif //DEBUG
+
+	D3D_DRIVER_TYPE driverTypes[] =
+	{
+		D3D_DRIVER_TYPE_HARDWARE,
+		D3D_DRIVER_TYPE_WARP,
+		D3D_DRIVER_TYPE_REFERENCE
+	};
+	UINT numDriverTypes = ARRAYSIZE(driverTypes);
+
+	D3D_FEATURE_LEVEL featureLevels[] =
+	{
+		D3D_FEATURE_LEVEL_11_0,
+		D3D_FEATURE_LEVEL_10_1,
+		D3D_FEATURE_LEVEL_10_0,
+		D3D_FEATURE_LEVEL_9_3
+	};
+
+	UINT numFeatureLevels = ARRAYSIZE(featureLevels);
 	DXGI_SWAP_CHAIN_DESC scd;
 	ZeroMemory(&scd, sizeof(DXGI_SWAP_CHAIN_DESC));
 
@@ -130,10 +153,35 @@ HRESULT App::CreateDirect3DContext()
 	scd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;      // how swap chain is to be used
 	scd.OutputWindow = m_wndHandle;                           // the window to be used
 	scd.SampleDesc.Count = 1;                               // how many multisamples
-	scd.Windowed = TRUE;                                    // windowed/full-screen mode
+	scd.Windowed = TRUE;   // windowed/full-screen mode
+
+	HRESULT result;
+	for (int i = 0; i < numDriverTypes; ++i)
+	{
+		result = D3D11CreateDeviceAndSwapChain(NULL, driverTypes[i], NULL, createDeviceFlags,
+			featureLevels, numFeatureLevels, D3D11_SDK_VERSION, &scd,
+			&m_SwapChain, &m_Device,m_featureLevel, &m_DeviceContext);
+		if (SUCCEEDED(result))
+		{
+			m_driverType = driverTypes[i];
+			// get the address of the back buffer
+			ID3D11Texture2D* pBackBuffer = nullptr;
+			m_SwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (LPVOID*)&pBackBuffer);
+			// use the back buffer address to create the render target
+			m_Device->CreateRenderTargetView(pBackBuffer, NULL, &m_BackbufferRTV);
+			pBackBuffer->Release();
+			break;
+		}
+	}
+
+	if (FAILED(result))
+	{
+		OutputDebugString("FAILED TO CREATE DEVICE AND SWAP CHAIN");
+		return false;
+	}
 
 															// create a device, device context and swap chain using the information in the scd struct
-	HRESULT hr = D3D11CreateDeviceAndSwapChain(NULL,
+	/*HRESULT hr = D3D11CreateDeviceAndSwapChain(NULL,
 		D3D_DRIVER_TYPE_HARDWARE,
 		NULL,
 		NULL,
@@ -154,9 +202,9 @@ HRESULT App::CreateDirect3DContext()
 		// use the back buffer address to create the render target
 		m_Device->CreateRenderTargetView(pBackBuffer, NULL, &m_BackbufferRTV);
 		pBackBuffer->Release();
-	}
+	}*/
 
-	return hr;
+	return result;
 }
 
 bool App::CreateDepthBuffer()

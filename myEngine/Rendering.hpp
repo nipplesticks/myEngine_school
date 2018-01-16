@@ -61,6 +61,8 @@ private:
 	ID3D11Device*			m_Device;
 	ID3D11DeviceContext*	m_DeviceContext;
 	ID3D11RenderTargetView* m_BackbufferRTV;
+	D3D_FEATURE_LEVEL* m_featureLevel; 
+	D3D_DRIVER_TYPE m_driverType; 
 
 	ID3D11Buffer*			m_VertexBuffer;
 	ID3D11InputLayout*		m_VertexLayout;
