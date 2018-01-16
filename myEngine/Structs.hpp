@@ -7,4 +7,10 @@ struct CONSTANT_BUFFER
 	DirectX::XMMATRIX WorldMatrix;
 };
 
+struct TRIANGLE
+{
+	float x, y, z;
+	float u, v;
+};
+
 #endif
