@@ -73,7 +73,6 @@ private:
 	//DEPTH BUFFER
 	ID3D11DepthStencilView* m_Dsv; //View
 	ID3D11Texture2D*		m_Dsb; //Buffer
-
 };
 
 
