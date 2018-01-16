@@ -8,6 +8,7 @@
 #include <iostream>
 
 #include "Structs.hpp"
+#include "Entity.hpp"
 
 #pragma comment (lib, "d3d11.lib")
 #pragma comment (lib, "d3dcompiler.lib")
@@ -55,7 +56,7 @@ private:
 	LPWSTR		m_lpCmdLine;
 	int			m_nCmdShow;
 
-	HWND m_wndHandle;
+	HWND		m_wndHandle;
 
 	IDXGISwapChain*			m_SwapChain;
 	ID3D11Device*			m_Device;
@@ -73,6 +74,9 @@ private:
 	//DEPTH BUFFER
 	ID3D11DepthStencilView* m_Dsv; //View
 	ID3D11Texture2D*		m_Dsb; //Buffer
+
+	//Test
+	Entity m_triangle;
 };
 
 

@@ -36,8 +36,24 @@ int App::init()
 		if (!CreateDepthBuffer()) return 3;
 		SetViewport();
 		if (!CreateShaders()) return 4;
+
+		//<TEST>
+		D3D11_BUFFER_DESC bufferDesc;
+		memset(&bufferDesc, 0, sizeof(bufferDesc));
+		bufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+		bufferDesc.Usage = D3D11_USAGE_DEFAULT;
+		bufferDesc.ByteWidth = sizeof(m_triangle.getPolygons());
+
+		D3D11_SUBRESOURCE_DATA data;
+		data.pSysMem = m_triangle.getPolygons();
+		m_Device->CreateBuffer(&bufferDesc, &data, &m_VertexBuffer);
+		//</TEST>
+
 		if (!CreateConstantBuffer()) return 5;
 		ShowWindow(m_wndHandle, m_nCmdShow);
+
+
+
 	}
 
 	return 0;
@@ -244,7 +260,7 @@ void App::Update(float dt)
 
 void App::Render()
 {
-	float clearColor[] = { 0, 0, 0, 1 };
+	float clearColor[] = { 0.1, 0.1, 0.1, 1 };
 	
 	// Clear the Screen
 
@@ -284,7 +300,7 @@ void App::Render()
 	m_DeviceContext->OMSetRenderTargets(1, &m_BackbufferRTV, m_Dsv);
 
 	// draw geometry
-	///m_DeviceContext->Draw(nrOfVertices, 0);
+	m_DeviceContext->Draw(m_triangle.getNrOfPolygons(), 0);
 }
 
 bool App::CreateVertexShader()
