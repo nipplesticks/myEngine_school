@@ -35,6 +35,7 @@ int App::init()
 		SetViewport();
 		if (!CreateShaders()) return 4;
 		if (!CreateConstantBuffer()) return 5;
+		ShowWindow(m_wndHandle, m_nCmdShow);
 	}
 
 	return 0;
