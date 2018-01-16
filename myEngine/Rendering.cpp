@@ -6,6 +6,8 @@ App::App(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCm
 	m_hPrevInstance = hPrevInstance;
 	m_lpCmdLine = lpCmdLine;
 	m_nCmdShow = nCmdShow;
+
+	setMembersToNull();
 }
 
 App::~App()
@@ -397,5 +399,24 @@ bool App::CreatePixelShader()
 
 
 	return true;
+}
+
+void App::setMembersToNull()
+{
+	m_SwapChain = nullptr;
+	m_Device = nullptr;
+	m_DeviceContext = nullptr;
+	m_BackbufferRTV = nullptr;
+
+	m_VertexBuffer = nullptr;
+	m_VertexLayout = nullptr;
+	m_VertexShader = nullptr;
+	m_GeometryShader = nullptr;
+	m_PixelShader = nullptr;
+
+	m_ConstantBuffer = nullptr;
+
+	m_Dsv = nullptr;
+	m_Dsb = nullptr;
 }
 

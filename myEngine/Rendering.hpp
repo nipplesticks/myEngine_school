@@ -48,6 +48,7 @@ private:
 	bool CreateGeometryShader();
 	bool CreatePixelShader();
 
+	void setMembersToNull();
 private:
 	HINSTANCE	m_hInstance;
 	HINSTANCE	m_hPrevInstance;
