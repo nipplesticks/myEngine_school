@@ -4,8 +4,9 @@
 #include "Structs.hpp"
 #include "Entity.hpp"
 
-#define CLIENT_HEIGHT 640.0f
-#define CLIENT_WIDITH 480.0f
+#define CLIENT_WIDITH	640.0f
+#define CLIENT_HEIGHT	480.0f
+#define FOV				45.0f
 
 class App
 {
@@ -21,6 +22,7 @@ public:
 		3: Failed to create depth buffer
 		4: Failed to create shaders
 		5: Failed to create constant buffers
+		6: Failed to initiate render function
 	*/
 	int init();
 
@@ -32,6 +34,7 @@ private:
 	void SetViewport();
 	bool CreateShaders();
 	bool CreateConstantBuffer();
+	bool InitRenderFunction();
 
 	void Update(float dt);
 	void Render();
@@ -40,10 +43,9 @@ private:
 	bool CreateGeometryShader();
 	bool CreatePixelShader();
 
-	void setMembersToNull();
+	void clrScrn();
 
-	//remove later
-	void setTriangleData();
+	void setMembersToNull();
 
 private:
 	HINSTANCE	m_hInstance;
@@ -72,6 +74,11 @@ private:
 
 	//Test
 	Entity m_triangle;
+	Entity m_triangle2;
+
+	CAMERA cam;
+	DirectX::XMMATRIX		m_viewMatrix;
+	DirectX::XMMATRIX		m_projectionMatrix;
 };
 
 

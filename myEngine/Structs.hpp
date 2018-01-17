@@ -23,4 +23,11 @@ struct VERTEX
 	float u, v;
 };
 
+struct CAMERA
+{
+	DirectX::XMFLOAT3 Position;
+	DirectX::XMFLOAT3 LookAt;
+	DirectX::XMFLOAT3 Up;
+};
+
 #endif

@@ -7,6 +7,19 @@ App::App(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCm
 	m_lpCmdLine = lpCmdLine;
 	m_nCmdShow = nCmdShow;
 
+	cam = CAMERA{
+		DirectX::XMFLOAT3(0.0f, 0.0f, -5.0f),	//pos
+		DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f),	//look at
+		DirectX::XMFLOAT3(0.0f, 1.0f, 0.0f)		//up
+	};
+	m_viewMatrix = DirectX::XMMatrixLookAtLH(
+		DirectX::XMLoadFloat3(&cam.Position),
+		DirectX::XMLoadFloat3(&cam.LookAt),
+		DirectX::XMLoadFloat3(&cam.Up)
+	);
+
+	m_projectionMatrix = DirectX::XMMatrixPerspectiveFovLH(DirectX::XMConvertToRadians(FOV), CLIENT_WIDITH / CLIENT_HEIGHT, 0.1f, 20.0f);
+
 	setMembersToNull();
 }
 
@@ -38,14 +51,21 @@ int App::init()
 		if (!CreateShaders()) return 4;
 
 		//<TEST>
-		m_triangle.loadVertexBuffer(m_Device);
+		m_triangle.setProjectionMatrix(m_projectionMatrix);
+		m_triangle.cameraMoved(m_viewMatrix);
+		m_triangle.loadBuffers(m_Device);
+		m_triangle.setPosition(-1.0f, 0.0f, 0.0f);
+
+		m_triangle2.setProjectionMatrix(m_projectionMatrix);
+		m_triangle2.cameraMoved(m_viewMatrix);
+		m_triangle2.loadBuffers(m_Device);
+		m_triangle2.setPosition(1.0f, 0.0f, 0.0f);
 		//</TEST>
 
 		if (!CreateConstantBuffer()) return 5;
+		if (!InitRenderFunction()) return 6;
+
 		ShowWindow(m_wndHandle, m_nCmdShow);
-
-
-
 	}
 
 	return 0;
@@ -107,7 +127,7 @@ bool App::InitWindow()
 		return false;
 	}
 
-	RECT rc = { 0, 0, static_cast<long>(CLIENT_HEIGHT), static_cast<long>(CLIENT_WIDITH) };
+	RECT rc = { 0, 0, static_cast<long>(CLIENT_WIDITH), static_cast<long>(CLIENT_HEIGHT) };
 	AdjustWindowRect(&rc, WS_OVERLAPPEDWINDOW, FALSE);
 
 	HWND handle = CreateWindow(
@@ -252,51 +272,31 @@ bool App::CreateConstantBuffer()
 	return true;
 }
 
-void App::Update(float dt)
+bool App::InitRenderFunction()
 {
-	//Update everything here
-}
-
-void App::Render()
-{
-	float clearColor[] = { 0.1f, 0.1f, 0.1f, 1.0f };
-	
-	// Clear the Screen
-
-	m_DeviceContext->ClearRenderTargetView(m_BackbufferRTV, clearColor);
-	m_DeviceContext->ClearDepthStencilView(m_Dsv, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
-
-	//	Setting Rendering State
-	//	If nothing changes, this does not have to be "re-done" every frame...
-	
-	/*
-	UINT32 vertexSize = sizeof(float) * 5;
-	UINT offset = 0;
-	m_VertexBuffer = m_triangle.getVertexBuffer();
-	m_DeviceContext->IASetInputLayout(m_VertexLayout);
-	m_DeviceContext->IASetVertexBuffers(0, 1, &m_VertexBuffer, &vertexSize, &offset);
-	*/
-
 	m_DeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	m_DeviceContext->VSSetShader(m_VertexShader, nullptr, 0);
 	m_DeviceContext->HSSetShader(nullptr, nullptr, 0);
 	m_DeviceContext->DSSetShader(nullptr, nullptr, 0);
 	m_DeviceContext->GSSetShader(m_GeometryShader, nullptr, 0);
-	m_DeviceContext->GSSetShader(nullptr, nullptr, 0);
 	m_DeviceContext->PSSetShader(m_PixelShader, nullptr, 0);
 
 	m_DeviceContext->IASetInputLayout(m_VertexLayout);
 	m_DeviceContext->OMSetRenderTargets(1, &m_BackbufferRTV, m_Dsv);
+	return true;
+}
 
+void App::Update(float dt)
+{
+	m_triangle.rotate(0, 0, 1, 25 * dt);
+	m_triangle2.rotate(0, 0, 1, -25 * dt);
+}
 
+void App::Render()
+{
+	clrScrn();
 	m_triangle.draw(m_DeviceContext);
-
-	// Map constant buffer so that we can write to it
-	
-
-	// draw geometry
-	//m_DeviceContext->Draw(m_triangle.getNrOfVertices(), 0);
-	//m_DeviceContext->Draw(3, 0);
+	m_triangle2.draw(m_DeviceContext);
 }
 
 bool App::CreateVertexShader()
@@ -411,6 +411,13 @@ bool App::CreatePixelShader()
 
 
 	return true;
+}
+
+void App::clrScrn()
+{
+	float clearColor[] = { 0.1f, 0.1f, 0.1f, 1.0f };
+	m_DeviceContext->ClearRenderTargetView(m_BackbufferRTV, clearColor);
+	m_DeviceContext->ClearDepthStencilView(m_Dsv, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 }
 
 void App::setMembersToNull()

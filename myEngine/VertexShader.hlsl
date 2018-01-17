@@ -1,3 +1,9 @@
+cbuffer CONSTANT_BUFFER : register(b0)
+{
+    matrix WVPMatrix;
+    matrix WorldMatrix;
+};
+
 struct VS_IN
 {
     float3 Pos : POSITION;
