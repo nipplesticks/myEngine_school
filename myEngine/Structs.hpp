@@ -1,6 +1,16 @@
 #ifndef STRUCTS_HPP
 #define STRUCTS_HPP
+#include <windows.h>
+#include <chrono>
+#include <d3d11.h>
+#include <d3dcompiler.h>
+#include <iostream>
 #include <DirectXMath.h>
+
+#pragma comment (lib, "d3d11.lib")
+#pragma comment (lib, "d3dcompiler.lib")
+
+
 struct CONSTANT_BUFFER
 {
 	DirectX::XMMATRIX WVPMatrix;

@@ -1,17 +1,8 @@
 #ifndef RENDERING_HPP
 #define RENDERING_HPP
 
-#include <windows.h>
-#include <chrono>
-#include <d3d11.h>
-#include <d3dcompiler.h>
-#include <iostream>
-
 #include "Structs.hpp"
 #include "Entity.hpp"
-
-#pragma comment (lib, "d3d11.lib")
-#pragma comment (lib, "d3dcompiler.lib")
 
 #define CLIENT_HEIGHT 640.0f
 #define CLIENT_WIDITH 480.0f
@@ -62,8 +53,9 @@ private:
 	ID3D11Device*			m_Device;
 	ID3D11DeviceContext*	m_DeviceContext;
 	ID3D11RenderTargetView* m_BackbufferRTV;
-	D3D_FEATURE_LEVEL* m_featureLevel; 
-	D3D_DRIVER_TYPE m_driverType; 
+	
+	D3D_FEATURE_LEVEL*		m_FeatureLevel; 
+	D3D_DRIVER_TYPE			m_DriverType; 
 
 	ID3D11Buffer*			m_VertexBuffer;
 	ID3D11InputLayout*		m_VertexLayout;

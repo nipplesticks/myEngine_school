@@ -1,40 +1,72 @@
 #include "Entity.hpp"
+using namespace DirectX;
 
 Entity::Entity()
 {
-	m_polygons = nullptr;
+	m_vertexBuffer = nullptr;
+	m_model = nullptr;
 
-	m_nrOfPolygons = 3;
-
-	m_polygons = new VERTEX[m_nrOfPolygons];
-
-	m_polygons[0] = VERTEX{
-		-0.5, -0.5, 0.0,
-		0.0, 0.0
-	};
-	m_polygons[1] = VERTEX{
-		0.5, -0.5, 0.0,
-		0.0, 0.0
-	};
-	m_polygons[0] = VERTEX{
-		-0.5, 0.5, 0.0,
-		0.0, 0.0
-	};
-
+	//REMOVE THIS LATER
+	m_model = new Model;
+	m_model->initModel("");
 }
 
 Entity::~Entity()
 {
-	delete[] m_polygons;
-	m_polygons = nullptr;
+	m_vertexBuffer->Release();
+
+	//REMOVE THIS LATER
+	delete m_model;
 }
 
-VERTEX * Entity::getPolygons() const
+void Entity::loadModel(Model * m)
 {
-	return m_polygons;
+	m_model = m;
 }
 
-int Entity::getNrOfPolygons() const
+void Entity::loadVertexBuffer(ID3D11Device*& device)
 {
-	return m_nrOfPolygons;
+	D3D11_BUFFER_DESC bufferDesc;
+	memset(&bufferDesc, 0, sizeof(bufferDesc));
+	bufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+	bufferDesc.Usage = D3D11_USAGE_DEFAULT;
+	bufferDesc.ByteWidth = sizeof(m_model->getMesh());
+
+	D3D11_SUBRESOURCE_DATA data;
+	data.pSysMem = m_model->getMesh();
+	device->CreateBuffer(&bufferDesc, &data, &m_vertexBuffer);
 }
+
+void Entity::setRotation(DirectX::XMFLOAT3 rotation)
+{
+	m_rot = XMLoadFloat3(&rotation);
+}
+
+void Entity::setRotation(float x, float y, float z)
+{
+	XMFLOAT3 rot(x, y, z);
+	setRotation(rot);
+}
+
+void Entity::rotate(DirectX::XMFLOAT3 rotation)
+{
+	XMVECTOR rot = XMLoadFloat3(&rotation);
+	m_rot += rot;
+}
+
+void Entity::rotate(float x, float y, float z)
+{
+	XMFLOAT3 rot(x, y, z);
+	rotate(rot);
+}
+
+int Entity::getNrOfVetices() const
+{
+	return m_model->getNrOfVertices();
+}
+
+ID3D11Buffer * Entity::getVertexBuffer() const
+{
+	return m_vertexBuffer;
+}
+

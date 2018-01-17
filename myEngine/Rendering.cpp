@@ -38,15 +38,7 @@ int App::init()
 		if (!CreateShaders()) return 4;
 
 		//<TEST>
-		D3D11_BUFFER_DESC bufferDesc;
-		memset(&bufferDesc, 0, sizeof(bufferDesc));
-		bufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-		bufferDesc.Usage = D3D11_USAGE_DEFAULT;
-		bufferDesc.ByteWidth = sizeof(m_triangle.getPolygons());
-
-		D3D11_SUBRESOURCE_DATA data;
-		data.pSysMem = m_triangle.getPolygons();
-		m_Device->CreateBuffer(&bufferDesc, &data, &m_VertexBuffer);
+		m_triangle.loadVertexBuffer(m_Device);
 		//</TEST>
 
 		if (!CreateConstantBuffer()) return 5;
@@ -170,13 +162,15 @@ HRESULT App::CreateDirect3DContext()
 	scd.OutputWindow = m_wndHandle;                           // the window to be used
 	scd.SampleDesc.Count = 1;                               // how many multisamples
 	scd.Windowed = TRUE;   // windowed/full-screen mode
-
+	
+	//Following code generated memory leaks				   
+	/*
 	HRESULT result;
-	for (int i = 0; i < numDriverTypes; ++i)
+	for (unsigned int i = 0; i < numDriverTypes; ++i)
 	{
 		result = D3D11CreateDeviceAndSwapChain(NULL, driverTypes[i], NULL, createDeviceFlags,
 			featureLevels, numFeatureLevels, D3D11_SDK_VERSION, &scd,
-			&m_SwapChain, &m_Device,m_featureLevel, &m_DeviceContext);
+			&m_SwapChain, &m_Device, m_featureLevel, &m_DeviceContext);
 		if (SUCCEEDED(result))
 		{
 			m_driverType = driverTypes[i];
@@ -189,15 +183,19 @@ HRESULT App::CreateDirect3DContext()
 			break;
 		}
 	}
-
 	if (FAILED(result))
 	{
-		OutputDebugString("FAILED TO CREATE DEVICE AND SWAP CHAIN");
-		return false;
+	OutputDebugString("FAILED TO CREATE DEVICE AND SWAP CHAIN");
+	return false;
 	}
 
-															// create a device, device context and swap chain using the information in the scd struct
-	/*HRESULT hr = D3D11CreateDeviceAndSwapChain(NULL,
+
+	*/
+
+
+
+// create a device, device context and swap chain using the information in the scd struct
+	HRESULT hr = D3D11CreateDeviceAndSwapChain(NULL,
 		D3D_DRIVER_TYPE_HARDWARE,
 		NULL,
 		NULL,
@@ -218,9 +216,10 @@ HRESULT App::CreateDirect3DContext()
 		// use the back buffer address to create the render target
 		m_Device->CreateRenderTargetView(pBackBuffer, NULL, &m_BackbufferRTV);
 		pBackBuffer->Release();
-	}*/
+	}
 
-	return result;
+
+	return hr;
 }
 
 bool App::CreateDepthBuffer()
@@ -308,7 +307,7 @@ void App::Update(float dt)
 
 void App::Render()
 {
-	float clearColor[] = { 0.1, 0.1, 0.1, 1 };
+	float clearColor[] = { 0.1f, 0.1f, 0.1f, 1.0f };
 	
 	// Clear the Screen
 
@@ -319,6 +318,8 @@ void App::Render()
 	//	If nothing changes, this does not have to be "re-done" every frame...
 	UINT32 vertexSize = sizeof(float) * 5;
 	UINT offset = 0;
+
+	m_VertexBuffer = m_triangle.getVertexBuffer();
 
 	m_DeviceContext->IASetInputLayout(m_VertexLayout);
 	m_DeviceContext->IASetVertexBuffers(0, 1, &m_VertexBuffer, &vertexSize, &offset);
@@ -348,7 +349,7 @@ void App::Render()
 	m_DeviceContext->OMSetRenderTargets(1, &m_BackbufferRTV, m_Dsv);
 
 	// draw geometry
-	m_DeviceContext->Draw(m_triangle.getNrOfPolygons(), 0);
+	m_DeviceContext->Draw(m_triangle.getNrOfVetices(), 0);
 }
 
 bool App::CreateVertexShader()

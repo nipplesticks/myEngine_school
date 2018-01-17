@@ -1,5 +1,5 @@
-Texture2D txDiffuse : register(t0);
-SamplerState sampAni;
+//Texture2D txDiffuse : register(t0);
+//SamplerState sampAni;
 
 struct PS_IN
 {

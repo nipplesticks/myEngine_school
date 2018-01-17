@@ -1,22 +1,30 @@
 #ifndef ENTITY_HPP
 #define ENTITY_HPP
-#include "Structs.hpp"
-
+#include "Model.hpp"
 
 class Entity
 {
 public:
 	Entity();
 	~Entity();
-	VERTEX* getPolygons() const;
-	int getNrOfPolygons() const;
+
+	void loadModel(Model* m);
+	void loadVertexBuffer(ID3D11Device*& device);
+
+	void setRotation(DirectX::XMFLOAT3 rotation);
+	void setRotation(float x, float y, float z);
+	void rotate(DirectX::XMFLOAT3 rotation);
+	void rotate(float x, float y, float z);
+
+	int getNrOfVetices() const;
+	ID3D11Buffer* getVertexBuffer() const;
 
 private:
-	VERTEX* m_polygons;
-	int m_nrOfPolygons;
-	DirectX::XMVECTOR m_pos;
-	DirectX::XMVECTOR m_rot;
-
+	ID3D11Buffer*		m_vertexBuffer;
+	Model*				m_model;
+	DirectX::XMVECTOR	m_pos;
+	DirectX::XMVECTOR	m_rot;
+	DirectX::XMMATRIX	m_worldMatrix;
 };
 
 #endif
