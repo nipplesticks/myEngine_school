@@ -41,6 +41,10 @@ private:
 	bool CreatePixelShader();
 
 	void setMembersToNull();
+
+	//remove later
+	void setTriangleData();
+
 private:
 	HINSTANCE	m_hInstance;
 	HINSTANCE	m_hPrevInstance;
@@ -53,9 +57,6 @@ private:
 	ID3D11Device*			m_Device;
 	ID3D11DeviceContext*	m_DeviceContext;
 	ID3D11RenderTargetView* m_BackbufferRTV;
-	
-	D3D_FEATURE_LEVEL*		m_FeatureLevel; 
-	D3D_DRIVER_TYPE			m_DriverType; 
 
 	ID3D11Buffer*			m_VertexBuffer;
 	ID3D11InputLayout*		m_VertexLayout;

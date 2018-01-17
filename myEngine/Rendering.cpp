@@ -12,7 +12,7 @@ App::App(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCm
 
 App::~App()
 {
-	m_VertexBuffer->Release();
+	//m_VertexBuffer->Release();
 	m_VertexLayout->Release();
 	m_VertexShader->Release();
 	m_BackbufferRTV->Release();
@@ -135,23 +135,6 @@ HRESULT App::CreateDirect3DContext()
 	createDeviceFlags |= D3D11_CREATE_DEVICE_DEBUG;
 #endif //DEBUG
 
-	D3D_DRIVER_TYPE driverTypes[] =
-	{
-		D3D_DRIVER_TYPE_HARDWARE,
-		D3D_DRIVER_TYPE_WARP,
-		D3D_DRIVER_TYPE_REFERENCE
-	};
-	UINT numDriverTypes = ARRAYSIZE(driverTypes);
-
-	D3D_FEATURE_LEVEL featureLevels[] =
-	{
-		D3D_FEATURE_LEVEL_11_0,
-		D3D_FEATURE_LEVEL_10_1,
-		D3D_FEATURE_LEVEL_10_0,
-		D3D_FEATURE_LEVEL_9_3
-	};
-
-	UINT numFeatureLevels = ARRAYSIZE(featureLevels);
 	DXGI_SWAP_CHAIN_DESC scd;
 	ZeroMemory(&scd, sizeof(DXGI_SWAP_CHAIN_DESC));
 
@@ -162,37 +145,6 @@ HRESULT App::CreateDirect3DContext()
 	scd.OutputWindow = m_wndHandle;                           // the window to be used
 	scd.SampleDesc.Count = 1;                               // how many multisamples
 	scd.Windowed = TRUE;   // windowed/full-screen mode
-	
-	//Following code generated memory leaks				   
-	/*
-	HRESULT result;
-	for (unsigned int i = 0; i < numDriverTypes; ++i)
-	{
-		result = D3D11CreateDeviceAndSwapChain(NULL, driverTypes[i], NULL, createDeviceFlags,
-			featureLevels, numFeatureLevels, D3D11_SDK_VERSION, &scd,
-			&m_SwapChain, &m_Device, m_featureLevel, &m_DeviceContext);
-		if (SUCCEEDED(result))
-		{
-			m_driverType = driverTypes[i];
-			// get the address of the back buffer
-			ID3D11Texture2D* pBackBuffer = nullptr;
-			m_SwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (LPVOID*)&pBackBuffer);
-			// use the back buffer address to create the render target
-			m_Device->CreateRenderTargetView(pBackBuffer, NULL, &m_BackbufferRTV);
-			pBackBuffer->Release();
-			break;
-		}
-	}
-	if (FAILED(result))
-	{
-	OutputDebugString("FAILED TO CREATE DEVICE AND SWAP CHAIN");
-	return false;
-	}
-
-
-	*/
-
-
 
 // create a device, device context and swap chain using the information in the scd struct
 	HRESULT hr = D3D11CreateDeviceAndSwapChain(NULL,
@@ -316,40 +268,35 @@ void App::Render()
 
 	//	Setting Rendering State
 	//	If nothing changes, this does not have to be "re-done" every frame...
+	
+	/*
 	UINT32 vertexSize = sizeof(float) * 5;
 	UINT offset = 0;
-
 	m_VertexBuffer = m_triangle.getVertexBuffer();
-
 	m_DeviceContext->IASetInputLayout(m_VertexLayout);
 	m_DeviceContext->IASetVertexBuffers(0, 1, &m_VertexBuffer, &vertexSize, &offset);
+	*/
+
 	m_DeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	m_DeviceContext->VSSetShader(m_VertexShader, nullptr, 0);
 	m_DeviceContext->HSSetShader(nullptr, nullptr, 0);
 	m_DeviceContext->DSSetShader(nullptr, nullptr, 0);
 	m_DeviceContext->GSSetShader(m_GeometryShader, nullptr, 0);
+	m_DeviceContext->GSSetShader(nullptr, nullptr, 0);
 	m_DeviceContext->PSSetShader(m_PixelShader, nullptr, 0);
-	///m_DeviceContext->PSSetShaderResources(0, 1, &m_BthTextureView);
 
-	// Map constant buffer so that we can write to it
-	D3D11_MAPPED_SUBRESOURCE dataPtr;
-	m_DeviceContext->Map(m_ConstantBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &dataPtr);
-
-	//	Copy memory from CPU to GPU
-	///memcpy(dataptr.pData, &THE_CONSTANT_BUFFER_IN_USE, sizeof(CONSTANT_BUFFER));
-
-	// Unmap constant buffer so that we can use it again in the GPU
-	m_DeviceContext->Unmap(m_ConstantBuffer, 0);
-
-	// set resources to shaders
-
-	m_DeviceContext->VSSetConstantBuffers(0, 1, &m_ConstantBuffer);
-	m_DeviceContext->GSSetConstantBuffers(0, 1, &m_ConstantBuffer);
-	m_DeviceContext->PSSetConstantBuffers(0, 1, &m_ConstantBuffer);
+	m_DeviceContext->IASetInputLayout(m_VertexLayout);
 	m_DeviceContext->OMSetRenderTargets(1, &m_BackbufferRTV, m_Dsv);
 
+
+	m_triangle.draw(m_DeviceContext);
+
+	// Map constant buffer so that we can write to it
+	
+
 	// draw geometry
-	m_DeviceContext->Draw(m_triangle.getNrOfVetices(), 0);
+	//m_DeviceContext->Draw(m_triangle.getNrOfVertices(), 0);
+	//m_DeviceContext->Draw(3, 0);
 }
 
 bool App::CreateVertexShader()
@@ -360,7 +307,7 @@ bool App::CreateVertexShader()
 		L"VertexShader.hlsl", // filename
 		nullptr,		// optional macros
 		nullptr,		// optional include files
-		"main",		// entry point
+		"main",			// entry point
 		"vs_5_0",		// shader model (target)
 		0,				// shader compile options			// here DEBUGGING OPTIONS
 		0,				// effect compile options

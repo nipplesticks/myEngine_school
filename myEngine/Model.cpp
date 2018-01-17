@@ -16,13 +16,14 @@ void Model::initModel(std::string path)
 {
 	m_nrOfVertices = 3;
 	m_vertices = new VERTEX[m_nrOfVertices];
+	
 	m_vertices[0] = VERTEX{
 		-0.5f, 0.5f, 0.0f,
 		0.0f, 0.0f
 	};
 	m_vertices[1] = VERTEX{
 		0.5f, 0.5f, 0.0f,
-		0.0f, 0.0f
+		0.0f, 0.0f,
 	};
 	m_vertices[2] = VERTEX{
 		-0.5f, -0.5f, 0.0f,

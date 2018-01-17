@@ -16,7 +16,9 @@ public:
 	void rotate(DirectX::XMFLOAT3 rotation);
 	void rotate(float x, float y, float z);
 
-	int getNrOfVetices() const;
+	void draw(ID3D11DeviceContext*& deviceContext) const;
+
+	int getNrOfVertices() const;
 	ID3D11Buffer* getVertexBuffer() const;
 
 private:
