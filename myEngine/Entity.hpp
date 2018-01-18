@@ -47,6 +47,7 @@ private:
 	//<NOT A GOOD SOLUTION, NEED FIX>
 	float				m_currentAngle;
 	//</NOT A GOOD SOLUTION, NEED FIX>
+	//Direct::XMFLOAT3	m_angle;
 
 	DirectX::XMFLOAT3	m_pos;
 	DirectX::XMFLOAT3	m_scale;
@@ -54,7 +55,7 @@ private:
 	DirectX::XMMATRIX	m_viewMatrix;
 	DirectX::XMMATRIX	m_projectionMatrix;
 	DirectX::XMMATRIX	m_worldMatrix;
-	CONSTANT_BUFFER		m_vsBuffer;
+	CONSTANT_BUFFER		m_cBuffer;
 };
 
 #endif

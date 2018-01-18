@@ -54,12 +54,12 @@ int App::init()
 		m_triangle.setProjectionMatrix(m_projectionMatrix);
 		m_triangle.cameraMoved(m_viewMatrix);
 		m_triangle.loadBuffers(m_Device);
-		m_triangle.setPosition(-1.0f, 0.0f, 0.0f);
+		m_triangle.setPosition(-1.0f, 1.0f, 0.0f);
 
 		m_triangle2.setProjectionMatrix(m_projectionMatrix);
 		m_triangle2.cameraMoved(m_viewMatrix);
 		m_triangle2.loadBuffers(m_Device);
-		m_triangle2.setPosition(1.0f, 0.0f, 0.0f);
+		m_triangle2.setPosition(1.0f, -1.0f, 0.0f);
 		//</TEST>
 
 		if (!CreateConstantBuffer()) return 5;
@@ -288,8 +288,14 @@ bool App::InitRenderFunction()
 
 void App::Update(float dt)
 {
-	m_triangle.rotate(0, 0, 1, 25 * dt);
-	m_triangle2.rotate(0, 0, 1, -25 * dt);
+	if (GetAsyncKeyState(int('D')))
+		m_triangle.rotate(0, 0, 1, -50 * dt);
+	if (GetAsyncKeyState(int('A')))
+		m_triangle.rotate(0, 0, 1, 50 * dt);
+	if (GetAsyncKeyState(VK_RIGHT))
+		m_triangle2.rotate(0, 0, 1, -50 * dt);
+	if (GetAsyncKeyState(VK_LEFT))
+		m_triangle2.rotate(0, 0, 1, 50 * dt);
 }
 
 void App::Render()

@@ -64,7 +64,7 @@ void Entity::setRotation(float x, float y, float z, float angle)
 
 void Entity::rotate(DirectX::XMFLOAT3 rotation, float angle)
 {
-	m_rot = add(m_rot, rotation);
+	m_rot = rotation;
 	m_currentAngle += XMConvertToRadians(angle);
 	buildMatrix();
 }
@@ -145,7 +145,7 @@ void Entity::draw(ID3D11DeviceContext *& deviceContext) const
 	deviceContext->Map(m_constantBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &dataPtr);
 
 	//	Copy memory from CPU to GPU
-	memcpy(dataPtr.pData, &m_vsBuffer, sizeof(CONSTANT_BUFFER));
+	memcpy(dataPtr.pData, &m_cBuffer, sizeof(CONSTANT_BUFFER));
 
 	// Unmap constant buffer so that we can use it again in the GPU
 	deviceContext->Unmap(m_constantBuffer, 0);
@@ -175,8 +175,8 @@ void Entity::buildMatrix()
 	m_worldMatrix = rotation * scale * translate;
 	//m_worldMatrix = scale * translate * rotation;
 
-	m_vsBuffer.WorldMatrix = XMMatrixTranspose(m_worldMatrix);
-	m_vsBuffer.WVPMatrix = XMMatrixTranspose(m_worldMatrix * m_viewMatrix * m_projectionMatrix);
+	m_cBuffer.WorldMatrix = XMMatrixTranspose(m_worldMatrix);
+	m_cBuffer.WVPMatrix = XMMatrixTranspose(m_worldMatrix * m_viewMatrix * m_projectionMatrix);
 }
 
 void Entity::init()

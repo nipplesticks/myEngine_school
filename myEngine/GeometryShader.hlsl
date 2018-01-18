@@ -42,5 +42,5 @@ void main(triangle GS_IN input[3], inout TriangleStream<GS_OUT> fragmentShaderIn
         fragmentShaderInput.Append(output);
     }
 		
-    fragmentShaderInput.RestartStrip();
+    //fragmentShaderInput.RestartStrip();
 }
