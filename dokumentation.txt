@@ -1,0 +1,12 @@
+What do do:
+
+[Magnus]
+* Skeletal Animation [ ];
+* Parsing and Rendering an existing model format [ ];
+
+[Victor]
+* Height-map terrain rendering, user can walk on the terrain using WASD keys [ ];
+
+
+Core techniques [X]
+Geometry	[X]
