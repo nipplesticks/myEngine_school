@@ -54,7 +54,7 @@ artifacts/
 *.ilk
 *.meta
 *.obj
-!Male.obj
+!myEngine/models/*.obj
 *.pch
 *.pdb
 *.pgc
