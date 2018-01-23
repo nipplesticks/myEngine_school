@@ -54,6 +54,7 @@ artifacts/
 *.ilk
 *.meta
 *.obj
+!Male.obj
 *.pch
 *.pdb
 *.pgc
