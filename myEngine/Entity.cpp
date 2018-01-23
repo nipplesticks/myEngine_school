@@ -4,19 +4,12 @@ using namespace DirectX;
 Entity::Entity()
 {
 	init();
-
-	//REMOVE THIS LATER
-	m_model = new Model;
-	m_model->initModel("");
 }
 
 Entity::~Entity()
 {
 	m_vertexBuffer->Release();
 	m_constantBuffer->Release();
-
-	//REMOVE THIS LATER
-	delete m_model;
 }
 
 void Entity::loadModel(Model * m)

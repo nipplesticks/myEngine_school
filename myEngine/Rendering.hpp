@@ -4,8 +4,8 @@
 #include "Structs.hpp"
 #include "Entity.hpp"
 
-#define CLIENT_WIDITH	640.0f
-#define CLIENT_HEIGHT	480.0f
+#define CLIENT_WIDITH	1920.0f
+#define CLIENT_HEIGHT	1080.0f
 #define FOV				45.0f
 
 class App
@@ -73,8 +73,9 @@ private:
 	ID3D11Texture2D*		m_Dsb; //Buffer
 
 	//Test
-	Entity m_triangle;
-	Entity m_triangle2;
+	Entity m_Male;
+
+	std::vector<Model*> models;
 
 	CAMERA cam;
 	DirectX::XMMATRIX		m_viewMatrix;

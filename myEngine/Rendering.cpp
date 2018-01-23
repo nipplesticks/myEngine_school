@@ -8,7 +8,7 @@ App::App(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCm
 	m_nCmdShow = nCmdShow;
 
 	cam = CAMERA{
-		DirectX::XMFLOAT3(0.0f, 0.0f, -5.0f),	//pos
+		DirectX::XMFLOAT3(0.0f, 0.0f, -10),	//pos
 		DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f),	//look at
 		DirectX::XMFLOAT3(0.0f, 1.0f, 0.0f)		//up
 	};
@@ -18,7 +18,20 @@ App::App(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCm
 		DirectX::XMLoadFloat3(&cam.Up)
 	);
 
-	m_projectionMatrix = DirectX::XMMatrixPerspectiveFovLH(DirectX::XMConvertToRadians(FOV), CLIENT_WIDITH / CLIENT_HEIGHT, 0.1f, 20.0f);
+	m_projectionMatrix = DirectX::XMMatrixPerspectiveFovLH(DirectX::XMConvertToRadians(FOV), CLIENT_WIDITH / CLIENT_HEIGHT, 0.1f, 20000.0f);
+
+
+	//<TEST>
+	//REMOVE THIS LATER
+	Model* m;
+	m = new Model;
+	m->settings(false, false, false);
+	m->initModel("models/Male.obj");
+	models.push_back(m);
+
+	m_Male.loadModel(models[0]);
+	//</TEST>
+
 
 	setMembersToNull();
 }
@@ -34,6 +47,18 @@ App::~App()
 	m_DeviceContext->Release();
 	m_Dsv->Release();
 	m_Dsb->Release();
+
+	//<TEST>
+	int nrOfModels = models.size();
+	for (int i = 0; i < nrOfModels; i++)
+	{
+		delete models[i];
+	}
+	for (int i = 0; i < nrOfModels; i++)
+	{
+		models.pop_back();
+	}
+	//</TEST>
 
 	DestroyWindow(m_wndHandle);
 }
@@ -51,15 +76,10 @@ int App::init()
 		if (!CreateShaders()) return 4;
 
 		//<TEST>
-		m_triangle.setProjectionMatrix(m_projectionMatrix);
-		m_triangle.cameraMoved(m_viewMatrix);
-		m_triangle.loadBuffers(m_Device);
-		m_triangle.setPosition(-1.0f, 1.0f, 0.0f);
-
-		m_triangle2.setProjectionMatrix(m_projectionMatrix);
-		m_triangle2.cameraMoved(m_viewMatrix);
-		m_triangle2.loadBuffers(m_Device);
-		m_triangle2.setPosition(1.0f, -1.0f, 0.0f);
+		m_Male.setProjectionMatrix(m_projectionMatrix);
+		m_Male.cameraMoved(m_viewMatrix);
+		m_Male.loadBuffers(m_Device);
+		m_Male.setPosition(0.0f, 2.0f, 0.0f);
 		//</TEST>
 
 		if (!CreateConstantBuffer()) return 5;
@@ -275,6 +295,7 @@ bool App::CreateConstantBuffer()
 bool App::InitRenderFunction()
 {
 	m_DeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	
 	m_DeviceContext->VSSetShader(m_VertexShader, nullptr, 0);
 	m_DeviceContext->HSSetShader(nullptr, nullptr, 0);
 	m_DeviceContext->DSSetShader(nullptr, nullptr, 0);
@@ -289,20 +310,16 @@ bool App::InitRenderFunction()
 void App::Update(float dt)
 {
 	if (GetAsyncKeyState(int('D')))
-		m_triangle.rotate(0, 0, 1, -50 * dt);
+		m_Male.rotate(0, 1, 0, -100 * dt);
 	if (GetAsyncKeyState(int('A')))
-		m_triangle.rotate(0, 0, 1, 50 * dt);
-	if (GetAsyncKeyState(VK_RIGHT))
-		m_triangle2.rotate(0, 0, 1, -50 * dt);
-	if (GetAsyncKeyState(VK_LEFT))
-		m_triangle2.rotate(0, 0, 1, 50 * dt);
+		m_Male.rotate(0, 1, 0, 100 * dt);
+
 }
 
 void App::Render()
 {
 	clrScrn();
-	m_triangle.draw(m_DeviceContext);
-	m_triangle2.draw(m_DeviceContext);
+	m_Male.draw(m_DeviceContext);
 }
 
 bool App::CreateVertexShader()
