@@ -73,13 +73,18 @@ private:
 	ID3D11Texture2D*		m_Dsb; //Buffer
 
 	//Test
-	Entity m_Male;
+	Entity m_Statue;
+	Entity m_Terrain;
 
 	std::vector<Model*> models;
 
 	CAMERA cam;
 	DirectX::XMMATRIX		m_viewMatrix;
 	DirectX::XMMATRIX		m_projectionMatrix;
+
+	//REMOVE LATER
+	bool m_CrouchLock;
+
 };
 
 

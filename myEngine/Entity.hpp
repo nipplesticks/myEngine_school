@@ -23,8 +23,10 @@ public:
 
 	void setScale(DirectX::XMFLOAT3 scale);
 	void setScale(float x, float y, float z);
+	void setScale(float s);
 	void scale(DirectX::XMFLOAT3 scale);
 	void scale(float x, float y, float z);
+	void scale(float s);
 
 	void setProjectionMatrix(DirectX::XMMATRIX projection);
 	void cameraMoved(DirectX::XMMATRIX view);
@@ -37,17 +39,13 @@ private:
 	DirectX::XMFLOAT3 add(DirectX::XMFLOAT3 tar, DirectX::XMFLOAT3 adder) const;
 	void buildMatrix();
 	void init();
+	void resetAngles();
 private:
 	ID3D11Buffer*		m_vertexBuffer;
 	ID3D11Buffer*		m_constantBuffer;
 	Model*				m_model;
 
-	DirectX::XMFLOAT3	m_rot;
-
-	//<NOT A GOOD SOLUTION, NEED FIX>
-	float				m_currentAngle;
-	//</NOT A GOOD SOLUTION, NEED FIX>
-	//Direct::XMFLOAT3	m_angle;
+	DirectX::XMFLOAT3	m_angle;
 
 	DirectX::XMFLOAT3	m_pos;
 	DirectX::XMFLOAT3	m_scale;

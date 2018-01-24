@@ -44,9 +44,12 @@ void Entity::loadBuffers(ID3D11Device*& device)
 
 void Entity::setRotation(DirectX::XMFLOAT3 rotation, float angle)
 {
-	m_rot = rotation;
-	m_currentAngle = XMConvertToRadians(angle);
+	m_angle.x = rotation.x * XMConvertToRadians(angle);
+	m_angle.y = rotation.y * XMConvertToRadians(angle);
+	m_angle.z = rotation.z * XMConvertToRadians(angle);
+	resetAngles();
 	buildMatrix();
+
 }
 
 void Entity::setRotation(float x, float y, float z, float angle)
@@ -57,8 +60,10 @@ void Entity::setRotation(float x, float y, float z, float angle)
 
 void Entity::rotate(DirectX::XMFLOAT3 rotation, float angle)
 {
-	m_rot = rotation;
-	m_currentAngle += XMConvertToRadians(angle);
+	m_angle.x += rotation.x * XMConvertToRadians(angle);
+	m_angle.y += rotation.y * XMConvertToRadians(angle);
+	m_angle.z += rotation.z * XMConvertToRadians(angle);
+	resetAngles();
 	buildMatrix();
 }
 
@@ -95,6 +100,13 @@ void Entity::move(float x, float y, float z)
 void Entity::setScale(DirectX::XMFLOAT3 scale)
 {
 	m_scale = scale;
+	if (m_scale.x < 0)
+		m_scale.x = 0;
+	if (m_scale.y < 0)
+		m_scale.y = 0;
+	if (m_scale.z < 0)
+		m_scale.z = 0;
+
 	buildMatrix();
 }
 
@@ -104,9 +116,21 @@ void Entity::setScale(float x, float y, float z)
 	setScale(scale);
 }
 
+void Entity::setScale(float s)
+{
+	setScale(s, s, s);
+}
+
 void Entity::scale(DirectX::XMFLOAT3 scale)
 {
 	m_scale = add(m_scale, scale);
+	if (m_scale.x < 0)
+		m_scale.x = 0;
+	if (m_scale.y < 0)
+		m_scale.y = 0;
+	if (m_scale.z < 0)
+		m_scale.z = 0;
+
 	buildMatrix();
 }
 
@@ -114,6 +138,11 @@ void Entity::scale(float x, float y, float z)
 {
 	XMFLOAT3 scale(x, y, z);
 	this->scale(scale);
+}
+
+void Entity::scale(float s)
+{
+	scale(s, s, s);
 }
 
 void Entity::setProjectionMatrix(DirectX::XMMATRIX projection)
@@ -162,8 +191,13 @@ XMFLOAT3 Entity::add(XMFLOAT3 tar, XMFLOAT3 adder) const
 void Entity::buildMatrix()
 {
 	XMMATRIX translate = XMMatrixTranslation(m_pos.x, m_pos.y, m_pos.z);
-	XMVECTOR axis = XMLoadFloat3(&m_rot);
-	XMMATRIX rotation = XMMatrixRotationAxis(axis, m_currentAngle);
+
+	//XMVECTOR axis = XMLoadFloat3(&m_rot);
+	//XMMATRIX rotation = XMMatrixRotationAxis(axis, m_currentAngle);
+	XMVECTOR quat = XMLoadFloat3(&m_angle);
+	XMMATRIX rotation = XMMatrixRotationRollPitchYawFromVector(quat);
+
+
 	XMMATRIX scale = XMMatrixScaling(m_scale.x, m_scale.y, m_scale.z);
 	m_worldMatrix = rotation * scale * translate;
 	//m_worldMatrix = scale * translate * rotation;
@@ -178,10 +212,27 @@ void Entity::init()
 	m_constantBuffer = nullptr;
 	m_model = nullptr;
 
-	m_rot = XMFLOAT3(0.0f, 1.0f, 0.0f);
-	m_currentAngle = 0.0f;
+	m_angle = XMFLOAT3(0.0f, 0.0f, 0.0f);
 	m_pos = XMFLOAT3(0.0f, 0.0f, 0.0f);
 	m_scale = XMFLOAT3(1.0f, 1.0f, 1.0f);
+}
+
+void Entity::resetAngles()
+{
+	float maxAngle = XMConvertToRadians(360.0f);
+
+	if (m_angle.x < maxAngle * -1)
+		m_angle.x += maxAngle;
+	if (m_angle.x > maxAngle)
+		m_angle.x -= maxAngle;
+	if (m_angle.y < maxAngle * -1)
+		m_angle.y += maxAngle;
+	if (m_angle.y > maxAngle)
+		m_angle.y -= maxAngle;
+	if (m_angle.z < maxAngle * -1)
+		m_angle.z += maxAngle;
+	if (m_angle.z > maxAngle)
+		m_angle.z -= maxAngle;
 }
 
 int Entity::getNrOfVertices() const

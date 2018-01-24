@@ -137,42 +137,87 @@ void Model::initModel(std::string path)
 						}
 						*/
 						
-						f.vIndex = currentIndices[0].arr[0];
-						f.vtIndex = currentIndices[0].arr[1];
-						f.vnIndex = currentIndices[0].arr[2];
-						indices.push_back(f);
-						f.vIndex = currentIndices[1].arr[0];
-						f.vtIndex = currentIndices[1].arr[1];
-						f.vnIndex = currentIndices[1].arr[2];
-						indices.push_back(f);
-						f.vIndex = currentIndices[2].arr[0];
-						f.vtIndex = currentIndices[2].arr[1];
-						f.vnIndex = currentIndices[2].arr[2];
-						indices.push_back(f);
+						if (m_clockwise)
+						{
+							f.vIndex = currentIndices[0].arr[0];
+							f.vtIndex = currentIndices[0].arr[1];
+							f.vnIndex = currentIndices[0].arr[2];
+							indices.push_back(f);
+							f.vIndex = currentIndices[1].arr[0];
+							f.vtIndex = currentIndices[1].arr[1];
+							f.vnIndex = currentIndices[1].arr[2];
+							indices.push_back(f);
+							f.vIndex = currentIndices[2].arr[0];
+							f.vtIndex = currentIndices[2].arr[1];
+							f.vnIndex = currentIndices[2].arr[2];
+							indices.push_back(f);
 
-						f.vIndex = currentIndices[2].arr[0];
-						f.vtIndex = currentIndices[2].arr[1];
-						f.vnIndex = currentIndices[2].arr[2];
-						indices.push_back(f);
-						f.vIndex = currentIndices[3].arr[0];
-						f.vtIndex = currentIndices[3].arr[1];
-						f.vnIndex = currentIndices[3].arr[2];
-						indices.push_back(f);
-						f.vIndex = currentIndices[0].arr[0];
-						f.vtIndex = currentIndices[0].arr[1];
-						f.vnIndex = currentIndices[0].arr[2];
-						indices.push_back(f);
+							f.vIndex = currentIndices[2].arr[0];
+							f.vtIndex = currentIndices[2].arr[1];
+							f.vnIndex = currentIndices[2].arr[2];
+							indices.push_back(f);
+							f.vIndex = currentIndices[3].arr[0];
+							f.vtIndex = currentIndices[3].arr[1];
+							f.vnIndex = currentIndices[3].arr[2];
+							indices.push_back(f);
+							f.vIndex = currentIndices[0].arr[0];
+							f.vtIndex = currentIndices[0].arr[1];
+							f.vnIndex = currentIndices[0].arr[2];
+							indices.push_back(f);
+						}
+						else
+						{
+							f.vIndex = currentIndices[2].arr[0];
+							f.vtIndex = currentIndices[2].arr[1];
+							f.vnIndex = currentIndices[2].arr[2];
+							indices.push_back(f);
+							f.vIndex = currentIndices[1].arr[0];
+							f.vtIndex = currentIndices[1].arr[1];
+							f.vnIndex = currentIndices[1].arr[2];
+							indices.push_back(f);
+							f.vIndex = currentIndices[0].arr[0];
+							f.vtIndex = currentIndices[0].arr[1];
+							f.vnIndex = currentIndices[0].arr[2];
+							indices.push_back(f);
+
+							f.vIndex = currentIndices[0].arr[0];
+							f.vtIndex = currentIndices[0].arr[1];
+							f.vnIndex = currentIndices[0].arr[2];
+							indices.push_back(f);
+							f.vIndex = currentIndices[3].arr[0];
+							f.vtIndex = currentIndices[3].arr[1];
+							f.vnIndex = currentIndices[3].arr[2];
+							indices.push_back(f);
+							f.vIndex = currentIndices[2].arr[0];
+							f.vtIndex = currentIndices[2].arr[1];
+							f.vnIndex = currentIndices[2].arr[2];
+							indices.push_back(f);
+						}
 					}
 					else
 					{
 						F_IMPORT f;
-						for (int i = 0; i < 3; i++)
+						if (m_clockwise)
 						{
-							counter = 0;
-							f.vIndex = currentIndices[i].arr[counter++];
-							f.vtIndex = currentIndices[i].arr[counter++];
-							f.vnIndex = currentIndices[i].arr[counter++];
-							indices.push_back(f);
+							for (int i = 0; i < 3; i++)
+							{
+								counter = 0;
+								f.vIndex = currentIndices[i].arr[counter++];
+								f.vtIndex = currentIndices[i].arr[counter++];
+								f.vnIndex = currentIndices[i].arr[counter++];
+								indices.push_back(f);
+							}
+						}
+						else
+						{
+							for (int i = 2; i >= 0; i--)
+							{
+								counter = 0;
+								f.vIndex = currentIndices[i].arr[counter++];
+								f.vtIndex = currentIndices[i].arr[counter++];
+								f.vnIndex = currentIndices[i].arr[counter++];
+								indices.push_back(f);
+							}
 						}
 					}
 				}
