@@ -24,6 +24,12 @@ App::App(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCm
 	//<TEST>
 	//REMOVE THIS LATER
 	Model* m;
+
+	m = new Model;
+	m->settings(false, true, false);
+	m->initModel("models/Cube.obj");
+	models.push_back(m);
+
 	m = new Model;
 	m->settings(false, true);
 	m->initModel("models/nymph1.obj");
@@ -33,8 +39,10 @@ App::App(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCm
 	m->settings(true, false);
 	m->initModel("models/Ring_Of_Doom.obj");
 	models.push_back(m);
-	m_Statue.loadModel(models[0]);
-	m_Terrain.loadModel(models[1]);
+
+	m_Cube.loadModel(models[0]);
+	m_Statue.loadModel(models[1]);
+	m_Terrain.loadModel(models[2]);
 
 	m_CrouchLock = false;
 	//</TEST>
@@ -56,7 +64,7 @@ App::~App()
 	m_Dsb->Release();
 
 	//<TEST>
-	int nrOfModels = models.size();
+	int nrOfModels = static_cast<int>(models.size());
 	for (int i = 0; i < nrOfModels; i++)
 	{
 		delete models[i];
@@ -83,6 +91,13 @@ int App::init()
 		if (!CreateShaders()) return 4;
 
 		//<TEST>
+		m_Cube.setProjectionMatrix(m_projectionMatrix);
+		m_Cube.cameraMoved(m_viewMatrix);
+		m_Cube.loadBuffers(m_Device);
+		m_Cube.setPosition(-500.0f, 0.0f, 0.0f);
+		m_Cube.setRotation(0.0f, 1.0f, 0.0f, 45.0f);
+		m_Cube.setScale(500.0f);
+
 		m_Statue.setProjectionMatrix(m_projectionMatrix);
 		m_Statue.cameraMoved(m_viewMatrix);
 		m_Statue.loadBuffers(m_Device);
@@ -332,7 +347,7 @@ void App::Update(float dt)
 	int defaultY = static_cast<int>(CLIENT_HEIGHT) / 2;	
 	float speed = 10.0f;
 	if (m_CrouchLock)
-		speed *= 0.6;
+		speed *= 0.4f;
 	float sensitivity = 12.0f;
 
 	if (GetAsyncKeyState(int('A')))
@@ -448,6 +463,7 @@ void App::Update(float dt)
 		DirectX::XMLoadFloat3(&cam.LookAt),
 		DirectX::XMLoadFloat3(&cam.Up)
 	);
+	m_Cube.cameraMoved(m_viewMatrix);
 	m_Statue.cameraMoved(m_viewMatrix);
 	m_Terrain.cameraMoved(m_viewMatrix);
 	SetCursorPos(defaultX, defaultY);
@@ -456,6 +472,7 @@ void App::Update(float dt)
 void App::Render()
 {
 	clrScrn();
+	m_Cube.draw(m_DeviceContext);
 	m_Statue.draw(m_DeviceContext);
 	m_Terrain.draw(m_DeviceContext);
 }

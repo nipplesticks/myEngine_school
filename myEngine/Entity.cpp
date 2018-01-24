@@ -194,13 +194,16 @@ void Entity::buildMatrix()
 
 	//XMVECTOR axis = XMLoadFloat3(&m_rot);
 	//XMMATRIX rotation = XMMatrixRotationAxis(axis, m_currentAngle);
-	XMVECTOR quat = XMLoadFloat3(&m_angle);
-	XMMATRIX rotation = XMMatrixRotationRollPitchYawFromVector(quat);
 
-
+	XMMATRIX rotation = XMMatrixRotationRollPitchYawFromVector(XMLoadFloat3(&m_angle));
+	XMVECTOR quat = XMQuaternionRotationMatrix(rotation);
 	XMMATRIX scale = XMMatrixScaling(m_scale.x, m_scale.y, m_scale.z);
-	m_worldMatrix = rotation * scale * translate;
-	//m_worldMatrix = scale * translate * rotation;
+
+	/*
+	XMMATRIX m_worldMatrix = XMMatrixAffineTransformation(
+		XMLoadFloat3(&m_scale), XMVectorZero(), quat, XMLoadFloat3(&m_pos));
+		*/
+	XMMATRIX m_worldMatrix = rotation * scale * translate;
 
 	m_cBuffer.WorldMatrix = XMMatrixTranspose(m_worldMatrix);
 	m_cBuffer.WVPMatrix = XMMatrixTranspose(m_worldMatrix * m_viewMatrix * m_projectionMatrix);

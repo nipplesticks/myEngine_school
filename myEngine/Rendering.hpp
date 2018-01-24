@@ -75,6 +75,7 @@ private:
 	//Test
 	Entity m_Statue;
 	Entity m_Terrain;
+	Entity m_Cube;
 
 	std::vector<Model*> models;
 

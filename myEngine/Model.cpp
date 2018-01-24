@@ -118,25 +118,7 @@ void Model::initModel(std::string path)
 					if (isQuad)
 					{
 						F_IMPORT f;
-						/*
-						for (int i = 0; i < 3; i++)
-						{
-							counter = 0;
-							f.vIndex = currentIndices[i].arr[counter++];
-							f.vtIndex = currentIndices[i].arr[counter++];
-							f.vnIndex = currentIndices[i].arr[counter++];
-							indices.push_back(f);
-						}
-						for (int i = 1; i < 4; i++)
-						{
-							counter = 0;
-							f.vIndex = currentIndices[i].arr[counter++];
-							f.vtIndex = currentIndices[i].arr[counter++];
-							f.vnIndex = currentIndices[i].arr[counter++];
-							indices.push_back(f);
-						}
-						*/
-						
+										
 						if (m_clockwise)
 						{
 							f.vIndex = currentIndices[0].arr[0];
