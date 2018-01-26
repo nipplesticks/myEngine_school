@@ -44,6 +44,8 @@ App::App(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCm
 	m_Statue.loadModel(models[1]);
 	m_Terrain.loadModel(models[2]);
 
+	
+
 	m_CrouchLock = false;
 	//</TEST>
 
@@ -90,20 +92,34 @@ int App::init()
 		SetViewport();
 		if (!CreateShaders()) return 4;
 
+		if (!CreateConstantBuffer()) return 5;
+		if (!InitRenderFunction()) return 6;
+
+
 		//<TEST>
+		m_Cube.bindVertexShader(m_VertexShader);
+		m_Cube.bindGeometryShader(m_GeometryShader);
+		m_Cube.bindPixelShader(m_PixelShaderJustBlue);
 		m_Cube.setProjectionMatrix(m_projectionMatrix);
 		m_Cube.cameraMoved(m_viewMatrix);
 		m_Cube.loadBuffers(m_Device);
-		m_Cube.setPosition(-500.0f, 0.0f, 0.0f);
+		m_Cube.setPosition(-500.0f, -5.0f, 0.0f);
 		m_Cube.setRotation(0.0f, 1.0f, 0.0f, 45.0f);
 		m_Cube.setScale(500.0f);
 
+		m_Statue.bindVertexShader(m_VertexShader);
+		m_Statue.bindGeometryShader(m_GeometryShader);
+		m_Statue.bindPixelShader(m_PixelShaderDrawNormal);
 		m_Statue.setProjectionMatrix(m_projectionMatrix);
 		m_Statue.cameraMoved(m_viewMatrix);
 		m_Statue.loadBuffers(m_Device);
 		m_Statue.setPosition(0.0f, 3.0f, 0.0f);
 		m_Statue.setRotation(0.0f, 0.0f, 1.0f, 180.0f);
 
+
+		m_Terrain.bindVertexShader(m_VertexShader);
+		m_Terrain.bindGeometryShader(m_GeometryShader);
+		m_Terrain.bindPixelShader(m_PixelShader);
 		m_Terrain.setProjectionMatrix(m_projectionMatrix);
 		m_Terrain.cameraMoved(m_viewMatrix);
 		m_Terrain.loadBuffers(m_Device);
@@ -111,9 +127,6 @@ int App::init()
 		m_Terrain.setRotation(1.0f, 0.0f, 1.0f, -90.0f);
 		m_Terrain.setScale(100.0f);
 		//</TEST>
-
-		if (!CreateConstantBuffer()) return 5;
-		if (!InitRenderFunction()) return 6;
 
 		ShowWindow(m_wndHandle, m_nCmdShow);
 	}
@@ -325,12 +338,6 @@ bool App::CreateConstantBuffer()
 bool App::InitRenderFunction()
 {
 	m_DeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-	
-	m_DeviceContext->VSSetShader(m_VertexShader, nullptr, 0);
-	m_DeviceContext->HSSetShader(nullptr, nullptr, 0);
-	m_DeviceContext->DSSetShader(nullptr, nullptr, 0);
-	m_DeviceContext->GSSetShader(m_GeometryShader, nullptr, 0);
-	m_DeviceContext->PSSetShader(m_PixelShader, nullptr, 0);
 
 	m_DeviceContext->IASetInputLayout(m_VertexLayout);
 	m_DeviceContext->OMSetRenderTargets(1, &m_BackbufferRTV, m_Dsv);
@@ -343,6 +350,8 @@ void App::Update(float dt)
 	if (GetAsyncKeyState(int('D')))
 		m_Male.rotate(0, 1, 0, -100 * dt);
 	*/
+	m_Statue.rotate(0, 1, 0, 25 * dt);
+
 	int defaultX = static_cast<int>(CLIENT_WIDITH) / 2;
 	int defaultY = static_cast<int>(CLIENT_HEIGHT) / 2;	
 	float speed = 10.0f;
@@ -587,8 +596,10 @@ bool App::CreatePixelShader()
 	
 	pPS->Release();
 
+	bool f = initDrawNormal();
+	f = initJustBlue();
 
-	return true;
+	return f;
 }
 
 void App::clrScrn()
@@ -610,10 +621,81 @@ void App::setMembersToNull()
 	m_VertexShader = nullptr;
 	m_GeometryShader = nullptr;
 	m_PixelShader = nullptr;
+	m_PixelShaderDrawNormal = nullptr;
 
 	m_ConstantBuffer = nullptr;
 
 	m_Dsv = nullptr;
 	m_Dsb = nullptr;
+}
+
+bool App::initDrawNormal()
+{
+	//create pixel shader
+	ID3DBlob* pPS = nullptr;
+	ID3DBlob* error = nullptr;
+	HRESULT hr = D3DCompileFromFile(
+		L"PixelShaderDrawNormals.hlsl", // filename
+		nullptr,			// optional macros
+		nullptr,			// optional include files
+		"main",				// entry point
+		"ps_5_0",			// shader model (target)
+		0,					// shader compile options
+		0,					// effect compile options
+		&pPS,				// double pointer to ID3DBlob		
+		&error				// pointer for Error Blob messages.
+							// how to use the Error blob, see here
+							// https://msdn.microsoft.com/en-us/library/windows/desktop/hh968107(v=vs.85).aspx
+	);
+	if (FAILED(hr))
+	{
+		OutputDebugString((char*)error->GetBufferPointer());
+		pPS->Release();
+		return false;
+	}
+	if (FAILED(m_Device->CreatePixelShader(pPS->GetBufferPointer(), pPS->GetBufferSize(), nullptr, &m_PixelShaderDrawNormal)))
+	{
+		pPS->Release();
+		return false;
+	}
+
+	pPS->Release();
+
+	return true;
+}
+
+bool App::initJustBlue()
+{
+	//create pixel shader
+	ID3DBlob* pPS = nullptr;
+	ID3DBlob* error = nullptr;
+	HRESULT hr = D3DCompileFromFile(
+		L"PixelShaderJustBlue.hlsl", // filename
+		nullptr,			// optional macros
+		nullptr,			// optional include files
+		"main",				// entry point
+		"ps_5_0",			// shader model (target)
+		0,					// shader compile options
+		0,					// effect compile options
+		&pPS,				// double pointer to ID3DBlob		
+		&error				// pointer for Error Blob messages.
+							// how to use the Error blob, see here
+							// https://msdn.microsoft.com/en-us/library/windows/desktop/hh968107(v=vs.85).aspx
+	);
+	if (FAILED(hr))
+	{
+		OutputDebugString((char*)error->GetBufferPointer());
+		pPS->Release();
+		return false;
+	}
+	if (FAILED(m_Device->CreatePixelShader(pPS->GetBufferPointer(), pPS->GetBufferSize(), nullptr, &m_PixelShaderJustBlue)))
+	{
+		pPS->Release();
+		return false;
+	}
+
+	pPS->Release();
+
+	return true;
 }
 

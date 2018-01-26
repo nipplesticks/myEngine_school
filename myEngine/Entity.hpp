@@ -10,6 +10,9 @@ public:
 
 	void loadModel(Model* m);
 	void loadBuffers(ID3D11Device*& device);
+	void bindVertexShader(ID3D11VertexShader* vertexShader);
+	void bindGeometryShader(ID3D11GeometryShader* geometryShader);
+	void bindPixelShader(ID3D11PixelShader* pixelShader);
 
 	void setRotation(DirectX::XMFLOAT3 axis, float angle);
 	void setRotation(float x, float y, float z, float angle);
@@ -40,20 +43,28 @@ private:
 	void buildMatrix();
 	void init();
 	void resetAngles();
+	void setShaders(ID3D11DeviceContext *& deviceContext) const;
+
 private:
-	ID3D11Buffer*		m_vertexBuffer;
-	ID3D11Buffer*		m_constantBuffer;
-	Model*				m_model;
+	ID3D11Buffer*			m_vertexBuffer;
+	ID3D11Buffer*			m_constantBuffer;
+	ID3D11VertexShader*		m_vertexShader;
+	ID3D11GeometryShader*	m_geometryShader;
+	ID3D11PixelShader*		m_pixelShader;
 
-	DirectX::XMFLOAT3	m_angle;
 
-	DirectX::XMFLOAT3	m_pos;
-	DirectX::XMFLOAT3	m_scale;
 
-	DirectX::XMMATRIX	m_viewMatrix;
-	DirectX::XMMATRIX	m_projectionMatrix;
-	DirectX::XMMATRIX	m_worldMatrix;
-	CONSTANT_BUFFER		m_cBuffer;
+	Model*					m_model;
+
+	DirectX::XMFLOAT3		m_angle;
+
+	DirectX::XMFLOAT3		m_pos;
+	DirectX::XMFLOAT3		m_scale;
+
+	DirectX::XMMATRIX		m_viewMatrix;
+	DirectX::XMMATRIX		m_projectionMatrix;
+	DirectX::XMMATRIX		m_worldMatrix;
+	CONSTANT_BUFFER			m_cBuffer;
 };
 
 #endif

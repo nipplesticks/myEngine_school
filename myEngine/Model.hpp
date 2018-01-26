@@ -15,7 +15,6 @@ public:
 	void settings(bool texture, bool normals, bool clockwise = true);
 	void initModel(std::string path);
 
-
 	std::string getName() const;
 	VERTEX* getMesh() const;
 	int getNrOfVertices() const;

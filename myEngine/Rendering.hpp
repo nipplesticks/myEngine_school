@@ -47,6 +47,8 @@ private:
 
 	void setMembersToNull();
 
+	bool initDrawNormal();
+	bool initJustBlue();
 private:
 	HINSTANCE	m_hInstance;
 	HINSTANCE	m_hPrevInstance;
@@ -65,6 +67,8 @@ private:
 	ID3D11VertexShader*		m_VertexShader;
 	ID3D11GeometryShader*	m_GeometryShader;
 	ID3D11PixelShader*		m_PixelShader;
+	ID3D11PixelShader*		m_PixelShaderDrawNormal;
+	ID3D11PixelShader*		m_PixelShaderJustBlue;
 
 	ID3D11Buffer*			m_ConstantBuffer;
 
