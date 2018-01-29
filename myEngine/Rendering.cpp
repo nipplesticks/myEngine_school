@@ -111,7 +111,7 @@ int App::init()
 		m_Statue.setProjectionMatrix(m_projectionMatrix);
 		m_Statue.cameraMoved(m_viewMatrix);
 		m_Statue.loadBuffers(m_Device);
-		m_Statue.setPosition(0.0f, 3.0f, 0.0f);
+		m_Statue.setPosition(40.0f, 8.5f, 40.0f);
 		m_Statue.setRotation(0.0f, 0.0f, 1.0f, 180.0f);
 
 		m_Terrain2.bindVertexShader(m_VertexShader);
@@ -120,7 +120,7 @@ int App::init()
 		m_Terrain2.setProjectionMatrix(m_projectionMatrix); 
 		m_Terrain2.cameraMoved(m_viewMatrix); 
 		m_Terrain2.loadBuffers(m_Device); 
-		//m_Terrain2.setScale(1,1,1);
+		m_Terrain2.setScale(1,10,1);
 		m_Terrain2.setPosition(0.0f, 0.0f, 0.0f);
 		//</TEST>
 
@@ -349,7 +349,7 @@ void App::Update(float dt)
 
 	//m_Terrain2.rotate(1.0f, 0, 0, -25 * dt); 
 
-	m_Statue.rotate(0, 1, 0, 25 * dt);
+	//m_Statue.rotate(0, 1, 0, 25 * dt);
 	//m_Terrain2.scale(0, 50 * dt, 0);
 	//m_Terrain2.move(0, 30 * dt, 0);
 
