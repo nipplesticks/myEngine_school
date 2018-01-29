@@ -24,12 +24,12 @@ void main(triangle GS_IN input[3], inout TriangleStream<GS_OUT> fragmentShaderIn
 {
 	GS_OUT output = (GS_OUT)0;
     // set normal
-    float4 p0 = input[0].Pos;
-    float4 p1 = input[1].Pos;
-    float4 p2 = input[2].Pos;
+	float4 p0 = input[0].Pos;
+	float4 p1 = input[1].Pos;
+	float4 p2 = input[2].Pos;
 
-    float3 v0 = p1.xyz - p0.xyz;
-    float3 v1 = p2.xyz - p0.xyz;
+    float3 v0 = mul(p1 - p0, WorldMatrix).xyz;
+    float3 v1 = mul(p2 - p0, WorldMatrix).xyz;
     float3 n = normalize(cross(v0, v1));
 
 	// Apply rotation
@@ -37,7 +37,8 @@ void main(triangle GS_IN input[3], inout TriangleStream<GS_OUT> fragmentShaderIn
     {
         output.Pos = mul(input[i].Pos, WVPMatrix);
         output.worldPos = mul(input[i].Pos, WorldMatrix);
-        output.Normal = normalize(mul(float4(n, 0), WorldMatrix).xyz);
+        //output.Normal = normalize(mul(float4(n, 0), WorldMatrix).xyz);
+		output.Normal = n;
         output.Tex = input[i].Tex;
         fragmentShaderInput.Append(output);
     }

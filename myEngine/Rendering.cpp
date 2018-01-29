@@ -37,7 +37,7 @@ App::App(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCm
 
 	m = new Model(); 
 	m->settings(false, false); 
-	m->initExistingModel(); 
+	m->initExistingModel("HeightMap/test5.data"); 
 	models.push_back(m); 
 
 	m_Cube.loadModel(models[0]);
@@ -45,6 +45,7 @@ App::App(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCm
 	m_Terrain2.loadModel(models[2]); 
 
 	m_CrouchLock = false;
+	m_flying = true;
 	//</TEST>
 
 	setMembersToNull();
@@ -100,9 +101,9 @@ int App::init()
 		m_Cube.setProjectionMatrix(m_projectionMatrix);
 		m_Cube.cameraMoved(m_viewMatrix);
 		m_Cube.loadBuffers(m_Device);
-		m_Cube.setPosition(-500.0f, -10.0f, 0.0f);
+		m_Cube.setPosition(-500.0f, -250.0f, 0.0f);
 		m_Cube.setRotation(0.0f, 1.0f, 0.0f, 45.0f);
-		m_Cube.setScale(500.0f);
+		m_Cube.setScale(1000.0f);
 
 		m_Statue.bindVertexShader(m_VertexShader);
 		m_Statue.bindGeometryShader(m_GeometryShader);
@@ -115,10 +116,11 @@ int App::init()
 
 		m_Terrain2.bindVertexShader(m_VertexShader);
 		m_Terrain2.bindGeometryShader(m_GeometryShader);
-		m_Terrain2.bindPixelShader(m_PixelShaderDrawNormal);
+		m_Terrain2.bindPixelShader(m_PixelShader);
 		m_Terrain2.setProjectionMatrix(m_projectionMatrix); 
 		m_Terrain2.cameraMoved(m_viewMatrix); 
 		m_Terrain2.loadBuffers(m_Device); 
+		//m_Terrain2.setScale(1,1,1);
 		m_Terrain2.setPosition(0.0f, 0.0f, 0.0f);
 		//</TEST>
 
@@ -345,9 +347,11 @@ void App::Update(float dt)
 		m_Male.rotate(0, 1, 0, -100 * dt);
 	*/
 
-	m_Terrain2.rotate(1.0f, 0, 0, -25 * dt); 
+	//m_Terrain2.rotate(1.0f, 0, 0, -25 * dt); 
 
 	m_Statue.rotate(0, 1, 0, 25 * dt);
+	//m_Terrain2.scale(0, 50 * dt, 0);
+	//m_Terrain2.move(0, 30 * dt, 0);
 
 	int defaultX = static_cast<int>(CLIENT_WIDITH) / 2;
 	int defaultY = static_cast<int>(CLIENT_HEIGHT) / 2;	
@@ -388,34 +392,66 @@ void App::Update(float dt)
 	if (GetAsyncKeyState(int('W')))
 	{
 		DirectX::XMVECTOR lookAt = DirectX::XMVectorSubtract(DirectX::XMLoadFloat3(&cam.LookAt), DirectX::XMLoadFloat3(&cam.Position));
-		DirectX::XMVECTOR up = DirectX::XMLoadFloat3(&cam.Up);
-		DirectX::XMVECTOR right = DirectX::XMVector3Cross(lookAt, up);
-		DirectX::XMVECTOR front = DirectX::XMVector3Normalize(DirectX::XMVector3Cross(up, right));
-		DirectX::XMFLOAT3 dir;
-		DirectX::XMStoreFloat3(&dir, front);
-		std::cout << dir.x << dir.y << dir.z << std::endl;
-		cam.Position.x += speed * dir.x * dt;
-		cam.Position.y += speed * dir.y * dt;
-		cam.Position.z += speed * dir.z * dt;
-		cam.LookAt.x += speed * dir.x * dt;
-		cam.LookAt.y += speed * dir.y * dt;
-		cam.LookAt.z += speed * dir.z * dt;
+		if (!m_flying)
+		{
+			DirectX::XMVECTOR up = DirectX::XMLoadFloat3(&cam.Up);
+			DirectX::XMVECTOR right = DirectX::XMVector3Cross(lookAt, up);
+			DirectX::XMVECTOR front = DirectX::XMVector3Normalize(DirectX::XMVector3Cross(up, right));
+			DirectX::XMFLOAT3 dir;
+			DirectX::XMStoreFloat3(&dir, front);
+			std::cout << dir.x << dir.y << dir.z << std::endl;
+			cam.Position.x += speed * dir.x * dt;
+			cam.Position.y += speed * dir.y * dt;
+			cam.Position.z += speed * dir.z * dt;
+			cam.LookAt.x += speed * dir.x * dt;
+			cam.LookAt.y += speed * dir.y * dt;
+			cam.LookAt.z += speed * dir.z * dt;
+		}
+		else
+		{
+			lookAt = DirectX::XMVector3Normalize(lookAt);
+			DirectX::XMFLOAT3 dir;
+			DirectX::XMStoreFloat3(&dir, lookAt);
+
+			cam.Position.x += speed * dir.x * dt;
+			cam.Position.y += speed * dir.y * dt;
+			cam.Position.z += speed * dir.z * dt;
+			cam.LookAt.x += speed * dir.x * dt;
+			cam.LookAt.y += speed * dir.y * dt;
+			cam.LookAt.z += speed * dir.z * dt;
+		}
 	}
 	if (GetAsyncKeyState(int('S')))
 	{
 		DirectX::XMVECTOR lookAt = DirectX::XMVectorSubtract(DirectX::XMLoadFloat3(&cam.LookAt), DirectX::XMLoadFloat3(&cam.Position));
-		DirectX::XMVECTOR up = DirectX::XMLoadFloat3(&cam.Up);
-		DirectX::XMVECTOR right = DirectX::XMVector3Cross(lookAt, up);
-		DirectX::XMVECTOR front = DirectX::XMVector3Normalize(DirectX::XMVector3Cross(up, right));
-		DirectX::XMFLOAT3 dir;
-		DirectX::XMStoreFloat3(&dir, front);
-		std::cout << dir.x << dir.y << dir.z << std::endl;
-		cam.Position.x -= speed * dir.x * dt;
-		cam.Position.y -= speed * dir.y * dt;
-		cam.Position.z -= speed * dir.z * dt;
-		cam.LookAt.x -= speed * dir.x * dt;
-		cam.LookAt.y -= speed * dir.y * dt;
-		cam.LookAt.z -= speed * dir.z * dt;
+		if (!m_flying)
+		{
+			DirectX::XMVECTOR up = DirectX::XMLoadFloat3(&cam.Up);
+			DirectX::XMVECTOR right = DirectX::XMVector3Cross(lookAt, up);
+			DirectX::XMVECTOR front = DirectX::XMVector3Normalize(DirectX::XMVector3Cross(up, right));
+			DirectX::XMFLOAT3 dir;
+			DirectX::XMStoreFloat3(&dir, front);
+			std::cout << dir.x << dir.y << dir.z << std::endl;
+			cam.Position.x -= speed * dir.x * dt;
+			cam.Position.y -= speed * dir.y * dt;
+			cam.Position.z -= speed * dir.z * dt;
+			cam.LookAt.x -= speed * dir.x * dt;
+			cam.LookAt.y -= speed * dir.y * dt;
+			cam.LookAt.z -= speed * dir.z * dt;
+		}
+		else
+		{
+			lookAt = DirectX::XMVector3Normalize(lookAt);
+			DirectX::XMFLOAT3 dir;
+			DirectX::XMStoreFloat3(&dir, lookAt);
+
+			cam.Position.x -= speed * dir.x * dt;
+			cam.Position.y -= speed * dir.y * dt;
+			cam.Position.z -= speed * dir.z * dt;
+			cam.LookAt.x -= speed * dir.x * dt;
+			cam.LookAt.y -= speed * dir.y * dt;
+			cam.LookAt.z -= speed * dir.z * dt;
+		}
 	}
 
 	if (GetAsyncKeyState(VK_LCONTROL))

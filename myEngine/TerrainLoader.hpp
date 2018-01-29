@@ -3,22 +3,23 @@
 
 namespace TerrainLoader
 {
-	std::vector<VERTEX> terrainLoader()
+	std::vector<VERTEX> terrainLoader(std::string path)
 	{
 		//A high anti-sensitivity value means that the colors won't affect the height-values 
 		//as much as a low anti-sensitvity value would. 
 		int anti_sensitivity = 255; 
-		
-		unsigned char heightMap[100][100];
+		const int size = 100;
+
+		unsigned char heightMap[size][size];
 	    std::vector<VERTEX> vertexVector;
 		std::ifstream heightMapFile;
-		heightMapFile.open("HeightMap/Test5.data", std::ifstream::binary);
+		heightMapFile.open(path, std::ifstream::binary);
 
 		if (heightMapFile.is_open())
 		{
-			for (int i = 0; i < 100; i++)
+			for (int i = 0; i < size; i++)
 			{
-				heightMapFile.read((char*)heightMap[i], 100);
+				heightMapFile.read((char*)heightMap[i], size);
 			}
 
 			/*std::cout << "Values loaded to heightMap: " << std::endl;
@@ -31,9 +32,9 @@ namespace TerrainLoader
 			}*/
 
 
-			for (int i = 0; i < 100 - 1; i++)
+			for (int i = 0; i < size - 1; i++)
 			{
-				for (int j = 0; j < 100 - 1; j++)
+				for (int j = 0; j < size - 1; j++)
 				{
 					VERTEX v;
 
@@ -58,12 +59,18 @@ namespace TerrainLoader
 			}
 			heightMapFile.close();
 
-			/*std::cout << "Before pass: " << std::endl; 
+			/*
 			for (int i = 0; i < vertexVector.size(); i++)
 			{
-				std::cout << vertexVector.at(i).y << std::endl;
-			}*/
-			return vertexVector;
+				std::cout << vertexVector[i].y << ", ";
+				if (i % size == 0 && i != 0)
+				{
+					std::cout << "\n";
+				}
+			}
+			*/
+		
 		}
+		return vertexVector;
 	}
 }

@@ -222,7 +222,7 @@ void Entity::buildMatrix()
 	XMMATRIX m_worldMatrix = XMMatrixAffineTransformation(
 		XMLoadFloat3(&m_scale), XMVectorZero(), quat, XMLoadFloat3(&m_pos));
 		*/
-	XMMATRIX m_worldMatrix = rotation * scale * translate;
+	XMMATRIX m_worldMatrix = scale * rotation * translate;
 
 	m_cBuffer.WorldMatrix = XMMatrixTranspose(m_worldMatrix);
 	m_cBuffer.WVPMatrix = XMMatrixTranspose(m_worldMatrix * m_viewMatrix * m_projectionMatrix);

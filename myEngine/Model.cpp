@@ -224,10 +224,10 @@ void Model::initModel(std::string path)
 	}
 }
 
-void Model::initExistingModel()
+void Model::initExistingModel(std::string path)
 {
-	std::vector<VERTEX> vertexVector = TerrainLoader::terrainLoader();
-	m_nrOfVertices = vertexVector.size();
+	std::vector<VERTEX> vertexVector = TerrainLoader::terrainLoader(path);
+	m_nrOfVertices = static_cast<int>(vertexVector.size());
 	m_vertices = new VERTEX[m_nrOfVertices];
 
 	for (int i = 0; i < m_nrOfVertices; i++)
