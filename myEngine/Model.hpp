@@ -9,11 +9,12 @@
 class Model
 {
 public:
-	Model(bool terrain);
+	Model();
 	~Model();
 
 	void settings(bool texture, bool normals, bool clockwise = true);
 	void initModel(std::string path);
+
 	void initExistingModel(); 
 
 	std::string getName() const;

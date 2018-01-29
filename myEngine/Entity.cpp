@@ -8,8 +8,10 @@ Entity::Entity()
 
 Entity::~Entity()
 {
-	m_vertexBuffer->Release();
-	m_constantBuffer->Release();
+	if (m_vertexBuffer != nullptr)
+		m_vertexBuffer->Release();
+	if (m_constantBuffer != nullptr)
+		m_constantBuffer->Release();
 }
 
 void Entity::loadModel(Model * m)
@@ -40,6 +42,21 @@ void Entity::loadBuffers(ID3D11Device*& device)
 
 	// check if the creation failed for any reason
 	hr = device->CreateBuffer(&cBufferDesc, nullptr, &m_constantBuffer);
+}
+
+void Entity::bindVertexShader(ID3D11VertexShader * vertexShader)
+{
+	m_vertexShader = vertexShader;
+}
+
+void Entity::bindGeometryShader(ID3D11GeometryShader * geometryShader)
+{
+	m_geometryShader = geometryShader;
+}
+
+void Entity::bindPixelShader(ID3D11PixelShader * pixelShader)
+{
+	m_pixelShader = pixelShader;
 }
 
 void Entity::setRotation(DirectX::XMFLOAT3 rotation, float angle)
@@ -158,6 +175,8 @@ void Entity::cameraMoved(DirectX::XMMATRIX view)
 
 void Entity::draw(ID3D11DeviceContext *& deviceContext) const
 {
+	setShaders(deviceContext);
+	
 	UINT32 vertexSize = sizeof(float) * 5;
 	UINT offset = 0;
 	deviceContext->IASetVertexBuffers(0, 1, &m_vertexBuffer, &vertexSize, &offset);
@@ -194,13 +213,16 @@ void Entity::buildMatrix()
 
 	//XMVECTOR axis = XMLoadFloat3(&m_rot);
 	//XMMATRIX rotation = XMMatrixRotationAxis(axis, m_currentAngle);
-	XMVECTOR quat = XMLoadFloat3(&m_angle);
-	XMMATRIX rotation = XMMatrixRotationRollPitchYawFromVector(quat);
 
-
+	XMMATRIX rotation = XMMatrixRotationRollPitchYawFromVector(XMLoadFloat3(&m_angle));
+	XMVECTOR quat = XMQuaternionRotationMatrix(rotation);
 	XMMATRIX scale = XMMatrixScaling(m_scale.x, m_scale.y, m_scale.z);
-	m_worldMatrix = rotation * scale * translate;
-	//m_worldMatrix = scale * translate * rotation;
+
+	/*
+	XMMATRIX m_worldMatrix = XMMatrixAffineTransformation(
+		XMLoadFloat3(&m_scale), XMVectorZero(), quat, XMLoadFloat3(&m_pos));
+		*/
+	XMMATRIX m_worldMatrix = rotation * scale * translate;
 
 	m_cBuffer.WorldMatrix = XMMatrixTranspose(m_worldMatrix);
 	m_cBuffer.WVPMatrix = XMMatrixTranspose(m_worldMatrix * m_viewMatrix * m_projectionMatrix);
@@ -211,6 +233,9 @@ void Entity::init()
 	m_vertexBuffer = nullptr;
 	m_constantBuffer = nullptr;
 	m_model = nullptr;
+	m_vertexShader = nullptr;
+	m_geometryShader = nullptr;
+	m_pixelShader = nullptr;
 
 	m_angle = XMFLOAT3(0.0f, 0.0f, 0.0f);
 	m_pos = XMFLOAT3(0.0f, 0.0f, 0.0f);
@@ -233,6 +258,15 @@ void Entity::resetAngles()
 		m_angle.z += maxAngle;
 	if (m_angle.z > maxAngle)
 		m_angle.z -= maxAngle;
+}
+
+void Entity::setShaders(ID3D11DeviceContext *& deviceContext) const
+{
+	deviceContext->VSSetShader(m_vertexShader, nullptr, 0);
+	deviceContext->HSSetShader(nullptr, nullptr, 0);
+	deviceContext->DSSetShader(nullptr, nullptr, 0);
+	deviceContext->GSSetShader(m_geometryShader, nullptr, 0);
+	deviceContext->PSSetShader(m_pixelShader, nullptr, 0);
 }
 
 int Entity::getNrOfVertices() const

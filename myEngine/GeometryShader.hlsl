@@ -37,7 +37,7 @@ void main(triangle GS_IN input[3], inout TriangleStream<GS_OUT> fragmentShaderIn
     {
         output.Pos = mul(input[i].Pos, WVPMatrix);
         output.worldPos = mul(input[i].Pos, WorldMatrix);
-        output.Normal = mul(float4(n, 0), WorldMatrix).xyz;
+        output.Normal = normalize(mul(float4(n, 0), WorldMatrix).xyz);
         output.Tex = input[i].Tex;
         fragmentShaderInput.Append(output);
     }

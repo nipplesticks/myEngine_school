@@ -2,14 +2,13 @@
 #include "TerrainLoader.hpp"
 #include <iostream>
 
-Model::Model(bool terrain)
+Model::Model()
 {
 	m_vertices = nullptr;
 	m_nrOfVertices = 0;
 	m_name = "";
 	m_useTexture = false;
 	m_useNormals = false;
-	m_terrainStatus = terrain; 
 }
 
 Model::~Model()
@@ -119,27 +118,10 @@ void Model::initModel(std::string path)
 						{
 							isQuad = true;
 						}
+						
 						if (isQuad)
 						{
 							F_IMPORT f;
-							/*
-							for (int i = 0; i < 3; i++)
-							{
-							counter = 0;
-							f.vIndex = currentIndices[i].arr[counter++];
-							f.vtIndex = currentIndices[i].arr[counter++];
-							f.vnIndex = currentIndices[i].arr[counter++];
-							indices.push_back(f);
-							}
-							for (int i = 1; i < 4; i++)
-							{
-							counter = 0;
-							f.vIndex = currentIndices[i].arr[counter++];
-							f.vtIndex = currentIndices[i].arr[counter++];
-							f.vnIndex = currentIndices[i].arr[counter++];
-							indices.push_back(f);
-							}
-							*/
 
 							if (m_clockwise)
 							{
@@ -154,19 +136,6 @@ void Model::initModel(std::string path)
 								f.vIndex = currentIndices[2].arr[0];
 								f.vtIndex = currentIndices[2].arr[1];
 								f.vnIndex = currentIndices[2].arr[2];
-								indices.push_back(f);
-
-								f.vIndex = currentIndices[2].arr[0];
-								f.vtIndex = currentIndices[2].arr[1];
-								f.vnIndex = currentIndices[2].arr[2];
-								indices.push_back(f);
-								f.vIndex = currentIndices[3].arr[0];
-								f.vtIndex = currentIndices[3].arr[1];
-								f.vnIndex = currentIndices[3].arr[2];
-								indices.push_back(f);
-								f.vIndex = currentIndices[0].arr[0];
-								f.vtIndex = currentIndices[0].arr[1];
-								f.vnIndex = currentIndices[0].arr[2];
 								indices.push_back(f);
 							}
 							else
@@ -257,28 +226,13 @@ void Model::initModel(std::string path)
 
 void Model::initExistingModel()
 {
-
-	/*m_nrOfVertices = 6;
-
-	m_vertices = new VERTEX[m_nrOfVertices]; 
-
-	m_vertices[0] = VERTEX{ 0,0,0 }; 
-	m_vertices[1] = VERTEX{ 0,0,1 };
-	m_vertices[2] = VERTEX{ 1,0,0 };
-
-	m_vertices[3] = VERTEX{ 0,0,1 };
-	m_vertices[4] = VERTEX{ 1,0,1 };
-	m_vertices[5] = VERTEX{ 1,0,0 };*/
-
 	std::vector<VERTEX> vertexVector = TerrainLoader::terrainLoader();
 	m_nrOfVertices = vertexVector.size();
-	m_vertices = new VERTEX[m_nrOfVertices]; 
-
-	std::cout << "After pass: " << std::endl; 
+	m_vertices = new VERTEX[m_nrOfVertices];
 
 	for (int i = 0; i < m_nrOfVertices; i++)
 	{
-		m_vertices[i] = vertexVector[i]; 
+		m_vertices[i] = vertexVector[i];
 	}
 }
 
