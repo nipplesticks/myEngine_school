@@ -24,21 +24,29 @@ App::App(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCm
 	//<TEST>
 	//REMOVE THIS LATER
 	Model* m;
-	m = new Model;
+	m = new Model(false);
 	m->settings(false, true);
 	m->initModel("models/nymph1.obj");
 	models.push_back(m);
 
-	m = new Model;
+	/*m = new Model(false);
 	m->settings(true, false);
 	m->initModel("models/Ring_Of_Doom.obj");
-	models.push_back(m);
+	models.push_back(m);*/
+	std::cout << "Time to fix terrain" << std::endl; 
+
+
+	m = new Model(true); 
+	//m->settings(true,true,true); 
+	m->initExistingModel(); 
+	models.push_back(m); 
+
 	m_Statue.loadModel(models[0]);
-	m_Terrain.loadModel(models[1]);
+	//m_Terrain.loadModel(models[1]);
+	m_Terrain2.loadModel(models[1]); 
 
 	m_CrouchLock = false;
 	//</TEST>
-
 
 	setMembersToNull();
 }
@@ -89,12 +97,18 @@ int App::init()
 		m_Statue.setPosition(0.0f, 3.0f, 0.0f);
 		m_Statue.setRotation(0.0f, 0.0f, 1.0f, 180.0f);
 
-		m_Terrain.setProjectionMatrix(m_projectionMatrix);
+		/*m_Terrain.setProjectionMatrix(m_projectionMatrix);
 		m_Terrain.cameraMoved(m_viewMatrix);
 		m_Terrain.loadBuffers(m_Device);
 		m_Terrain.setPosition(-40.0f, -2.0f, -40.0f);
 		m_Terrain.setRotation(1.0f, 0.0f, 1.0f, -90.0f);
-		m_Terrain.setScale(100.0f);
+		m_Terrain.setScale(100.0f);*/
+
+		m_Terrain2.setProjectionMatrix(m_projectionMatrix); 
+		m_Terrain2.cameraMoved(m_viewMatrix); 
+		m_Terrain2.loadBuffers(m_Device); 
+		m_Terrain2.setPosition(0.0f,0.0f,0.0f);
+		m_Terrain2.setScale(1.0f,10.0f,1.0f); 
 		//</TEST>
 
 		if (!CreateConstantBuffer()) return 5;
@@ -130,9 +144,6 @@ int App::run()
 			m_SwapChain->Present(0, 0);
 		}
 	}
-
-
-
 	return (int) msg.wParam;
 }
 
@@ -224,8 +235,6 @@ HRESULT App::CreateDirect3DContext()
 		m_Device->CreateRenderTargetView(pBackBuffer, NULL, &m_BackbufferRTV);
 		pBackBuffer->Release();
 	}
-
-
 	return hr;
 }
 
@@ -320,6 +329,11 @@ bool App::InitRenderFunction()
 	m_DeviceContext->IASetInputLayout(m_VertexLayout);
 	m_DeviceContext->OMSetRenderTargets(1, &m_BackbufferRTV, m_Dsv);
 	return true;
+}
+
+void App::initTerrain(Model & terrain)
+{
+	
 }
 
 void App::Update(float dt)
@@ -449,7 +463,7 @@ void App::Update(float dt)
 		DirectX::XMLoadFloat3(&cam.Up)
 	);
 	m_Statue.cameraMoved(m_viewMatrix);
-	m_Terrain.cameraMoved(m_viewMatrix);
+	m_Terrain2.cameraMoved(m_viewMatrix);
 	SetCursorPos(defaultX, defaultY);
 }
 
@@ -457,7 +471,8 @@ void App::Render()
 {
 	clrScrn();
 	m_Statue.draw(m_DeviceContext);
-	m_Terrain.draw(m_DeviceContext);
+	m_Terrain2.draw(m_DeviceContext); 
+	//m_Terrain.draw(m_DeviceContext);
 }
 
 bool App::CreateVertexShader()

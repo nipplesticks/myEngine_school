@@ -9,12 +9,12 @@
 class Model
 {
 public:
-	Model();
+	Model(bool terrain);
 	~Model();
 
 	void settings(bool texture, bool normals, bool clockwise = true);
 	void initModel(std::string path);
-
+	void initExistingModel(); 
 
 	std::string getName() const;
 	VERTEX* getMesh() const;
@@ -27,6 +27,7 @@ private:
 	bool m_useTexture;
 	bool m_useNormals;
 	bool m_clockwise;
+	bool m_terrainStatus; 
 };
 
 

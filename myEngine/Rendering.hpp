@@ -1,11 +1,11 @@
 #ifndef RENDERING_HPP
 #define RENDERING_HPP
 
-#include "Structs.hpp"
 #include "Entity.hpp"
+#include <istream>
 
-#define CLIENT_WIDITH	1920.0f
-#define CLIENT_HEIGHT	1080.0f
+#define CLIENT_WIDITH	800.0f
+#define CLIENT_HEIGHT	600.0f
 #define FOV				45.0f
 
 class App
@@ -35,6 +35,8 @@ private:
 	bool CreateShaders();
 	bool CreateConstantBuffer();
 	bool InitRenderFunction();
+
+	void initTerrain(Model& terrain); 
 
 	void Update(float dt);
 	void Render();
@@ -75,6 +77,7 @@ private:
 	//Test
 	Entity m_Statue;
 	Entity m_Terrain;
+	Entity m_Terrain2;
 
 	std::vector<Model*> models;
 
