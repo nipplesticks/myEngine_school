@@ -274,6 +274,11 @@ int Entity::getNrOfVertices() const
 	return m_model->getNrOfVertices();
 }
 
+Model* Entity::getModel() const
+{
+	return m_model; 
+}
+
 ID3D11Buffer * Entity::getVertexBuffer() const
 {
 	return m_vertexBuffer;
