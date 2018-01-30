@@ -14,7 +14,7 @@ public:
 
 	void settings(bool texture, bool normals, bool clockwise = true);
 	void initModel(std::string path);
-	void initTexture(std::string path, ID3D11Device*& device);
+	void initTexture(wchar_t* path, ID3D11Device*& device);
 	ID3D11ShaderResourceView* getTextureResourceView() const;
 
 	void initExistingModel(std::string path); 

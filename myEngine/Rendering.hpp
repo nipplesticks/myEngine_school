@@ -53,6 +53,11 @@ private:
 	bool initDrawNormal();
 	bool initJustBlue();
 	bool initDrawTexture();
+
+	//Remove later
+	void loadModels();
+	void loadEnteties();
+
 private:
 	HINSTANCE	m_hInstance;
 	HINSTANCE	m_hPrevInstance;

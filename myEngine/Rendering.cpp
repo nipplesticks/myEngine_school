@@ -25,34 +25,7 @@ App::App(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCm
 
 	//<TEST>
 	//REMOVE THIS LATER
-	Model* m;
-
-	m = new Model;
-	m->settings(false, true, false);
-	m->initModel("models/Cube.obj");
-	models.push_back(m);
-
 	
-	m = new Model;
-	m->settings(false,true);
-	m->initModel("models/nymph1.obj");
-	models.push_back(m);
-	
-	m = new Model(); 
-	m->settings(false, false); 
-	m->initExistingModel("HeightMap/Hidden_star_01.data"); 
-	//m->initTexture("HeightMap/Hidden_star_01.bmp", m_Device);
-	models.push_back(m); 
-
-	m = new Model();
-	m_player = Character("dog", m); 
-	models.push_back(m); 
-
-	m_Cube.loadModel(models[0]);
-	m_Statue.loadModel(models[1]);
-	m_Terrain2.loadModel(models[2]);
-	m_player.loadModel(models[3]); 
-
 	m_CrouchLock = false;
 	m_flying = true;
 	//</TEST>
@@ -103,47 +76,8 @@ int App::init()
 		if (!InitRenderFunction()) return 6;
 
 
-		//<TEST>
-		m_Cube.bindVertexShader(m_VertexShader);
-		m_Cube.bindGeometryShader(m_GeometryShader);
-		m_Cube.bindPixelShader(m_PixelShaderJustBlue);
-		m_Cube.setProjectionMatrix(m_projectionMatrix);
-		m_Cube.cameraMoved(m_viewMatrix);
-		m_Cube.loadBuffers(m_Device);
-		m_Cube.setPosition(-5000, -5000.0f, 0);
-		m_Cube.setRotation(0.0f, 1.0f, 0.0f, 45.0f);
-		m_Cube.setScale(10000.0f);
-
-		m_Statue.bindVertexShader(m_VertexShader);
-		m_Statue.bindGeometryShader(m_GeometryShader);
-		m_Statue.bindPixelShader(m_PixelShader);
-		m_Statue.setProjectionMatrix(m_projectionMatrix);
-		m_Statue.cameraMoved(m_viewMatrix);
-		m_Statue.loadBuffers(m_Device);
-		m_Statue.setPosition(494.247f, 230.87f, 546.431f);
-		m_Statue.setRotation(0.0f, 0.0f, 1.0f, 180.0f);
-
-		m_Terrain2.bindVertexShader(m_VertexShader);
-		m_Terrain2.bindGeometryShader(m_GeometryShader);
-		m_Terrain2.bindPixelShader(m_PixelShader);
-		m_Terrain2.setProjectionMatrix(m_projectionMatrix); 
-		m_Terrain2.cameraMoved(m_viewMatrix); 
-		m_Terrain2.loadBuffers(m_Device); 
-		m_Terrain2.setScale(1,500,1);
-		m_Terrain2.setPosition(0.0f, 0.0f, 0.0f);
-
-		m_player.bindVertexShader(m_VertexShader);
-		m_player.bindGeometryShader(m_GeometryShader);
-		m_player.bindPixelShader(m_PixelShader);
-		m_player.setProjectionMatrix(m_projectionMatrix);
-		m_player.cameraMoved(m_viewMatrix);
-		m_player.loadBuffers(m_Device);
-		m_player.rotate(0.0f, 1.0f, 0.0f, 180); 
-		m_player.setScale(0.05f,0.05f,0.05f);
-		m_player.setPosition(40.0f, 24.8f, 45.0f);
-
-		//</TEST>
-
+		loadModels();
+		loadEnteties();
 		ShowWindow(m_wndHandle, m_nCmdShow);
 	}
 
@@ -152,6 +86,8 @@ int App::init()
 
 int App::run()
 {
+
+
 	MSG msg = { 0 };
 	using namespace std::chrono;
 	auto time = steady_clock::now();
@@ -788,5 +724,85 @@ bool App::initDrawTexture()
 	pPS->Release();
 
 	return true;
+}
+
+void App::loadModels()
+{
+	Model* m;
+
+	m = new Model;
+	m->settings(false, true, false);
+	m->initModel("models/Cube.obj");
+	models.push_back(m);
+
+
+	m = new Model;
+	m->settings(false, true);
+	m->initModel("models/nymph1.obj");
+	models.push_back(m);
+
+	m = new Model();
+	m->settings(false, false);
+	m->initExistingModel("HeightMap/Hidden_star_01.data");
+	models.push_back(m);
+
+	m = new Model();
+	m->settings(true, true);
+	m->initModel("models/dog.obj");
+	m_player = Character("dog", m);
+	models.push_back(m);
+}
+
+void App::loadEnteties()
+{
+	
+	m_Cube.loadModel(models[0]);	//The cube model
+	m_Statue.loadModel(models[1]);	//The statue model
+	//models[2]->initTexture(L"HeightMap/Hidden_star_01.dds", m_Device);
+	m_Terrain2.loadModel(models[2]);	//The Terrain model
+	m_player.loadModel(models[3]);		//The dog model
+
+
+	//<TEST>
+	m_Cube.bindVertexShader(m_VertexShader);
+	m_Cube.bindGeometryShader(m_GeometryShader);
+	m_Cube.bindPixelShader(m_PixelShaderJustBlue);
+	m_Cube.setProjectionMatrix(m_projectionMatrix);
+	m_Cube.cameraMoved(m_viewMatrix);
+	m_Cube.loadBuffers(m_Device);
+	m_Cube.setPosition(-5000, -5000.0f, 0);
+	m_Cube.setRotation(0.0f, 1.0f, 0.0f, 45.0f);
+	m_Cube.setScale(10000.0f);
+
+	m_Statue.bindVertexShader(m_VertexShader);
+	m_Statue.bindGeometryShader(m_GeometryShader);
+	m_Statue.bindPixelShader(m_PixelShader);
+	m_Statue.setProjectionMatrix(m_projectionMatrix);
+	m_Statue.cameraMoved(m_viewMatrix);
+	m_Statue.loadBuffers(m_Device);
+	m_Statue.setPosition(494.247f, 230.87f, 546.431f);
+	m_Statue.setRotation(0.0f, 0.0f, 1.0f, 180.0f);
+
+	m_Terrain2.bindVertexShader(m_VertexShader);
+	m_Terrain2.bindGeometryShader(m_GeometryShader);
+	m_Terrain2.bindPixelShader(m_PixelShader);
+	m_Terrain2.setProjectionMatrix(m_projectionMatrix);
+	m_Terrain2.cameraMoved(m_viewMatrix);
+	m_Terrain2.loadBuffers(m_Device);
+	m_Terrain2.setScale(1, 500, 1);
+	m_Terrain2.setPosition(0.0f, 0.0f, 0.0f);
+
+	m_player.bindVertexShader(m_VertexShader);
+	m_player.bindGeometryShader(m_GeometryShader);
+	m_player.bindPixelShader(m_PixelShader);
+	m_player.setProjectionMatrix(m_projectionMatrix);
+	m_player.cameraMoved(m_viewMatrix);
+	m_player.loadBuffers(m_Device);
+	m_player.rotate(0.0f, 1.0f, 0.0f, 180);
+	m_player.setScale(0.05f, 0.05f, 0.05f);
+	m_player.setPosition(40.0f, 24.8f, 45.0f);
+
+	//</TEST>
+
 }
 

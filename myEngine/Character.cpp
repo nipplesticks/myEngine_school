@@ -2,8 +2,10 @@
 
 Character::Character(std::string modelName, Model* model) : Entity()
 { 
-	model->settings(true,true);
-	model->initModel("models/" + modelName + ".obj"); 
+	/*
+	model->settings(true, true);
+	model->initModel("models/" + modelName + ".obj");
+	*/
 }
 
 Character::Character() : Entity()

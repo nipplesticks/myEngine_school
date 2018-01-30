@@ -20,7 +20,7 @@ float4 main(PS_IN input) : SV_Target
     angle = max(angle, 0);
 
 
-    float3 finalColor = amb * tx + (angle * tx);
+    float4 finalColor = amb * tx + (angle * tx);
 
-    return float4(finalColor, 1.0f);
+    return float4(finalColor);
 };
