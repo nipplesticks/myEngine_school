@@ -2,6 +2,7 @@
 #define RENDERING_HPP
 
 #include "Entity.hpp"
+#include "Character.h"
 #include <istream>
 
 #define CLIENT_WIDTH	1920.0f
@@ -85,6 +86,7 @@ private:
 	Entity m_Terrain;
 	Entity m_Terrain2;
 	Entity m_Cube;
+	Character m_player; 
 
 	std::vector<Model*> models;
 

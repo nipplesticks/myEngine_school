@@ -1,4 +1,5 @@
 #include "Rendering.hpp"
+#include "Character.h"
 
 App::App(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCmdShow)
 {
@@ -33,7 +34,7 @@ App::App(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCm
 
 	
 	m = new Model;
-	m->settings(false, true);
+	m->settings(false,true);
 	m->initModel("models/nymph1.obj");
 	models.push_back(m);
 	
@@ -43,9 +44,14 @@ App::App(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCm
 	//m->initTexture("HeightMap/Hidden_star_01.bmp", m_Device);
 	models.push_back(m); 
 
+	m = new Model();
+	m_player = Character("dog", m); 
+	models.push_back(m); 
+
 	m_Cube.loadModel(models[0]);
 	m_Statue.loadModel(models[1]);
-	m_Terrain2.loadModel(models[2]); 
+	m_Terrain2.loadModel(models[2]);
+	m_player.loadModel(models[3]); 
 
 	m_CrouchLock = false;
 	m_flying = true;
@@ -125,6 +131,17 @@ int App::init()
 		m_Terrain2.loadBuffers(m_Device); 
 		m_Terrain2.setScale(1,500,1);
 		m_Terrain2.setPosition(0.0f, 0.0f, 0.0f);
+
+		m_player.bindVertexShader(m_VertexShader);
+		m_player.bindGeometryShader(m_GeometryShader);
+		m_player.bindPixelShader(m_PixelShader);
+		m_player.setProjectionMatrix(m_projectionMatrix);
+		m_player.cameraMoved(m_viewMatrix);
+		m_player.loadBuffers(m_Device);
+		m_player.rotate(0.0f, 1.0f, 0.0f, 180); 
+		m_player.setScale(0.05f,0.05f,0.05f);
+		m_player.setPosition(40.0f, 24.8f, 45.0f);
+
 		//</TEST>
 
 		ShowWindow(m_wndHandle, m_nCmdShow);
@@ -324,8 +341,6 @@ bool App::CreateConstantBuffer()
 		//exit(-1);
 		return false;
 	}
-
-
 	return true;
 }
 
@@ -512,18 +527,18 @@ void App::Update(float dt)
 	m_Cube.cameraMoved(m_viewMatrix);
 	m_Statue.cameraMoved(m_viewMatrix);
 	m_Terrain2.cameraMoved(m_viewMatrix);
+	m_player.cameraMoved(m_viewMatrix); 
 	SetCursorPos(defaultX, defaultY);
 }
 
 void App::Render()
 {
 	clrScrn();
+	m_player.draw(m_DeviceContext); 
 	m_Statue.draw(m_DeviceContext);
-	
-	
-	
 	m_Terrain2.draw(m_DeviceContext); 
 	m_Cube.draw(m_DeviceContext);
+
 }
 
 bool App::CreateVertexShader()

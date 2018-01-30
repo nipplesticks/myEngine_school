@@ -203,6 +203,7 @@ void Model::initModel(std::string path)
 			m_nrOfVertices = static_cast<int>(indices.size());
 			m_vertices = new VERTEX[m_nrOfVertices];
 			int indexCounter = 0;
+
 			for (int i = 0; i < m_nrOfVertices; i++)
 			{
 				VERTEX v;

@@ -36,6 +36,7 @@ public:
 	void cameraMoved(DirectX::XMMATRIX view);
 
 	int getNrOfVertices() const;
+	Model* getModel() const; 
 	ID3D11Buffer* getVertexBuffer() const;
 
 	void draw(ID3D11DeviceContext*& deviceContext) const;
