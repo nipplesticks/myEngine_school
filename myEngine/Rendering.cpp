@@ -117,7 +117,7 @@ int App::init()
 		m_Statue.setProjectionMatrix(m_projectionMatrix);
 		m_Statue.cameraMoved(m_viewMatrix);
 		m_Statue.loadBuffers(m_Device);
-		m_Statue.setPosition(0.0f, 3.0f, 0.0f);
+		m_Statue.setPosition(40.0f, 8.5f, 40.0f);
 		m_Statue.setRotation(0.0f, 0.0f, 1.0f, 180.0f);
 
 		m_Terrain2.bindVertexShader(m_VertexShader);
@@ -126,7 +126,7 @@ int App::init()
 		m_Terrain2.setProjectionMatrix(m_projectionMatrix); 
 		m_Terrain2.cameraMoved(m_viewMatrix); 
 		m_Terrain2.loadBuffers(m_Device); 
-		m_Terrain2.setScale(1,50,1);
+		m_Terrain2.setScale(1,10,1);
 		m_Terrain2.setPosition(0.0f, 0.0f, 0.0f);
 
 		m_player.bindVertexShader(m_VertexShader);
@@ -365,7 +365,6 @@ void App::Update(float dt)
 	//m_Terrain2.rotate(1.0f, 0, 0, -25 * dt); 
 
 	m_Statue.rotate(0, 1, 0, 25 * dt);
-	m_player.rotate(0, 1, 0, 25 * dt); 
 	//m_Terrain2.scale(0, 50 * dt, 0);
 	//m_Terrain2.move(0, 30 * dt, 0);
 
@@ -469,29 +468,52 @@ void App::Update(float dt)
 			cam.LookAt.z -= speed * dir.z * dt;
 		}
 	}
-
-	if (GetAsyncKeyState(VK_LCONTROL))
+	if (!m_flying)
 	{
-		if (!m_CrouchLock)
+		if (GetAsyncKeyState(VK_LCONTROL))
 		{
-			m_CrouchLock = true;
-			cam.Position.x -= cam.Up.x * 2;
-			cam.Position.y -= cam.Up.y * 2;
-			cam.Position.z -= cam.Up.z * 2;
-			cam.LookAt.x -= cam.Up.x * 2;
-			cam.LookAt.y -= cam.Up.y * 2;
-			cam.LookAt.z -= cam.Up.z * 2;
+			if (!m_CrouchLock)
+			{
+				m_CrouchLock = true;
+				cam.Position.x -= cam.Up.x * 2;
+				cam.Position.y -= cam.Up.y * 2;
+				cam.Position.z -= cam.Up.z * 2;
+				cam.LookAt.x -= cam.Up.x * 2;
+				cam.LookAt.y -= cam.Up.y * 2;
+				cam.LookAt.z -= cam.Up.z * 2;
+			}
+		}
+		else if (m_CrouchLock)
+		{
+			m_CrouchLock = false;
+			cam.Position.x += cam.Up.x * 2;
+			cam.Position.y += cam.Up.y * 2;
+			cam.Position.z += cam.Up.z * 2;
+			cam.LookAt.x += cam.Up.x * 2;
+			cam.LookAt.y += cam.Up.y * 2;
+			cam.LookAt.z += cam.Up.z * 2;
 		}
 	}
-	else if (m_CrouchLock)
+	else
 	{
-		m_CrouchLock = false;
-		cam.Position.x += cam.Up.x * 2;
-		cam.Position.y += cam.Up.y * 2;
-		cam.Position.z += cam.Up.z * 2;
-		cam.LookAt.x += cam.Up.x * 2;
-		cam.LookAt.y += cam.Up.y * 2;
-		cam.LookAt.z += cam.Up.z * 2;
+		if (GetAsyncKeyState(VK_SPACE))
+		{
+			cam.Position.x += cam.Up.x * speed * dt;
+			cam.Position.y += cam.Up.y * speed* dt;
+			cam.Position.z += cam.Up.z * speed* dt;
+			cam.LookAt.x += cam.Up.x * speed* dt;
+			cam.LookAt.y += cam.Up.y * speed* dt;
+			cam.LookAt.z += cam.Up.z * speed* dt;
+		}
+		else if (GetAsyncKeyState(VK_LCONTROL))
+		{
+			cam.Position.x -= cam.Up.x * speed* dt;
+			cam.Position.y -= cam.Up.y * speed* dt;
+			cam.Position.z -= cam.Up.z * speed* dt;
+			cam.LookAt.x -= cam.Up.x * speed* dt;
+			cam.LookAt.y -= cam.Up.y * speed* dt;
+			cam.LookAt.z -= cam.Up.z * speed* dt;
+		}
 	}
 
 	POINT mousePos;

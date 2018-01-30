@@ -5,8 +5,8 @@
 #include "Character.h"
 #include <istream>
 
-#define CLIENT_WIDITH	1920.0f
-#define CLIENT_HEIGHT	1080.0f
+#define CLIENT_WIDITH	800.0f
+#define CLIENT_HEIGHT	600.0f
 #define FOV				45.0f
 
 class App
