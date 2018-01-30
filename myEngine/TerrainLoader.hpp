@@ -10,6 +10,11 @@ namespace TerrainLoader
 		int anti_sensitivity = 255; 
 		const int size = 100;
 
+		float blender[3][3]; 
+		std::vector<float> yValues; 
+		int counterX = 0; 
+		int counterY = 0; 
+
 		unsigned char heightMap[size][size];
 	    std::vector<VERTEX> vertexVector;
 		std::ifstream heightMapFile;
@@ -31,13 +36,25 @@ namespace TerrainLoader
 				}
 			}*/
 
-
+			for (int i = 0; i < size; i++)
+			{
+				for (int k = 0; k < size; k++)
+				{
+					if (i > 0 && k > 0 && i < (size - 1) && k < (size - 1))
+					{
+						heightMap[i][k] =
+							(heightMap[i - 1][k + 1] + heightMap[i][k + 1] + heightMap[i + 1][k + 1] +
+								heightMap[i - 1][k] + heightMap[i][k] + heightMap[i + 1][k] +
+								heightMap[i - 1][k - 1] + heightMap[i][k - 1] + heightMap[i + 1][k - 1]) / 9;
+					}
+				}
+			}
 			for (int i = 0; i < size - 1; i++)
 			{
 				for (int j = 0; j < size - 1; j++)
 				{
 					VERTEX v;
-
+					
 					v = VERTEX{float(j),(float(heightMap[j][i] - 128) / anti_sensitivity),float(i)};
 					vertexVector.push_back(v);
 					
