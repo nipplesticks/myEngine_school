@@ -23,6 +23,7 @@ public:
 	void setPosition(float x, float y, float z);
 	void move(DirectX::XMFLOAT3 position);
 	void move(float x, float y, float z);
+	DirectX::XMFLOAT3 getPosition() const;
 
 	void setScale(DirectX::XMFLOAT3 scale);
 	void setScale(float x, float y, float z);
@@ -52,7 +53,6 @@ private:
 	ID3D11VertexShader*		m_vertexShader;
 	ID3D11GeometryShader*	m_geometryShader;
 	ID3D11PixelShader*		m_pixelShader;
-
 
 
 	Model*					m_model;

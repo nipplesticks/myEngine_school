@@ -14,6 +14,8 @@ Model::Model()
 Model::~Model()
 {
 	delete[] m_vertices;
+	
+	if (m_texture != nullptr) m_texture->Release();
 }
 
 void Model::settings(bool texture, bool normals, bool clockwise)
@@ -225,8 +227,98 @@ void Model::initModel(std::string path)
 	}
 }
 
+void Model::initTexture(std::string path, ID3D11Device*& device)
+{
+	std::cout << "Importing " << path << std::endl;
+
+	unsigned char header[54];			// The header of the BMP image
+	unsigned int dataPos = 0;			// The actual position of the data in the BMP image
+	unsigned int width = 0;				// Width of the BMP image, duh
+	unsigned int height = 0;			// Height of the BMP image, duh
+	unsigned int imageSize = 0;			// width * height * 3 (RGB == 3)
+
+	unsigned char* data = nullptr;		// RGB data
+
+	FILE* img;
+
+	fopen_s(&img, path.c_str(), "rb");	//read bytes
+	
+	if (img &&
+		fread(header, 1, 54, img) == 54 &&
+		header[0] == 'B' &&
+		header[1] == 'M')
+	{
+		dataPos = *(int*)&(header[0x0A]);
+		imageSize = *(int*)&(header[0x22]);
+		width = *(int*)&(header[0x12]);
+		height = *(int*)&(header[0x16]);
+
+		// In case of bad BMP
+		if (imageSize == 0) imageSize = width * height * 3;
+		if (dataPos == 0) dataPos = 54;
+
+		data = new unsigned char[imageSize];
+		fread(data, 1, imageSize, img);
+		fclose(img);
+
+		D3D11_TEXTURE2D_DESC desc;
+		ZeroMemory(&desc, sizeof(desc));
+		desc.Width = width;
+		desc.Height = height;
+		desc.MipLevels = 1;
+		desc.ArraySize = 1;
+		desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+		desc.SampleDesc.Count = 1;
+		desc.SampleDesc.Quality = 0;
+		desc.Usage = D3D11_USAGE_DEFAULT;
+		desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+		desc.CPUAccessFlags = 0;
+		desc.MiscFlags = 0;
+
+		D3D11_SUBRESOURCE_DATA initData;
+		initData.pSysMem = data;
+		initData.SysMemPitch = static_cast<UINT>(width * 3 * sizeof(char));
+		initData.SysMemSlicePitch = static_cast<UINT>(imageSize * 3);
+
+		ID3D11Texture2D* tex = nullptr;
+		HRESULT hr = device->CreateTexture2D(&desc, &initData, &tex);
+		if (SUCCEEDED(hr) && tex != 0)
+		{
+			D3D11_SHADER_RESOURCE_VIEW_DESC SRVDesc;
+			memset(&SRVDesc, 0, sizeof(SRVDesc));
+			SRVDesc.Format = desc.Format;
+			SRVDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+			SRVDesc.Texture2D.MipLevels = 1;
+			SRVDesc.Texture2D.MostDetailedMip = 0;
+			hr = device->CreateShaderResourceView(tex, &SRVDesc, &m_texture);
+
+			if (FAILED(hr))
+			{
+				std::cout << "Failed to create texture\n";
+			}
+			tex->Release();
+		}
+		else
+		{
+			std::cout << "failed to create texture\n";
+		}
+
+	}
+	else
+	{
+		std::cout << "Error reading file\n";
+	}
+
+}
+
+ID3D11ShaderResourceView * Model::getTextureResourceView() const
+{
+	return m_texture;
+}
+
 void Model::initExistingModel(std::string path)
 {
+	std::cout << "Importing " << path << std::endl;
 	std::vector<VERTEX> vertexVector = TerrainLoader::terrainLoader(path);
 	m_nrOfVertices = static_cast<int>(vertexVector.size());
 	m_vertices = new VERTEX[m_nrOfVertices];
