@@ -61,5 +61,8 @@
     <FxCompile Include="PixelShaderJustBlue.hlsl">
       <Filter>Resource Files</Filter>
     </FxCompile>
+    <FxCompile Include="PixelShaderDrawTexture.hlsl">
+      <Filter>Resource Files</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>

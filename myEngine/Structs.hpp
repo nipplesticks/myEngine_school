@@ -53,7 +53,8 @@ struct I_INPUT
 struct CAMERA
 {
 	DirectX::XMFLOAT3 Position;
-	DirectX::XMFLOAT3 LookAt;
+	DirectX::XMFLOAT3 LookAtDir;
+	DirectX::XMFLOAT3 LookAtPos;
 	DirectX::XMFLOAT3 Up;
 };
 

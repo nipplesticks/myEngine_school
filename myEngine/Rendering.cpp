@@ -6,19 +6,20 @@ App::App(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCm
 	m_hPrevInstance = hPrevInstance;
 	m_lpCmdLine = lpCmdLine;
 	m_nCmdShow = nCmdShow;
-	SetCursorPos(static_cast<int>(CLIENT_WIDITH) / 2, static_cast<int>(CLIENT_HEIGHT) / 2);
+	SetCursorPos(static_cast<int>(CLIENT_WIDTH) / 2, static_cast<int>(CLIENT_HEIGHT) / 2);
 	cam = CAMERA{
 		DirectX::XMFLOAT3(0.0f, 3.0f, -10),	//pos
-		DirectX::XMFLOAT3(0.0f, 3.0f, 0.0f),	//look at
+		DirectX::XMFLOAT3(0.0f, 0.0f, 1.0f), // look at dir
+		DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f), //look at pos
 		DirectX::XMFLOAT3(0.0f, 1.0f, 0.0f)		//up
 	};
 	m_viewMatrix = DirectX::XMMatrixLookAtLH(
 		DirectX::XMLoadFloat3(&cam.Position),
-		DirectX::XMLoadFloat3(&cam.LookAt),
+		DirectX::XMLoadFloat3(&cam.LookAtDir),
 		DirectX::XMLoadFloat3(&cam.Up)
 	);
 
-	m_projectionMatrix = DirectX::XMMatrixPerspectiveFovLH(DirectX::XMConvertToRadians(FOV), CLIENT_WIDITH / CLIENT_HEIGHT, 0.1f, 20000.0f);
+	m_projectionMatrix = DirectX::XMMatrixPerspectiveFovLH(DirectX::XMConvertToRadians(FOV), CLIENT_WIDTH / CLIENT_HEIGHT, 0.1f, 20000.0f);
 
 
 	//<TEST>
@@ -30,14 +31,16 @@ App::App(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCm
 	m->initModel("models/Cube.obj");
 	models.push_back(m);
 
+	
 	m = new Model;
 	m->settings(false, true);
 	m->initModel("models/nymph1.obj");
 	models.push_back(m);
-
+	
 	m = new Model(); 
 	m->settings(false, false); 
-	m->initExistingModel("HeightMap/test5.data"); 
+	m->initExistingModel("HeightMap/Hidden_star_01.data"); 
+	//m->initTexture("HeightMap/Hidden_star_01.bmp", m_Device);
 	models.push_back(m); 
 
 	m_Cube.loadModel(models[0]);
@@ -101,17 +104,17 @@ int App::init()
 		m_Cube.setProjectionMatrix(m_projectionMatrix);
 		m_Cube.cameraMoved(m_viewMatrix);
 		m_Cube.loadBuffers(m_Device);
-		m_Cube.setPosition(-500.0f, -250.0f, 0.0f);
+		m_Cube.setPosition(-5000, -5000.0f, 0);
 		m_Cube.setRotation(0.0f, 1.0f, 0.0f, 45.0f);
-		m_Cube.setScale(1000.0f);
+		m_Cube.setScale(10000.0f);
 
 		m_Statue.bindVertexShader(m_VertexShader);
 		m_Statue.bindGeometryShader(m_GeometryShader);
-		m_Statue.bindPixelShader(m_PixelShaderDrawNormal);
+		m_Statue.bindPixelShader(m_PixelShader);
 		m_Statue.setProjectionMatrix(m_projectionMatrix);
 		m_Statue.cameraMoved(m_viewMatrix);
 		m_Statue.loadBuffers(m_Device);
-		m_Statue.setPosition(40.0f, 8.5f, 40.0f);
+		m_Statue.setPosition(494.247f, 230.87f, 546.431f);
 		m_Statue.setRotation(0.0f, 0.0f, 1.0f, 180.0f);
 
 		m_Terrain2.bindVertexShader(m_VertexShader);
@@ -120,7 +123,7 @@ int App::init()
 		m_Terrain2.setProjectionMatrix(m_projectionMatrix); 
 		m_Terrain2.cameraMoved(m_viewMatrix); 
 		m_Terrain2.loadBuffers(m_Device); 
-		m_Terrain2.setScale(1,10,1);
+		m_Terrain2.setScale(1,500,1);
 		m_Terrain2.setPosition(0.0f, 0.0f, 0.0f);
 		//</TEST>
 
@@ -183,7 +186,7 @@ bool App::InitWindow()
 		return false;
 	}
 
-	RECT rc = { 0, 0, static_cast<long>(CLIENT_WIDITH), static_cast<long>(CLIENT_HEIGHT) };
+	RECT rc = { 0, 0, static_cast<long>(CLIENT_WIDTH), static_cast<long>(CLIENT_HEIGHT) };
 	AdjustWindowRect(&rc, WS_OVERLAPPEDWINDOW, FALSE);
 
 	HWND handle = CreateWindow(
@@ -251,7 +254,7 @@ HRESULT App::CreateDirect3DContext()
 bool App::CreateDepthBuffer()
 {
 	D3D11_TEXTURE2D_DESC dsd;
-	dsd.Width = static_cast<UINT>(CLIENT_WIDITH);
+	dsd.Width = static_cast<UINT>(CLIENT_WIDTH);
 	dsd.Height = static_cast<UINT>(CLIENT_HEIGHT);
 	dsd.MipLevels = 1;
 	dsd.ArraySize = 1;
@@ -284,7 +287,7 @@ bool App::CreateDepthBuffer()
 void App::SetViewport()
 {
 	D3D11_VIEWPORT vp;
-	vp.Width = CLIENT_WIDITH;
+	vp.Width = CLIENT_WIDTH;
 	vp.Height = CLIENT_HEIGHT;
 	vp.MinDepth = 0.0f;
 	vp.MaxDepth = 1.0f;
@@ -342,42 +345,39 @@ void App::initTerrain(Model & terrain)
 
 void App::Update(float dt)
 {
-	/*
-	if (GetAsyncKeyState(int('D')))
-		m_Male.rotate(0, 1, 0, -100 * dt);
-	*/
+	if (GetAsyncKeyState(VK_LEFT))
+		m_Statue.move(-5 * dt, 0, 0);
+	if (GetAsyncKeyState(VK_RIGHT))
+		m_Statue.move(5 * dt, 0, 0);
+	if (GetAsyncKeyState(VK_UP))
+		m_Statue.move(0, 0, 5*dt);
+	if (GetAsyncKeyState(VK_DOWN))
+		m_Statue.move(0, 0, -5 * dt);
+	if (GetAsyncKeyState(VK_DELETE))
+		m_Statue.move(0, -5 * dt, 0);
+	if (GetAsyncKeyState(VK_END))
+		m_Statue.move(0, 5 * dt, 0);
 
-	//m_Terrain2.rotate(1.0f, 0, 0, -25 * dt); 
-
-	//m_Statue.rotate(0, 1, 0, 25 * dt);
-	//m_Terrain2.scale(0, 50 * dt, 0);
-	//m_Terrain2.move(0, 30 * dt, 0);
-
-	int defaultX = static_cast<int>(CLIENT_WIDITH) / 2;
+	int defaultX = static_cast<int>(CLIENT_WIDTH) / 2;
 	int defaultY = static_cast<int>(CLIENT_HEIGHT) / 2;	
-	float speed = 10.0f;
+	float speed = 100.0f;
 	if (m_CrouchLock)
 		speed *= 0.4f;
 	float sensitivity = 12.0f;
-
 	if (GetAsyncKeyState(int('A')))
 	{
-		DirectX::XMVECTOR v1 = DirectX::XMVectorSubtract(DirectX::XMLoadFloat3(&cam.LookAt), DirectX::XMLoadFloat3(&cam.Position));
+		DirectX::XMVECTOR v1 = DirectX::XMLoadFloat3(&cam.LookAtDir);
 		DirectX::XMVECTOR v2 = DirectX::XMLoadFloat3(&cam.Up);
 		DirectX::XMVECTOR v3 = DirectX::XMVector3Normalize(DirectX::XMVector3Cross(v2, v1));
 		DirectX::XMFLOAT3 dir;
 		DirectX::XMStoreFloat3(&dir, v3);
-		std::cout << dir.x << dir.y << dir.z << std::endl;
 		cam.Position.x -= speed * dir.x * dt;
 		cam.Position.y -= speed * dir.y * dt;
 		cam.Position.z -= speed * dir.z * dt;
-		cam.LookAt.x -= speed * dir.x * dt;
-		cam.LookAt.y -= speed * dir.y * dt;
-		cam.LookAt.z -= speed * dir.z * dt;
 	}
 	if (GetAsyncKeyState(int('D')))
 	{
-		DirectX::XMVECTOR v1 = DirectX::XMVectorSubtract(DirectX::XMLoadFloat3(&cam.LookAt), DirectX::XMLoadFloat3(&cam.Position));
+		DirectX::XMVECTOR v1 = DirectX::XMLoadFloat3(&cam.LookAtDir);
 		DirectX::XMVECTOR v2 = DirectX::XMLoadFloat3(&cam.Up);
 		DirectX::XMVECTOR v3 = DirectX::XMVector3Normalize(DirectX::XMVector3Cross(v2, v1));
 		DirectX::XMFLOAT3 dir;
@@ -385,13 +385,10 @@ void App::Update(float dt)
 		cam.Position.x += speed * dir.x * dt;
 		cam.Position.y += speed * dir.y * dt;
 		cam.Position.z += speed * dir.z * dt;
-		cam.LookAt.x += speed * dir.x * dt;
-		cam.LookAt.y += speed * dir.y * dt;
-		cam.LookAt.z += speed * dir.z * dt;
 	}
 	if (GetAsyncKeyState(int('W')))
 	{
-		DirectX::XMVECTOR lookAt = DirectX::XMVectorSubtract(DirectX::XMLoadFloat3(&cam.LookAt), DirectX::XMLoadFloat3(&cam.Position));
+		DirectX::XMVECTOR lookAt = DirectX::XMLoadFloat3(&cam.LookAtDir);
 		if (!m_flying)
 		{
 			DirectX::XMVECTOR up = DirectX::XMLoadFloat3(&cam.Up);
@@ -399,13 +396,9 @@ void App::Update(float dt)
 			DirectX::XMVECTOR front = DirectX::XMVector3Normalize(DirectX::XMVector3Cross(up, right));
 			DirectX::XMFLOAT3 dir;
 			DirectX::XMStoreFloat3(&dir, front);
-			std::cout << dir.x << dir.y << dir.z << std::endl;
 			cam.Position.x += speed * dir.x * dt;
 			cam.Position.y += speed * dir.y * dt;
 			cam.Position.z += speed * dir.z * dt;
-			cam.LookAt.x += speed * dir.x * dt;
-			cam.LookAt.y += speed * dir.y * dt;
-			cam.LookAt.z += speed * dir.z * dt;
 		}
 		else
 		{
@@ -416,14 +409,11 @@ void App::Update(float dt)
 			cam.Position.x += speed * dir.x * dt;
 			cam.Position.y += speed * dir.y * dt;
 			cam.Position.z += speed * dir.z * dt;
-			cam.LookAt.x += speed * dir.x * dt;
-			cam.LookAt.y += speed * dir.y * dt;
-			cam.LookAt.z += speed * dir.z * dt;
 		}
 	}
 	if (GetAsyncKeyState(int('S')))
 	{
-		DirectX::XMVECTOR lookAt = DirectX::XMVectorSubtract(DirectX::XMLoadFloat3(&cam.LookAt), DirectX::XMLoadFloat3(&cam.Position));
+		DirectX::XMVECTOR lookAt = DirectX::XMLoadFloat3(&cam.LookAtDir);
 		if (!m_flying)
 		{
 			DirectX::XMVECTOR up = DirectX::XMLoadFloat3(&cam.Up);
@@ -431,13 +421,9 @@ void App::Update(float dt)
 			DirectX::XMVECTOR front = DirectX::XMVector3Normalize(DirectX::XMVector3Cross(up, right));
 			DirectX::XMFLOAT3 dir;
 			DirectX::XMStoreFloat3(&dir, front);
-			std::cout << dir.x << dir.y << dir.z << std::endl;
 			cam.Position.x -= speed * dir.x * dt;
 			cam.Position.y -= speed * dir.y * dt;
 			cam.Position.z -= speed * dir.z * dt;
-			cam.LookAt.x -= speed * dir.x * dt;
-			cam.LookAt.y -= speed * dir.y * dt;
-			cam.LookAt.z -= speed * dir.z * dt;
 		}
 		else
 		{
@@ -448,9 +434,6 @@ void App::Update(float dt)
 			cam.Position.x -= speed * dir.x * dt;
 			cam.Position.y -= speed * dir.y * dt;
 			cam.Position.z -= speed * dir.z * dt;
-			cam.LookAt.x -= speed * dir.x * dt;
-			cam.LookAt.y -= speed * dir.y * dt;
-			cam.LookAt.z -= speed * dir.z * dt;
 		}
 	}
 	if (!m_flying)
@@ -463,9 +446,6 @@ void App::Update(float dt)
 				cam.Position.x -= cam.Up.x * 2;
 				cam.Position.y -= cam.Up.y * 2;
 				cam.Position.z -= cam.Up.z * 2;
-				cam.LookAt.x -= cam.Up.x * 2;
-				cam.LookAt.y -= cam.Up.y * 2;
-				cam.LookAt.z -= cam.Up.z * 2;
 			}
 		}
 		else if (m_CrouchLock)
@@ -474,9 +454,6 @@ void App::Update(float dt)
 			cam.Position.x += cam.Up.x * 2;
 			cam.Position.y += cam.Up.y * 2;
 			cam.Position.z += cam.Up.z * 2;
-			cam.LookAt.x += cam.Up.x * 2;
-			cam.LookAt.y += cam.Up.y * 2;
-			cam.LookAt.z += cam.Up.z * 2;
 		}
 	}
 	else
@@ -486,21 +463,14 @@ void App::Update(float dt)
 			cam.Position.x += cam.Up.x * speed * dt;
 			cam.Position.y += cam.Up.y * speed* dt;
 			cam.Position.z += cam.Up.z * speed* dt;
-			cam.LookAt.x += cam.Up.x * speed* dt;
-			cam.LookAt.y += cam.Up.y * speed* dt;
-			cam.LookAt.z += cam.Up.z * speed* dt;
 		}
 		else if (GetAsyncKeyState(VK_LCONTROL))
 		{
 			cam.Position.x -= cam.Up.x * speed* dt;
 			cam.Position.y -= cam.Up.y * speed* dt;
 			cam.Position.z -= cam.Up.z * speed* dt;
-			cam.LookAt.x -= cam.Up.x * speed* dt;
-			cam.LookAt.y -= cam.Up.y * speed* dt;
-			cam.LookAt.z -= cam.Up.z * speed* dt;
 		}
 	}
-
 	POINT mousePos;
 	GetCursorPos(&mousePos);
 	if (mousePos.x != defaultX || mousePos.y != defaultY)
@@ -508,24 +478,35 @@ void App::Update(float dt)
 		int deltaX = mousePos.x - defaultX;
 		int deltaY = mousePos.y - defaultY;
 
-		DirectX::XMVECTOR v1 = DirectX::XMVectorSubtract(DirectX::XMLoadFloat3(&cam.LookAt), DirectX::XMLoadFloat3(&cam.Position));
+		
+		DirectX::XMVECTOR v1 = DirectX::XMLoadFloat3(&cam.LookAtDir);
 		DirectX::XMVECTOR v2 = DirectX::XMLoadFloat3(&cam.Up);
 		DirectX::XMVECTOR v3 = DirectX::XMVector3Normalize(DirectX::XMVector3Cross(v2, v1));
-		DirectX::XMFLOAT3 dir;
-		DirectX::XMStoreFloat3(&dir, v3);
-
-		cam.LookAt.x += sensitivity * deltaX * dir.x * dt;
-		cam.LookAt.y += sensitivity * deltaX * dir.y * dt;
-		cam.LookAt.z += sensitivity * deltaX * dir.z * dt;
-
-		cam.LookAt.x -= sensitivity * deltaY * cam.Up.x * dt;
-		cam.LookAt.y -= sensitivity * deltaY * cam.Up.y * dt;
-		cam.LookAt.z -= sensitivity * deltaY * cam.Up.z * dt;
+		DirectX::XMFLOAT3 camXAxel;
+		DirectX::XMStoreFloat3(&camXAxel, v3);
+		DirectX::XMVECTOR newLookAt = DirectX::XMLoadFloat3(&cam.LookAtDir);
+		float angleBeforeRot = DirectX::XMVectorGetX(DirectX::XMVector3Dot(DirectX::XMVector3Normalize(newLookAt), v2));
+		newLookAt = DirectX::XMVector3Transform(newLookAt, DirectX::XMMatrixRotationNormal(v3, DirectX::XMConvertToRadians(sensitivity * deltaY * dt)));
+		float angleAfterRot = DirectX::XMVectorGetX(DirectX::XMVector3Dot(DirectX::XMVector3Normalize(newLookAt), v2));
+		
+		float angle = angleAfterRot - angleBeforeRot;
+		printf((std::to_string(angle) + "\n").c_str());
+		if (abs(angle) < 1.0f)
+		{
+			DirectX::XMStoreFloat3(&cam.LookAtDir, newLookAt);
+		}
+		else
+		{
+			newLookAt = DirectX::XMLoadFloat3(&cam.LookAtDir);
+		}
+		newLookAt = DirectX::XMVector3Transform(newLookAt, DirectX::XMMatrixRotationNormal(v2, DirectX::XMConvertToRadians(sensitivity * deltaX * dt)));
+		newLookAt = DirectX::XMVector3Normalize(newLookAt);
+		DirectX::XMStoreFloat3(&cam.LookAtDir, newLookAt);
 	}
 
 	m_viewMatrix = DirectX::XMMatrixLookAtLH(
 		DirectX::XMLoadFloat3(&cam.Position),
-		DirectX::XMLoadFloat3(&cam.LookAt),
+		DirectX::XMVectorAdd(DirectX::XMLoadFloat3(&cam.LookAtDir), DirectX::XMLoadFloat3(&cam.Position)),
 		DirectX::XMLoadFloat3(&cam.Up)
 	);
 	m_Cube.cameraMoved(m_viewMatrix);
@@ -537,10 +518,12 @@ void App::Update(float dt)
 void App::Render()
 {
 	clrScrn();
-	m_Cube.draw(m_DeviceContext);
 	m_Statue.draw(m_DeviceContext);
+	
+	
+	
 	m_Terrain2.draw(m_DeviceContext); 
-	//m_Terrain.draw(m_DeviceContext);
+	m_Cube.draw(m_DeviceContext);
 }
 
 bool App::CreateVertexShader()
@@ -655,6 +638,7 @@ bool App::CreatePixelShader()
 
 	bool f = initDrawNormal();
 	f = initJustBlue();
+	f = initDrawTexture();
 
 	return f;
 }
@@ -746,6 +730,41 @@ bool App::initJustBlue()
 		return false;
 	}
 	if (FAILED(m_Device->CreatePixelShader(pPS->GetBufferPointer(), pPS->GetBufferSize(), nullptr, &m_PixelShaderJustBlue)))
+	{
+		pPS->Release();
+		return false;
+	}
+
+	pPS->Release();
+
+	return true;
+}
+
+bool App::initDrawTexture()
+{
+	//create pixel shader
+	ID3DBlob* pPS = nullptr;
+	ID3DBlob* error = nullptr;
+	HRESULT hr = D3DCompileFromFile(
+		L"PixelShaderDrawTexture.hlsl", // filename
+		nullptr,			// optional macros
+		nullptr,			// optional include files
+		"main",				// entry point
+		"ps_5_0",			// shader model (target)
+		0,					// shader compile options
+		0,					// effect compile options
+		&pPS,				// double pointer to ID3DBlob		
+		&error				// pointer for Error Blob messages.
+							// how to use the Error blob, see here
+							// https://msdn.microsoft.com/en-us/library/windows/desktop/hh968107(v=vs.85).aspx
+	);
+	if (FAILED(hr))
+	{
+		OutputDebugString((char*)error->GetBufferPointer());
+		pPS->Release();
+		return false;
+	}
+	if (FAILED(m_Device->CreatePixelShader(pPS->GetBufferPointer(), pPS->GetBufferSize(), nullptr, &m_PixelShaderTexture)))
 	{
 		pPS->Release();
 		return false;

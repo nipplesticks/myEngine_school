@@ -14,6 +14,8 @@ public:
 
 	void settings(bool texture, bool normals, bool clockwise = true);
 	void initModel(std::string path);
+	void initTexture(std::string path, ID3D11Device*& device);
+	ID3D11ShaderResourceView* getTextureResourceView() const;
 
 	void initExistingModel(std::string path); 
 
@@ -23,6 +25,7 @@ public:
 
 private:
 	VERTEX* m_vertices;
+	ID3D11ShaderResourceView* m_texture;
 	int m_nrOfVertices;
 	std::string m_name;
 	bool m_useTexture;

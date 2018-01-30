@@ -8,7 +8,7 @@ namespace TerrainLoader
 		//A high anti-sensitivity value means that the colors won't affect the height-values 
 		//as much as a low anti-sensitvity value would. 
 		int anti_sensitivity = 255; 
-		const int size = 100;
+		const int size = 1000;
 
 		unsigned char heightMap[size][size];
 	    std::vector<VERTEX> vertexVector;
@@ -39,21 +39,33 @@ namespace TerrainLoader
 					VERTEX v;
 
 					v = VERTEX{float(j),(float(heightMap[j][i] - 128) / anti_sensitivity),float(i)};
+					v.u = j;
+					v.v = i;
 					vertexVector.push_back(v);
 					
 					v = VERTEX{float(j),(float(heightMap[j][i + 1] - 128) / anti_sensitivity),float(i + 1)};
+					v.u = j;
+					v.v = i + 1;
 					vertexVector.push_back(v);
 
 					v = VERTEX{float(j + 1),(float(heightMap[j + 1][i] - 128) / anti_sensitivity),float(i)};
+					v.u = j + 1;
+					v.v = i;
 					vertexVector.push_back(v);
 
 					v = VERTEX{float(j),(float(heightMap[j][i + 1] - 128) / anti_sensitivity),float(i + 1)};
+					v.u = j;
+					v.v = i + 1;
 					vertexVector.push_back(v);
 
 					v = VERTEX{float(j + 1),(float(heightMap[j + 1][i + 1] - 128) / anti_sensitivity),float(i + 1)};
+					v.u = j + 1;
+					v.v = i + 1;
 					vertexVector.push_back(v);
 
 					v = VERTEX{float(j + 1),(float(heightMap[j + 1][i] - 128) / anti_sensitivity),float(i)};
+					v.u = j + 1;
+					v.v = i;
 					vertexVector.push_back(v);
 				}
 			}

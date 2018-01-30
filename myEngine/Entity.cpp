@@ -114,6 +114,11 @@ void Entity::move(float x, float y, float z)
 	move(pos);
 }
 
+DirectX::XMFLOAT3 Entity::getPosition() const
+{
+	return m_pos;
+}
+
 void Entity::setScale(DirectX::XMFLOAT3 scale)
 {
 	m_scale = scale;
@@ -180,7 +185,9 @@ void Entity::draw(ID3D11DeviceContext *& deviceContext) const
 	UINT32 vertexSize = sizeof(float) * 5;
 	UINT offset = 0;
 	deviceContext->IASetVertexBuffers(0, 1, &m_vertexBuffer, &vertexSize, &offset);
-	///m_DeviceContext->PSSetShaderResources(0, 1, &m_BthTextureView);
+
+	ID3D11ShaderResourceView* texture = m_model->getTextureResourceView();
+	deviceContext->PSSetShaderResources(0, 1, &texture);
 	
 	D3D11_MAPPED_SUBRESOURCE dataPtr;
 	deviceContext->Map(m_constantBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &dataPtr);

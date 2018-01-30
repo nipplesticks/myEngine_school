@@ -4,8 +4,8 @@
 #include "Entity.hpp"
 #include <istream>
 
-#define CLIENT_WIDITH	800.0f
-#define CLIENT_HEIGHT	600.0f
+#define CLIENT_WIDTH	1920.0f
+#define CLIENT_HEIGHT	1080.0f
 #define FOV				45.0f
 
 class App
@@ -51,6 +51,7 @@ private:
 
 	bool initDrawNormal();
 	bool initJustBlue();
+	bool initDrawTexture();
 private:
 	HINSTANCE	m_hInstance;
 	HINSTANCE	m_hPrevInstance;
@@ -71,6 +72,7 @@ private:
 	ID3D11PixelShader*		m_PixelShader;
 	ID3D11PixelShader*		m_PixelShaderDrawNormal;
 	ID3D11PixelShader*		m_PixelShaderJustBlue;
+	ID3D11PixelShader*		m_PixelShaderTexture;
 
 	ID3D11Buffer*			m_ConstantBuffer;
 
