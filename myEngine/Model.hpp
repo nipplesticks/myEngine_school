@@ -13,11 +13,14 @@ public:
 	~Model();
 
 	void settings(bool texture, bool normals, bool clockwise = true);
-	void initModel(std::string path);
-	void initTexture(wchar_t* path, ID3D11Device*& device);
+	void initModel(std::string path, std::string name);
+	void initTexture(wchar_t* path, ID3D11Device*& device, int textureSetting = 0);
 	ID3D11ShaderResourceView* getTextureResourceView() const;
+	ID3D11SamplerState* getSampleState() const;
+	int getTextureSetting() const;
+	void initTerrainViaHeightMap(std::string path, std::string name); 
+	bool isTerrain() const;
 
-	void initExistingModel(std::string path); 
 
 	std::string getName() const;
 	VERTEX* getMesh() const;
@@ -26,6 +29,9 @@ public:
 private:
 	VERTEX* m_vertices;
 	ID3D11ShaderResourceView* m_texture;
+	ID3D11SamplerState* m_sampleState;
+	int m_textureSetting;
+
 	int m_nrOfVertices;
 	std::string m_name;
 	bool m_useTexture;

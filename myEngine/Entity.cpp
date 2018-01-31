@@ -145,7 +145,7 @@ void Entity::setScale(float s)
 
 void Entity::scale(DirectX::XMFLOAT3 scale)
 {
-	m_scale = add(m_scale, scale);
+	m_scale = multiply(m_scale, scale);
 	if (m_scale.x < 0)
 		m_scale.x = 0;
 	if (m_scale.y < 0)
@@ -187,8 +187,16 @@ void Entity::draw(ID3D11DeviceContext *& deviceContext) const
 	deviceContext->IASetVertexBuffers(0, 1, &m_vertexBuffer, &vertexSize, &offset);
 
 	ID3D11ShaderResourceView* texture = m_model->getTextureResourceView();
+	if (m_model->getTextureSetting() == 0)
+	{
+		ID3D11SamplerState* sampleState = m_model->getSampleState();
+		deviceContext->PSSetSamplers(0, 1, &sampleState);
+	}
+
 	deviceContext->PSSetShaderResources(0, 1, &texture);
+
 	
+
 	D3D11_MAPPED_SUBRESOURCE dataPtr;
 	deviceContext->Map(m_constantBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &dataPtr);
 
@@ -201,6 +209,7 @@ void Entity::draw(ID3D11DeviceContext *& deviceContext) const
 	deviceContext->VSSetConstantBuffers(0, 1, &m_constantBuffer);
 	deviceContext->GSSetConstantBuffers(0, 1, &m_constantBuffer);
 	deviceContext->PSSetConstantBuffers(0, 1, &m_constantBuffer);
+	
 
 	deviceContext->Draw(m_model->getNrOfVertices(), 0);
 }
@@ -211,6 +220,15 @@ XMFLOAT3 Entity::add(XMFLOAT3 tar, XMFLOAT3 adder) const
 	result.x = tar.x + adder.x;
 	result.y = tar.y + adder.y;
 	result.z = tar.z + adder.z;
+	return result;
+}
+
+DirectX::XMFLOAT3 Entity::multiply(DirectX::XMFLOAT3 tar, DirectX::XMFLOAT3 adder) const
+{
+	XMFLOAT3 result;
+	result.x = tar.x * adder.x;
+	result.y = tar.y * adder.y;
+	result.z = tar.z * adder.z;
 	return result;
 }
 

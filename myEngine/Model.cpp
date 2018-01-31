@@ -2,7 +2,7 @@
 #include "TerrainLoader.hpp"
 #include <iostream>
 
-#include <DDSTextureLoader.h>
+#include "DDSTextureLoader.h"
 
 Model::Model()
 {
@@ -11,6 +11,10 @@ Model::Model()
 	m_name = "";
 	m_useTexture = false;
 	m_useNormals = false;
+	m_texture = nullptr;
+	m_sampleState = nullptr;
+	m_textureSetting = -1;
+	m_terrainStatus = false;
 }
 
 Model::~Model()
@@ -18,6 +22,7 @@ Model::~Model()
 	delete[] m_vertices;
 	
 	if (m_texture != nullptr) m_texture->Release();
+	if (m_sampleState != nullptr) m_sampleState->Release();
 }
 
 void Model::settings(bool texture, bool normals, bool clockwise)
@@ -27,8 +32,10 @@ void Model::settings(bool texture, bool normals, bool clockwise)
 	m_clockwise = clockwise;
 }
 
-void Model::initModel(std::string path)
+void Model::initModel(std::string path, std::string name)
 {
+	m_name = name;
+
 	if (!m_terrainStatus)
 	{
 		std::ifstream mod;
@@ -122,7 +129,7 @@ void Model::initModel(std::string path)
 						{
 							isQuad = true;
 						}
-						
+
 						if (isQuad)
 						{
 							F_IMPORT f;
@@ -209,17 +216,19 @@ void Model::initModel(std::string path)
 			for (int i = 0; i < m_nrOfVertices; i++)
 			{
 				VERTEX v;
-				int currentIndex = indices[indexCounter++].vIndex - 1;
+				int currentVIndex = indices[indexCounter].vIndex - 1;
 
-				v.x = vertices[currentIndex].x;
-				v.y = vertices[currentIndex].y;
-				v.z = vertices[currentIndex].z;
+				v.x = vertices[currentVIndex].x;
+				v.y = vertices[currentVIndex].y;
+				v.z = vertices[currentVIndex].z;
 				if (texCoords.size() > 0)
 				{
-					v.u = texCoords[currentIndex].u;
-					v.v = texCoords[currentIndex].v;
+					int currentTXIndex = indices[indexCounter].vtIndex - 1;
+					v.u = texCoords[currentTXIndex].u;
+					v.v = texCoords[currentTXIndex].v;
 				}
 				m_vertices[i] = v;
+				indexCounter++;
 			}
 		}
 		else
@@ -229,11 +238,44 @@ void Model::initModel(std::string path)
 	}
 }
 
-void Model::initTexture(wchar_t* path, ID3D11Device*& device)
+void Model::initTexture(wchar_t* path, ID3D11Device*& device, int textureSetting)
 {
-	std::cout << "Importing " << path << std::endl;
+	std::wstring ws(path);
+	std::string str(ws.begin(), ws.end());
+	std::cout << "Importing " << str << std::endl;
 
-	//HRESULT hr = DirectX::CreateDDSTextureFromFile(device, path, nullptr, &m_texture);
+	ID3D11Resource* pTexture = nullptr;
+
+	HRESULT hr = DirectX::CreateDDSTextureFromFile(device, path, &pTexture, &m_texture);
+	if (FAILED(hr))
+	{
+		std::cout << "FAILED" << std::endl;
+	}
+	else
+	{
+		m_textureSetting = textureSetting;
+		if (textureSetting == 0)
+		{
+			D3D11_SAMPLER_DESC samplerDesc;
+			samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+			samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+			samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+			samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+			samplerDesc.MipLODBias = 0.0f;
+			samplerDesc.MaxAnisotropy = 1;
+			samplerDesc.ComparisonFunc = D3D11_COMPARISON_ALWAYS;
+			samplerDesc.BorderColor[0] = 0;
+			samplerDesc.BorderColor[1] = 0;
+			samplerDesc.BorderColor[2] = 0;
+			samplerDesc.BorderColor[3] = 0;
+			samplerDesc.MinLOD = 0;
+			samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
+			hr = device->CreateSamplerState(&samplerDesc, &m_sampleState);
+		}
+	}
+
+
+	pTexture->Release();
 }
 
 ID3D11ShaderResourceView * Model::getTextureResourceView() const
@@ -241,9 +283,22 @@ ID3D11ShaderResourceView * Model::getTextureResourceView() const
 	return m_texture;
 }
 
-void Model::initExistingModel(std::string path)
+ID3D11SamplerState * Model::getSampleState() const
 {
+	return m_sampleState;
+}
+
+int Model::getTextureSetting() const
+{
+	return m_textureSetting;
+}
+
+void Model::initTerrainViaHeightMap(std::string path, std::string name)
+{
+	m_name = name;
+	m_terrainStatus = true;
 	std::cout << "Importing " << path << std::endl;
+	//std::vector<VERTEX> vertexVector = TerrainLoader::terrainLoader(path);
 	std::vector<VERTEX> vertexVector = TerrainLoader::terrainLoader(path);
 	m_nrOfVertices = static_cast<int>(vertexVector.size());
 	m_vertices = new VERTEX[m_nrOfVertices];
@@ -252,6 +307,11 @@ void Model::initExistingModel(std::string path)
 	{
 		m_vertices[i] = vertexVector[i];
 	}
+}
+
+bool Model::isTerrain() const
+{
+	return m_terrainStatus;
 }
 
 std::string Model::getName() const

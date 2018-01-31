@@ -3,6 +3,7 @@
 
 #include "Entity.hpp"
 #include "Character.h"
+#include "ModelHandler.hpp"
 #include <istream>
 
 #define CLIENT_WIDTH	1920.0f
@@ -86,6 +87,7 @@ private:
 	ID3D11DepthStencilView* m_Dsv; //View
 	ID3D11Texture2D*		m_Dsb; //Buffer
 
+	ModelHandler m_Mh;
 	//Test
 	Entity m_Statue;
 	Entity m_Terrain;
@@ -93,7 +95,7 @@ private:
 	Entity m_Cube;
 	Character m_player; 
 
-	std::vector<Model*> models;
+	
 
 	CAMERA cam;
 	DirectX::XMMATRIX		m_viewMatrix;

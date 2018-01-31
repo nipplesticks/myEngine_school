@@ -70,20 +70,20 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>./DirectXTex/DDSTextureLoader;$(IncludePath)</IncludePath>
-    <SourcePath>./DirectXTex/DDSTextureLoader;$(SourcePath)</SourcePath>
+    <IncludePath>$(IncludePath)</IncludePath>
+    <SourcePath>$(SourcePath)</SourcePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <IncludePath>./DirectXTex/DDSTextureLoader;$(IncludePath)</IncludePath>
-    <SourcePath>./DirectXTex/DDSTextureLoader;$(SourcePath)</SourcePath>
+    <IncludePath>$(IncludePath)</IncludePath>
+    <SourcePath>$(SourcePath)</SourcePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>./DirectXTex/DDSTextureLoader;$(IncludePath)</IncludePath>
-    <SourcePath>./DirectXTex/DDSTextureLoader;$(SourcePath)</SourcePath>
+    <IncludePath>$(IncludePath)</IncludePath>
+    <SourcePath>$(SourcePath)</SourcePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IncludePath>./DirectXTex/DDSTextureLoader;$(IncludePath)</IncludePath>
-    <SourcePath>./DirectXTex/DDSTextureLoader;$(SourcePath)</SourcePath>
+    <IncludePath>$(IncludePath)</IncludePath>
+    <SourcePath>$(SourcePath)</SourcePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -127,16 +127,20 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="Character.h" />
+    <ClInclude Include="DirectXTex\DDSTextureLoader\DDSTextureLoader.h" />
     <ClInclude Include="Entity.hpp" />
     <ClInclude Include="Model.hpp" />
+    <ClInclude Include="ModelHandler.hpp" />
     <ClInclude Include="Rendering.hpp" />
     <ClInclude Include="Structs.hpp" />
     <ClInclude Include="TerrainLoader.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Character.cpp" />
+    <ClCompile Include="DirectXTex\DDSTextureLoader\DDSTextureLoader.cpp" />
     <ClCompile Include="Entity.cpp" />
     <ClCompile Include="Model.cpp" />
+    <ClCompile Include="ModelHandler.cpp" />
     <ClCompile Include="Rendering.cpp" />
     <ClCompile Include="Source.cpp" />
   </ItemGroup>

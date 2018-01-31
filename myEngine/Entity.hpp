@@ -42,6 +42,8 @@ public:
 	void draw(ID3D11DeviceContext*& deviceContext) const;
 private:
 	DirectX::XMFLOAT3 add(DirectX::XMFLOAT3 tar, DirectX::XMFLOAT3 adder) const;
+	DirectX::XMFLOAT3 multiply(DirectX::XMFLOAT3 tar, DirectX::XMFLOAT3 adder) const;
+
 	void buildMatrix();
 	void init();
 	void resetAngles();
