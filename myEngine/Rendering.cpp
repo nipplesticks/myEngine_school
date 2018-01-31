@@ -79,8 +79,15 @@ int App::run()
 	MSG msg = { 0 };
 	using namespace std::chrono;
 	auto time = steady_clock::now();
+	auto timer = steady_clock::now();
+	int updates = 0;
+	int fpsCounter = 0;
+	float freq = 1000000000.0f / REFRESH_RATE;
+	float unprocessed = 0;
+
 	while (WM_QUIT != msg.message && !GetAsyncKeyState(VK_ESCAPE))
 	{
+		auto currentTime = steady_clock::now();
 		if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
 		{
 			TranslateMessage(&msg);
@@ -88,15 +95,34 @@ int App::run()
 		}
 		else
 		{
-			auto currentTime = steady_clock::now();
-			auto dt = duration<float>(currentTime - time).count();
+			auto dt = duration_cast<nanoseconds>(currentTime - time).count();
 			time = steady_clock::now();
 
-			Update(dt);
+			unprocessed += dt / freq;
+
+
+			while (unprocessed > 1)
+			{
+				updates++;
+				unprocessed -= 1;
+				Update(1.0f);
+			}
+
+			fpsCounter++;
+
 			Render();
 			
 			m_SwapChain->Present(0, 0);
 		}
+
+		if (duration_cast<milliseconds>(steady_clock::now() - timer).count() > 1000)
+		{
+			printf("\rFPS: %d TICK: %d", fpsCounter, updates);
+			updates = 0;
+			fpsCounter = 0;
+			timer += milliseconds(1000);
+		}
+
 	}
 	return (int) msg.wParam;
 }
@@ -302,12 +328,12 @@ void App::Update(float dt)
 
 	int defaultX = static_cast<int>(CLIENT_WIDTH) / 2;
 	int defaultY = static_cast<int>(CLIENT_HEIGHT) / 2;	
-	float speed = 10.0f;
-	if (GetAsyncKeyState(VK_LSHIFT)) speed = 120.0f;
+	float speed = 1.0f;
+	if (GetAsyncKeyState(VK_LSHIFT)) speed = 10.0f;
 
 	if (m_CrouchLock)
 		speed *= 0.4f;
-	float sensitivity = 5.0f;
+	float sensitivity = 0.05f;
 	if (GetAsyncKeyState(int('A')))
 	{
 		DirectX::XMVECTOR v1 = DirectX::XMLoadFloat3(&cam.LookAtDir);
@@ -434,7 +460,7 @@ void App::Update(float dt)
 		float angleAfterRot = DirectX::XMVectorGetX(DirectX::XMVector3Dot(DirectX::XMVector3Normalize(newLookAt), v2));
 		
 		float angle = angleAfterRot - angleBeforeRot;
-		printf((std::to_string(angle) + "\n").c_str());
+		//printf((std::to_string(angle) + "\n").c_str());
 		if (abs(angle) < 1.0f)
 		{
 			DirectX::XMStoreFloat3(&cam.LookAtDir, newLookAt);
@@ -465,9 +491,9 @@ void App::Update(float dt)
 	m_Statue.cameraMoved(m_viewMatrix);
 	m_Terrain2.cameraMoved(m_viewMatrix);
 	m_player.cameraMoved(m_viewMatrix); 
-	m_Soviet.rotate(0, 1, 0, 25 * dt);
-	lol += dt;
-	float newPos = DirectX::XMScalarCos(lol) * dt * 25;
+	m_Soviet.rotate(0, 1, 0, 0.25 * dt);
+	lol += 0.05;
+	float newPos = DirectX::XMScalarCos(lol) * 2;
 	m_Soviet.move(0, newPos, 0);
 	m_Soviet.cameraMoved(m_viewMatrix);
 	SetCursorPos(defaultX, defaultY);

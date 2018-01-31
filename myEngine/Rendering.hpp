@@ -9,6 +9,7 @@
 #define CLIENT_WIDTH	1920.0f
 #define CLIENT_HEIGHT	1080.0f
 #define FOV				45.0f
+#define REFRESH_RATE	60.0f
 
 class App
 {

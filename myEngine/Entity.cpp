@@ -251,6 +251,7 @@ void Entity::buildMatrix()
 
 	m_cBuffer.WorldMatrix = XMMatrixTranspose(m_worldMatrix);
 	m_cBuffer.WVPMatrix = XMMatrixTranspose(m_worldMatrix * m_viewMatrix * m_projectionMatrix);
+	
 }
 
 void Entity::init()
