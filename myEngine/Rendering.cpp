@@ -465,12 +465,18 @@ void App::Update(float dt)
 	m_Statue.cameraMoved(m_viewMatrix);
 	m_Terrain2.cameraMoved(m_viewMatrix);
 	m_player.cameraMoved(m_viewMatrix); 
+	m_Soviet.rotate(0, 1, 0, 25 * dt);
+	lol += dt;
+	float newPos = DirectX::XMScalarCos(lol) * dt * 25;
+	m_Soviet.move(0, newPos, 0);
+	m_Soviet.cameraMoved(m_viewMatrix);
 	SetCursorPos(defaultX, defaultY);
 }
 
 void App::Render()
 {
 	clrScrn();
+	m_Soviet.draw(m_DeviceContext);
 	m_player.draw(m_DeviceContext); 
 	m_Statue.draw(m_DeviceContext);
 	m_Terrain2.draw(m_DeviceContext); 
@@ -733,6 +739,7 @@ void App::loadModels()
 	m_Mh.loadModel("models/nymph1.obj", "Statue", false, true);
 	m_Mh.loadModel("HeightMap/planet_deluxe.data", "Hidden_Star", true, false, true);
 	m_Mh.loadModel("models/dog.obj", "Dog", true, true);
+	m_Mh.loadModel("models/soviet.obj", "Soviet", true, true);
 }
 
 void App::loadEnteties()
@@ -743,6 +750,8 @@ void App::loadEnteties()
 	m_Mh.getModel("Hidden_Star")->initTexture(L"HeightMap/Hidden_star_02.dds", m_Device);	//This will be moved into model later
 	m_Terrain2.loadModel(m_Mh.getModel("Hidden_Star"));	//The Terrain model
 	m_player.loadModel(m_Mh.getModel("Dog"));		//The dog model
+	m_Mh.getModel("Soviet")->initTexture(L"models/soviet.dds", m_Device);
+	m_Soviet.loadModel(m_Mh.getModel("Soviet"));
 
 
 	//<TEST>
@@ -785,6 +794,15 @@ void App::loadEnteties()
 	m_player.rotate(0, 1, 0, -90);
 	m_player.setScale(0.05f, 0.05f, 0.05f);
 	m_player.setPosition(-5, 2, 0);
+
+	m_Soviet.bindVertexShader(m_VertexShader);
+	m_Soviet.bindGeometryShader(m_GeometryShader);
+	m_Soviet.bindPixelShader(m_PixelShaderTexture);
+	m_Soviet.setProjectionMatrix(m_projectionMatrix);
+	m_Soviet.cameraMoved(m_viewMatrix);
+	m_Soviet.loadBuffers(m_Device);
+	m_Soviet.setPosition(0, 1000, 2000);
+	m_Soviet.setScale(6);
 
 	//</TEST>
 

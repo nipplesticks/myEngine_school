@@ -93,8 +93,10 @@ private:
 	Entity m_Terrain;
 	Entity m_Terrain2;
 	Entity m_Cube;
+	Entity m_Soviet;
 	Character m_player; 
 
+	float lol = 0;
 	
 
 	CAMERA cam;
