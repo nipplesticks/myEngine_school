@@ -12,7 +12,7 @@ struct PS_IN
 float4 main(PS_IN input) : SV_Target
 {
     //float4 tx = txDiffuse.Sample(sampAni, input.Tex);
-    float3 lightPos = float3(500, 500, 500);
+    float3 lightPos = float3(500, 5000, 500);
     float3 lightDir = normalize(lightPos - input.worldPos.xyz);
     float diffuse = dot(lightDir, input.Normal);
     float3 finalColor = 0.2 * float3(1.0f, 0.85892157f, 0.67459216f) + float3(1.0f, 0.980392f, 0.95686275f) * diffuse;

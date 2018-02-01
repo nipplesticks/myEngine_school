@@ -1,28 +1,38 @@
-#include "Terrain.h"
+#include "Terrain.hpp"
 
 Terrain::Terrain()
-{ 
-	this->InitTerrainModel();
+{
+	m_width = 0;
+	m_height = 0;
+	m_model = new Model;
+	m_model->settings(false, false);
 }
+
 
 Terrain::~Terrain()
 {
-	
+	delete m_model;
 }
 
-void Terrain::InitTerrainModel()
+void Terrain::initTerrainViaHeightMap(std::string path, std::string name, float normalizeHeight, int width, int height, float normalizeUV)
 {
-	this->terrainFile.open("HeightMap.bmp", 0); 
-	if (this->terrainFile.is_open())
-	{
-		for (int i = 0; i < 513; i++)
-		{
-			for (int j = 0; j < 513; j++)
-			{
-				this->heightMap[i][j] = this->terrainFile.get(); 
-				std::cout << this->heightMap[i][j];
-			}
-		}
-	}
-	this->terrainFile.close(); 
+	m_width = width;
+	m_height = height;
+	m_model->initTerrainViaHeightMap(path, name, normalizeHeight, width, height, normalizeUV);
+}
+
+void Terrain::setTerrainTexture(wchar_t * path, ID3D11Device *& device, int textureSetting)
+{
+	m_model->settings(true, false);
+	m_model->initTexture(path, device, textureSetting);
+}
+
+int Terrain::getWidith() const
+{
+	return m_width;
+}
+
+int Terrain::getHeight() const
+{
+	return m_height;
 }

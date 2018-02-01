@@ -1,15 +1,11 @@
 #ifndef RENDERING_HPP
 #define RENDERING_HPP
 
-#include "Entity.hpp"
+#include "Terrain.hpp"
 #include "Character.h"
 #include "ModelHandler.hpp"
+#include "Camera.hpp"
 #include <istream>
-
-#define CLIENT_WIDTH	1920.0f
-#define CLIENT_HEIGHT	1080.0f
-#define FOV				45.0f
-#define REFRESH_RATE	60.0f
 
 class App
 {
@@ -41,7 +37,7 @@ private:
 
 	void initTerrain(Model& terrain); 
 
-	void Update(float dt);
+	void Update();
 	void Render();
 
 	bool CreateVertexShader();
@@ -58,7 +54,7 @@ private:
 
 	//Remove later
 	void loadModels();
-	void loadEnteties();
+	void loadEntities();
 
 private:
 	HINSTANCE	m_hInstance;
@@ -87,20 +83,19 @@ private:
 	//DEPTH BUFFER
 	ID3D11DepthStencilView* m_Dsv; //View
 	ID3D11Texture2D*		m_Dsb; //Buffer
+	
+	Cam m_Camera;
 
-	ModelHandler m_Mh;
 	//Test
-	Entity m_Statue;
-	Entity m_Terrain;
-	Entity m_Terrain2;
+	ModelHandler m_Mh;
+	Terrain m_Terrain2;
 	Entity m_Cube;
 	Entity m_Soviet;
+	float m_SovietVobble = 0;
 	Character m_player; 
 
-	float lol = 0;
 	
 
-	CAMERA cam;
 	DirectX::XMMATRIX		m_viewMatrix;
 	DirectX::XMMATRIX		m_projectionMatrix;
 

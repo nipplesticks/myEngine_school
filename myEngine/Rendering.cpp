@@ -8,19 +8,15 @@ App::App(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCm
 	m_lpCmdLine = lpCmdLine;
 	m_nCmdShow = nCmdShow;
 	SetCursorPos(static_cast<int>(CLIENT_WIDTH) / 2, static_cast<int>(CLIENT_HEIGHT) / 2);
-	cam = CAMERA{
-		DirectX::XMFLOAT3(0.0f, 117.0f, 0.0f),	//pos
-		DirectX::XMFLOAT3(0.0f, 0.0f, 1.0f), // look at dir
-		DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f), //look at pos
-		DirectX::XMFLOAT3(0.0f, 1.0f, 0.0f)		//up
-	};
-	m_viewMatrix = DirectX::XMMatrixLookAtLH(
-		DirectX::XMLoadFloat3(&cam.Position),
-		DirectX::XMLoadFloat3(&cam.LookAtDir),
-		DirectX::XMLoadFloat3(&cam.Up)
-	);
+	
+	m_Camera = Cam(
+		DirectX::XMFLOAT3(0.0f, 117.0f, 0.0f),		//pos
+		DirectX::XMFLOAT3(0.0f, 0.0f, 1.0f),		// look at dir
+		DirectX::XMFLOAT3(0.0f, 1.0f, 0.0f));		//up)
+	
+	m_viewMatrix = m_Camera.getViewMatrix();
 
-	m_projectionMatrix = DirectX::XMMatrixPerspectiveFovLH(DirectX::XMConvertToRadians(FOV), CLIENT_WIDTH / CLIENT_HEIGHT, 0.1f, 20000.0f);
+	m_projectionMatrix = DirectX::XMMatrixPerspectiveFovLH(DirectX::XMConvertToRadians(FOV), CLIENT_WIDTH / CLIENT_HEIGHT, 0.1f, 100000.0f);
 
 
 	//<TEST>
@@ -65,7 +61,7 @@ int App::init()
 
 
 		loadModels();
-		loadEnteties();
+		loadEntities();
 		ShowWindow(m_wndHandle, m_nCmdShow);
 	}
 
@@ -75,7 +71,7 @@ int App::init()
 int App::run()
 {
 
-
+	ShowCursor(FALSE);
 	MSG msg = { 0 };
 	using namespace std::chrono;
 	auto time = steady_clock::now();
@@ -105,7 +101,7 @@ int App::run()
 			{
 				updates++;
 				unprocessed -= 1;
-				Update(1.0f);
+				Update();
 			}
 
 			fpsCounter++;
@@ -308,195 +304,20 @@ void App::initTerrain(Model & terrain)
 	
 }
 
-void App::Update(float dt)
+void App::Update()
 {
-	if (GetAsyncKeyState(VK_LEFT))
-		m_Statue.move(-5 * dt, 0, 0);
-	if (GetAsyncKeyState(VK_RIGHT))
-		m_Statue.move(5 * dt, 0, 0);
-	if (GetAsyncKeyState(VK_UP))
-		m_Statue.move(0, 0, 5*dt);
-	if (GetAsyncKeyState(VK_DOWN))
-		m_Statue.move(0, 0, -5 * dt);
-	if (GetAsyncKeyState(VK_DELETE))
-		m_Statue.move(0, -5 * dt, 0);
-	if (GetAsyncKeyState(VK_END))
-		m_Statue.move(0, 5 * dt, 0);
-	//system("cls");
-	//std::cout << m_Statue.getPosition().x << ":" << m_Statue.getPosition().y << ":" << m_Statue.getPosition().z;
+	m_Camera.update();
+	m_viewMatrix = m_Camera.getViewMatrix();
 
-
-	int defaultX = static_cast<int>(CLIENT_WIDTH) / 2;
-	int defaultY = static_cast<int>(CLIENT_HEIGHT) / 2;	
-	float speed = 1.0f;
-	if (GetAsyncKeyState(VK_LSHIFT)) speed = 10.0f;
-
-	if (m_CrouchLock)
-		speed *= 0.4f;
-	float sensitivity = 0.05f;
-	if (GetAsyncKeyState(int('A')))
-	{
-		DirectX::XMVECTOR v1 = DirectX::XMLoadFloat3(&cam.LookAtDir);
-		DirectX::XMVECTOR v2 = DirectX::XMLoadFloat3(&cam.Up);
-		DirectX::XMVECTOR v3 = DirectX::XMVector3Normalize(DirectX::XMVector3Cross(v2, v1));
-		DirectX::XMFLOAT3 dir;
-		DirectX::XMStoreFloat3(&dir, v3);
-		cam.Position.x -= speed * dir.x * dt;
-		cam.Position.y -= speed * dir.y * dt;
-		cam.Position.z -= speed * dir.z * dt;
-	}
-	if (GetAsyncKeyState(int('D')))
-	{
-		DirectX::XMVECTOR v1 = DirectX::XMLoadFloat3(&cam.LookAtDir);
-		DirectX::XMVECTOR v2 = DirectX::XMLoadFloat3(&cam.Up);
-		DirectX::XMVECTOR v3 = DirectX::XMVector3Normalize(DirectX::XMVector3Cross(v2, v1));
-		DirectX::XMFLOAT3 dir;
-		DirectX::XMStoreFloat3(&dir, v3);
-		cam.Position.x += speed * dir.x * dt;
-		cam.Position.y += speed * dir.y * dt;
-		cam.Position.z += speed * dir.z * dt;
-	}
-	if (GetAsyncKeyState(int('W')))
-	{
-		DirectX::XMVECTOR lookAt = DirectX::XMLoadFloat3(&cam.LookAtDir);
-		if (!m_flying)
-		{
-			DirectX::XMVECTOR up = DirectX::XMLoadFloat3(&cam.Up);
-			DirectX::XMVECTOR right = DirectX::XMVector3Cross(lookAt, up);
-			DirectX::XMVECTOR front = DirectX::XMVector3Normalize(DirectX::XMVector3Cross(up, right));
-			DirectX::XMFLOAT3 dir;
-			DirectX::XMStoreFloat3(&dir, front);
-			cam.Position.x += speed * dir.x * dt;
-			cam.Position.y += speed * dir.y * dt;
-			cam.Position.z += speed * dir.z * dt;
-		}
-		else
-		{
-			lookAt = DirectX::XMVector3Normalize(lookAt);
-			DirectX::XMFLOAT3 dir;
-			DirectX::XMStoreFloat3(&dir, lookAt);
-
-			cam.Position.x += speed * dir.x * dt;
-			cam.Position.y += speed * dir.y * dt;
-			cam.Position.z += speed * dir.z * dt;
-		}
-	}
-	if (GetAsyncKeyState(int('S')))
-	{
-		DirectX::XMVECTOR lookAt = DirectX::XMLoadFloat3(&cam.LookAtDir);
-		if (!m_flying)
-		{
-			DirectX::XMVECTOR up = DirectX::XMLoadFloat3(&cam.Up);
-			DirectX::XMVECTOR right = DirectX::XMVector3Cross(lookAt, up);
-			DirectX::XMVECTOR front = DirectX::XMVector3Normalize(DirectX::XMVector3Cross(up, right));
-			DirectX::XMFLOAT3 dir;
-			DirectX::XMStoreFloat3(&dir, front);
-			cam.Position.x -= speed * dir.x * dt;
-			cam.Position.y -= speed * dir.y * dt;
-			cam.Position.z -= speed * dir.z * dt;
-		}
-		else
-		{
-			lookAt = DirectX::XMVector3Normalize(lookAt);
-			DirectX::XMFLOAT3 dir;
-			DirectX::XMStoreFloat3(&dir, lookAt);
-
-			cam.Position.x -= speed * dir.x * dt;
-			cam.Position.y -= speed * dir.y * dt;
-			cam.Position.z -= speed * dir.z * dt;
-		}
-	}
-	if (!m_flying)
-	{
-		if (GetAsyncKeyState(VK_LCONTROL))
-		{
-			if (!m_CrouchLock)
-			{
-				m_CrouchLock = true;
-				cam.Position.x -= cam.Up.x * 2;
-				cam.Position.y -= cam.Up.y * 2;
-				cam.Position.z -= cam.Up.z * 2;
-			}
-		}
-		else if (m_CrouchLock)
-		{
-			m_CrouchLock = false;
-			cam.Position.x += cam.Up.x * 2;
-			cam.Position.y += cam.Up.y * 2;
-			cam.Position.z += cam.Up.z * 2;
-		}
-	}
-	else
-	{
-		if (GetAsyncKeyState(VK_SPACE))
-		{
-			cam.Position.x += cam.Up.x * speed * dt;
-			cam.Position.y += cam.Up.y * speed* dt;
-			cam.Position.z += cam.Up.z * speed* dt;
-		}
-		else if (GetAsyncKeyState(VK_LCONTROL))
-		{
-			cam.Position.x -= cam.Up.x * speed* dt;
-			cam.Position.y -= cam.Up.y * speed* dt;
-			cam.Position.z -= cam.Up.z * speed* dt;
-		}
-	}
-	POINT mousePos;
-	GetCursorPos(&mousePos);
-	if (mousePos.x != defaultX || mousePos.y != defaultY)
-	{
-		int deltaX = mousePos.x - defaultX;
-		int deltaY = mousePos.y - defaultY;
-
-		
-		DirectX::XMVECTOR v1 = DirectX::XMLoadFloat3(&cam.LookAtDir);
-		DirectX::XMVECTOR v2 = DirectX::XMLoadFloat3(&cam.Up);
-		DirectX::XMVECTOR v3 = DirectX::XMVector3Normalize(DirectX::XMVector3Cross(v2, v1));
-		DirectX::XMFLOAT3 camXAxel;
-		DirectX::XMStoreFloat3(&camXAxel, v3);
-		DirectX::XMVECTOR newLookAt = DirectX::XMLoadFloat3(&cam.LookAtDir);
-		float angleBeforeRot = DirectX::XMVectorGetX(DirectX::XMVector3Dot(DirectX::XMVector3Normalize(newLookAt), v2));
-		newLookAt = DirectX::XMVector3Transform(newLookAt, DirectX::XMMatrixRotationNormal(v3, DirectX::XMConvertToRadians(sensitivity * deltaY * dt)));
-		float angleAfterRot = DirectX::XMVectorGetX(DirectX::XMVector3Dot(DirectX::XMVector3Normalize(newLookAt), v2));
-		
-		float angle = angleAfterRot - angleBeforeRot;
-		//printf((std::to_string(angle) + "\n").c_str());
-		if (abs(angle) < 1.0f)
-		{
-			DirectX::XMStoreFloat3(&cam.LookAtDir, newLookAt);
-		}
-		else
-		{
-			newLookAt = DirectX::XMLoadFloat3(&cam.LookAtDir);
-		}
-		newLookAt = DirectX::XMVector3Transform(newLookAt, DirectX::XMMatrixRotationNormal(v2, DirectX::XMConvertToRadians(sensitivity * deltaX * dt)));
-		newLookAt = DirectX::XMVector3Normalize(newLookAt);
-		DirectX::XMStoreFloat3(&cam.LookAtDir, newLookAt);
-	}
-
-	m_viewMatrix = DirectX::XMMatrixLookAtLH(
-		DirectX::XMLoadFloat3(&cam.Position),
-		DirectX::XMVectorAdd(DirectX::XMLoadFloat3(&cam.LookAtDir), DirectX::XMLoadFloat3(&cam.Position)),
-		DirectX::XMLoadFloat3(&cam.Up)
-	);
-
-	//TEST
-	DirectX::XMMATRIX skyBoxViewMatrix = DirectX::XMMatrixLookAtLH(
-		DirectX::XMVectorZero(),
-		DirectX::XMLoadFloat3(&cam.LookAtDir),
-		DirectX::XMLoadFloat3(&cam.Up)
-	);
-
-	m_Cube.cameraMoved(skyBoxViewMatrix);
-	m_Statue.cameraMoved(m_viewMatrix);
+	m_Cube.cameraMoved(m_Camera.getViewMatrixForBackground());
+	//m_Cube.cameraMoved(m_viewMatrix);
 	m_Terrain2.cameraMoved(m_viewMatrix);
 	m_player.cameraMoved(m_viewMatrix); 
-	m_Soviet.rotate(0, 1, 0, 0.25 * dt);
-	lol += 0.05;
-	float newPos = DirectX::XMScalarCos(lol) * 2;
+	m_Soviet.rotate(0, 1, 0, 0.25f);
+	m_SovietVobble += 0.05f;
+	float newPos = DirectX::XMScalarCos(m_SovietVobble) * 2;
 	m_Soviet.move(0, newPos, 0);
 	m_Soviet.cameraMoved(m_viewMatrix);
-	SetCursorPos(defaultX, defaultY);
 }
 
 void App::Render()
@@ -504,7 +325,6 @@ void App::Render()
 	clrScrn();
 	m_Soviet.draw(m_DeviceContext);
 	m_player.draw(m_DeviceContext); 
-	m_Statue.draw(m_DeviceContext);
 	m_Terrain2.draw(m_DeviceContext); 
 	m_Cube.draw(m_DeviceContext);
 
@@ -761,24 +581,23 @@ bool App::initDrawTexture()
 
 void App::loadModels()
 {
-	m_Mh.loadModel("models/Cube.obj", "SkyBox", true, true, false, false);
-	m_Mh.loadModel("models/nymph1.obj", "Statue", false, true);
-	m_Mh.loadModel("HeightMap/planet_deluxe.data", "Hidden_Star", true, false, true);
+	m_Mh.loadModel("models/Cube.obj", "SkyBox", true, true, false);
+	m_Mh.getModel("SkyBox")->initTexture(L"models/SkyBox3.dds", m_Device);
+
 	m_Mh.loadModel("models/dog.obj", "Dog", true, true);
+
 	m_Mh.loadModel("models/soviet.obj", "Soviet", true, true);
+	m_Mh.getModel("Soviet")->initTexture(L"models/soviet.dds", m_Device);
 }
 
-void App::loadEnteties()
+void App::loadEntities()
 {
-	m_Mh.getModel("SkyBox")->initTexture(L"models/SkyBox3.dds", m_Device);
+	
 	m_Cube.loadModel(m_Mh.getModel("SkyBox"));			//The cube model
-	m_Statue.loadModel(m_Mh.getModel("Statue"));		//The statue model
-	m_Mh.getModel("Hidden_Star")->initTexture(L"HeightMap/Hidden_star_02.dds", m_Device);	//This will be moved into model later
-	m_Terrain2.loadModel(m_Mh.getModel("Hidden_Star"));	//The Terrain model
 	m_player.loadModel(m_Mh.getModel("Dog"));		//The dog model
-	m_Mh.getModel("Soviet")->initTexture(L"models/soviet.dds", m_Device);
 	m_Soviet.loadModel(m_Mh.getModel("Soviet"));
-
+	m_Terrain2.initTerrainViaHeightMap("HeightMap/Mountain2.data", "Mountain", 15.0f, 2048, 2048, 0.5f);
+	m_Terrain2.setTerrainTexture(L"HeightMap/sand.dds", m_Device);
 
 	//<TEST>
 	m_Cube.bindVertexShader(m_VertexShader);
@@ -787,19 +606,8 @@ void App::loadEnteties()
 	m_Cube.setProjectionMatrix(m_projectionMatrix);
 	m_Cube.cameraMoved(m_viewMatrix);
 	m_Cube.loadBuffers(m_Device);
-	m_Cube.setPosition(-5000.0f, -5000.0f, -5000.0f);
-	m_Cube.setScale(10000.0f);
-
-	m_Statue.bindVertexShader(m_VertexShader);
-	m_Statue.bindGeometryShader(m_GeometryShader);
-	m_Statue.bindPixelShader(m_PixelShader);
-	m_Statue.setProjectionMatrix(m_projectionMatrix);
-	m_Statue.cameraMoved(m_viewMatrix);
-	m_Statue.loadBuffers(m_Device);
-	//m_Statue.setPosition(494.247f, 230.87f, 546.431f);
-	m_Statue.setPosition(0, 2, 0);
-	m_Statue.setRotation(0.0f, 0.0f, 1.0f, 180.0f);
-	m_Statue.rotate(0.0f, 1.0f, 0.0f, 180.0f);
+	m_Cube.setPosition(-35000.0f, -35000.0f, -35000.0f);
+	m_Cube.setScale(70000.0f);
 
 	m_Terrain2.bindVertexShader(m_VertexShader);
 	m_Terrain2.bindGeometryShader(m_GeometryShader);
@@ -807,7 +615,7 @@ void App::loadEnteties()
 	m_Terrain2.setProjectionMatrix(m_projectionMatrix);
 	m_Terrain2.cameraMoved(m_viewMatrix);
 	m_Terrain2.loadBuffers(m_Device);
-	m_Terrain2.setScale(5, 25, 5);
+	m_Terrain2.setScale(75, 500, 75);
 	//m_Terrain2.setPosition(0.0f, 0.0f, 0.0f);
 
 	m_player.bindVertexShader(m_VertexShader);
@@ -819,7 +627,7 @@ void App::loadEnteties()
 	m_player.setRotation(0.0f, 0.0f, 0.0f, 180.0f);
 	m_player.rotate(0, 1, 0, -90);
 	m_player.setScale(0.05f, 0.05f, 0.05f);
-	m_player.setPosition(-5, 2, 0);
+	m_player.setPosition(-0, 0, 0);
 
 	m_Soviet.bindVertexShader(m_VertexShader);
 	m_Soviet.bindGeometryShader(m_GeometryShader);
@@ -829,7 +637,6 @@ void App::loadEnteties()
 	m_Soviet.loadBuffers(m_Device);
 	m_Soviet.setPosition(0, 1000, 2000);
 	m_Soviet.setScale(6);
-
 	//</TEST>
 
 }

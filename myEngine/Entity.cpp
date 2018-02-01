@@ -90,6 +90,11 @@ void Entity::rotate(float x, float y, float z, float angle)
 	rotate(rot, angle);
 }
 
+DirectX::XMFLOAT3 Entity::getRotation() const
+{
+	return m_angle;
+}
+
 void Entity::setPosition(DirectX::XMFLOAT3 position)
 {
 	m_pos = position;
@@ -165,6 +170,11 @@ void Entity::scale(float x, float y, float z)
 void Entity::scale(float s)
 {
 	scale(s, s, s);
+}
+
+DirectX::XMFLOAT3 Entity::getScale() const
+{
+	return m_scale;
 }
 
 void Entity::setProjectionMatrix(DirectX::XMMATRIX projection)

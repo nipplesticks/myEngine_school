@@ -18,6 +18,7 @@ public:
 	void setRotation(float x, float y, float z, float angle);
 	void rotate(DirectX::XMFLOAT3 axis, float angle);
 	void rotate(float x, float y, float z, float angle);
+	DirectX::XMFLOAT3 getRotation() const;
 
 	void setPosition(DirectX::XMFLOAT3 position);
 	void setPosition(float x, float y, float z);
@@ -31,6 +32,7 @@ public:
 	void scale(DirectX::XMFLOAT3 scale);
 	void scale(float x, float y, float z);
 	void scale(float s);
+	DirectX::XMFLOAT3 getScale() const;
 
 	void setProjectionMatrix(DirectX::XMMATRIX projection);
 	void cameraMoved(DirectX::XMMATRIX view);
@@ -56,9 +58,6 @@ private:
 	ID3D11GeometryShader*	m_geometryShader;
 	ID3D11PixelShader*		m_pixelShader;
 
-
-	Model*					m_model;
-
 	DirectX::XMFLOAT3		m_angle;
 
 	DirectX::XMFLOAT3		m_pos;
@@ -68,6 +67,9 @@ private:
 	DirectX::XMMATRIX		m_projectionMatrix;
 	DirectX::XMMATRIX		m_worldMatrix;
 	CONSTANT_BUFFER			m_cBuffer;
+
+protected:
+	Model*					m_model;
 };
 
 #endif

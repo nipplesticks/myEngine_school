@@ -17,18 +17,11 @@ ModelHandler::~ModelHandler()
 	}
 }
 
-void ModelHandler::loadModel(std::string path, std::string name, bool sTexture, bool sNormals, bool loadWithHeightmap, bool sClockwise)
+void ModelHandler::loadModel(std::string path, std::string name, bool sTexture, bool sNormals, bool sClockwise)
 {
 	Model* m = new Model;
 	m->settings(sTexture, sNormals, sClockwise);
-	if (!loadWithHeightmap)
-	{
-		m->initModel(path, name);
-	}
-	else
-	{
-		m->initTerrainViaHeightMap(path, name);
-	}
+	m->initModel(path, name);
 	models.push_back(m);
 }
 

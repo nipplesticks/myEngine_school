@@ -6,7 +6,10 @@
 #include <d3dcompiler.h>
 #include <iostream>
 #include <DirectXMath.h>
-
+#define CLIENT_WIDTH	1920.0f
+#define CLIENT_HEIGHT	1080.0f
+#define FOV				75.0f
+#define REFRESH_RATE	60.0f
 #pragma comment (lib, "d3d11.lib")
 #pragma comment (lib, "d3dcompiler.lib")
 
@@ -48,14 +51,6 @@ struct F_IMPORT
 struct I_INPUT
 {
 	int arr[3];
-};
-
-struct CAMERA
-{
-	DirectX::XMFLOAT3 Position;
-	DirectX::XMFLOAT3 LookAtDir;
-	DirectX::XMFLOAT3 LookAtPos;
-	DirectX::XMFLOAT3 Up;
 };
 
 #endif

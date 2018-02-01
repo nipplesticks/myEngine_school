@@ -18,7 +18,7 @@ public:
 	ID3D11ShaderResourceView* getTextureResourceView() const;
 	ID3D11SamplerState* getSampleState() const;
 	int getTextureSetting() const;
-	void initTerrainViaHeightMap(std::string path, std::string name); 
+	void initTerrainViaHeightMap(std::string path, std::string name, float normalizeHeight, int width, int height, float normalizeUV);
 	bool isTerrain() const;
 
 

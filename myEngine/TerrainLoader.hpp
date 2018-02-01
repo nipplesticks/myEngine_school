@@ -24,15 +24,6 @@ namespace TerrainLoader
 				heightMapFile.read((char*)heightMap[i], size);
 			}
 
-			/*std::cout << "Values loaded to heightMap: " << std::endl;
-			for (int i = 0; i < 2; i++)
-			{
-				for (int j = 0; j < 2; j++)
-				{
-					std::cout << (int)heightMap[j][i] << std::endl; 
-				}
-			}*/
-
 			for (int i = 0; i < size; i++)
 			{
 				for (int k = 0; k < size; k++)
@@ -84,18 +75,110 @@ namespace TerrainLoader
 				}
 			}
 			heightMapFile.close();
+		
+		}
+		return vertexVector;
+	}
 
-			/*
-			for (int i = 0; i < vertexVector.size(); i++)
+	std::vector<VERTEX> terrainLoader2(std::string path, float normalizeHeight, int width, int height, float normalizeUV)
+	{
+		//A high anti-sensitivity value means that the colors won't affect the height-values 
+		//as much as a low anti-sensitvity value would. 
+		int offsetZ = height / 2;
+		int offsetX = width / 2;
+
+		if (normalizeHeight < 1) normalizeHeight = 1.0f;
+
+		unsigned char **heightMap = new unsigned char*[height];
+		float **map = new float*[height];
+		for (int i = 0; i < height; i++)
+		{
+			map[i] = new float[width];
+		}
+		std::vector<VERTEX> vertexVector;
+		std::ifstream heightMapFile;
+		heightMapFile.open(path, std::ifstream::binary);
+		if (heightMapFile)
+		{
+			for (int i = 0; i < height; i++)
 			{
-				std::cout << vertexVector[i].y << ", ";
-				if (i % size == 0 && i != 0)
+				unsigned char * buffer = new unsigned char[width];
+				heightMapFile.read((char*)buffer, width);
+				heightMap[i] = buffer;
+			}
+			for (int i = 0; i < height; i++)
+			{
+				for (int k = 0; k < width; k++)
 				{
-					std::cout << "\n";
+					map[k][i] = (float)heightMap[k][i];
+					map[k][i] = map[k][i] / normalizeHeight;
 				}
 			}
-			*/
-		
+
+			
+
+
+
+			for (int i = 0; i < height; i++)
+			{
+				for (int k = 0; k < width; k++)
+				{
+					if (i > 0 && k > 0 && i < (height - 1) && k < (width - 1))
+					{
+						map[i][k] =
+							(map[i - 1][k + 1] + map[i][k + 1] + map[i + 1][k + 1] +
+								map[i - 1][k] + map[i][k] + map[i + 1][k] +
+								map[i - 1][k - 1] + map[i][k - 1] + map[i + 1][k - 1]) / 9;
+					}
+				}
+			}
+			for (int i = 0; i < height - 1; i++)
+			{
+				for (int j = 0; j < width - 1; j++)
+				{
+					VERTEX v;
+
+					v = VERTEX{ float(j) - offsetX, map[j][i] - 128 / normalizeHeight ,float(i) - offsetZ };
+					v.u = ((float)j) * normalizeUV;
+					v.v = ((float)i)* normalizeUV;
+					vertexVector.push_back(v);
+
+					v = VERTEX{ float(j) - offsetX, map[j][i + 1] - 128 / normalizeHeight, float(i + 1) - offsetZ };
+					v.u = ((float)j)* normalizeUV;
+					v.v = ((float)i + 1)* normalizeUV;
+					vertexVector.push_back(v);
+
+					v = VERTEX{ float(j + 1) - offsetX,map[j + 1][i] - 128 / normalizeHeight, float(i) - offsetZ };
+					v.u = ((float)j + 1)* normalizeUV;
+					v.v = ((float)i)* normalizeUV;
+					vertexVector.push_back(v);
+
+					v = VERTEX{ float(j) - offsetX, map[j][i + 1] - 128 / normalizeHeight, float(i + 1) - offsetZ };
+					v.u = ((float)j)* normalizeUV;
+					v.v = ((float)i + 1)* normalizeUV;
+					vertexVector.push_back(v);
+
+					v = VERTEX{ float(j + 1) - offsetX, map[j + 1][i + 1] - 128 / normalizeHeight, float(i + 1) - offsetZ };
+					v.u = ((float)j + 1)* normalizeUV;
+					v.v = ((float)i + 1)* normalizeUV;
+					vertexVector.push_back(v);
+
+					v = VERTEX{ float(j + 1) - offsetX, map[j + 1][i] - 128 / normalizeHeight, float(i) - offsetZ };
+					v.u = ((float)j + 1)* normalizeUV;
+					v.v = ((float)i)* normalizeUV;
+					vertexVector.push_back(v);
+				}
+			}
+			heightMapFile.close();
+
+			for (int i = 0; i < height; i++)
+			{
+				delete[] heightMap[i];
+				delete[] map[i];
+			}
+			delete[] heightMap;
+			delete[] map;
+
 		}
 		return vertexVector;
 	}

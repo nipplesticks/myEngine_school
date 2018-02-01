@@ -126,6 +126,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Camera.hpp" />
     <ClInclude Include="Character.h" />
     <ClInclude Include="DirectXTex\DDSTextureLoader\DDSTextureLoader.h" />
     <ClInclude Include="Entity.hpp" />
@@ -133,9 +134,11 @@
     <ClInclude Include="ModelHandler.hpp" />
     <ClInclude Include="Rendering.hpp" />
     <ClInclude Include="Structs.hpp" />
+    <ClInclude Include="Terrain.hpp" />
     <ClInclude Include="TerrainLoader.hpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Camera.cpp" />
     <ClCompile Include="Character.cpp" />
     <ClCompile Include="DirectXTex\DDSTextureLoader\DDSTextureLoader.cpp" />
     <ClCompile Include="Entity.cpp" />
@@ -143,6 +146,7 @@
     <ClCompile Include="ModelHandler.cpp" />
     <ClCompile Include="Rendering.cpp" />
     <ClCompile Include="Source.cpp" />
+    <ClCompile Include="Terrain.cpp" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="GeometryShader.hlsl">
