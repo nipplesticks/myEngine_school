@@ -1,0 +1,52 @@
+///////////////Terrain Collision Detection////////////////// 
+
+*The vertices are in a 2D array, but there is a formula that will represent thier position in a 1D array:
+
+Formula: x + (y * mapWidth)
+
+*Look at player pos x and z (represents x and y in heightmap). 
+
+*Send x and z into the formula, convert to int to get the position of one of the current triagles vertices in the array. 
+
+Which of the triangles vertices did we find?:
+
+*To know which vertices we should create vectors inbetween to get the correct triangle, we need to know which of the 
+ triangles vertices we found. 
+
+*To figure this out, we can do this:
+ 
+ 1) Take the position in the 1D array of which you found the vertice.
+ 2) Take the position number modolus 3. 
+ 3) If the result is 2, you have the last vertice, if it is 1 you have the second 
+    and if it is 0, you have the first vertice.
+
+What to do next: 
+
+*As said before, it is now time to create vectors between the found vertices.
+
+*When the vectors has been created, noramlize them so that they have the size 1. 
+
+*When they have been normalized, create a vector between one of the vertices and the players position.
+
+*The vector will have two composants. Aslong as both of these composants have a length greater than 0, and 
+ the addition between thier lenghts is less than 1, we are inside the CURRENT triangle.  
+
+When it is certain that we are inside a triangle: 
+
+*Store (use) the vertices with the highest and the lowest y-values.
+
+*Calculate the the 2D angle between them. 
+
+*If this angle is larger than the maximum walkable angle for the player, the player cannot pass.
+
+*If the angle is okay, the player can pass. In this case, set the players y-value to an average 
+ of the vertices y-values. 
+
+ 
+
+ 
+
+
+ 
+
+
