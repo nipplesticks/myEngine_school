@@ -257,7 +257,7 @@ void Entity::buildMatrix()
 	XMMATRIX m_worldMatrix = XMMatrixAffineTransformation(
 		XMLoadFloat3(&m_scale), XMVectorZero(), quat, XMLoadFloat3(&m_pos));
 		*/
-	XMMATRIX m_worldMatrix = scale * rotation * translate;
+	m_worldMatrix = scale * rotation * translate;
 
 	m_cBuffer.WorldMatrix = XMMatrixTranspose(m_worldMatrix);
 	m_cBuffer.WVPMatrix = XMMatrixTranspose(m_worldMatrix * m_viewMatrix * m_projectionMatrix);
@@ -318,5 +318,10 @@ Model* Entity::getModel() const
 ID3D11Buffer * Entity::getVertexBuffer() const
 {
 	return m_vertexBuffer;
+}
+
+const DirectX::XMMATRIX & Entity::getWorldMatrix() const
+{
+	return m_worldMatrix;
 }
 

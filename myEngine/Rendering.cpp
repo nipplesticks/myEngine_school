@@ -10,9 +10,9 @@ App::App(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCm
 	SetCursorPos(static_cast<int>(CLIENT_WIDTH) / 2, static_cast<int>(CLIENT_HEIGHT) / 2);
 	
 	m_Camera = Cam(
-		DirectX::XMFLOAT3(0.0f, 117.0f, 0.0f),		//pos
+		DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f),		//pos
 		DirectX::XMFLOAT3(0.0f, 0.0f, 1.0f),		// look at dir
-		DirectX::XMFLOAT3(0.0f, 1.0f, 0.0f));		//up)
+		DirectX::XMFLOAT3(0.0f, 1.0f, 0.0f));		//up
 	
 	m_viewMatrix = m_Camera.getViewMatrix();
 
@@ -23,7 +23,7 @@ App::App(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCm
 	//REMOVE THIS LATER
 	
 	m_CrouchLock = false;
-	m_flying = true;
+	m_flying = false;
 	//</TEST>
 
 	setMembersToNull();
@@ -113,7 +113,7 @@ int App::run()
 
 		if (duration_cast<milliseconds>(steady_clock::now() - timer).count() > 1000)
 		{
-			printf("\rFPS: %d TICK: %d", fpsCounter, updates);
+			//printf("\rFPS: %d TICK: %d", fpsCounter, updates);
 			updates = 0;
 			fpsCounter = 0;
 			timer += milliseconds(1000);
@@ -308,16 +308,59 @@ void App::Update()
 {
 	m_Camera.update();
 	m_viewMatrix = m_Camera.getViewMatrix();
-
-	m_Cube.cameraMoved(m_Camera.getViewMatrixForBackground());
-	//m_Cube.cameraMoved(m_viewMatrix);
 	m_Terrain2.cameraMoved(m_viewMatrix);
+	m_player.collisionHandling(m_Terrain2, 2048);
+	m_Cube.cameraMoved(m_Camera.getViewMatrixForBackground());
+	DirectX::XMFLOAT3 pos = m_player.getPosition();
+	pos.y += 100;
+	m_Camera.setPosition(pos);
+
+
+	//printf("\rCam.X:%f, Cam.Y:%f, Cam.Z:%f ", pos.x, pos.y, pos.z);
+
+	//std::cout << "Y:" << m_Camera.getPosition().y << std::endl; 
+	//m_Cube.cameraMoved(m_viewMatrix);
+	
 	m_player.cameraMoved(m_viewMatrix); 
 	m_Soviet.rotate(0, 1, 0, 0.25f);
 	m_SovietVobble += 0.05f;
 	float newPos = DirectX::XMScalarCos(m_SovietVobble) * 2;
 	m_Soviet.move(0, newPos, 0);
 	m_Soviet.cameraMoved(m_viewMatrix);
+	DirectX::XMFLOAT3 forward = m_Camera.getForward();
+	DirectX::XMFLOAT3 right = m_Camera.getRight();
+
+	float speed = 10;
+
+	if (GetAsyncKeyState(VK_UP))
+	{
+		
+		forward.x *= -1 * speed;
+		forward.y *= -1 * speed;
+		forward.z *= -1 * speed;
+		m_player.move(forward);
+	}
+	if (GetAsyncKeyState(VK_DOWN))
+	{
+		forward.x *= speed;
+		forward.y *= speed;
+		forward.z *= speed;
+		m_player.move(forward);
+	}
+	if (GetAsyncKeyState(VK_RIGHT))
+	{
+		right.x *= speed;
+		right.y *= speed;
+		right.z *= speed;
+		m_player.move(right);
+	}
+	if (GetAsyncKeyState(VK_LEFT))
+	{
+		right.x *= -1 * speed;
+		right.y *= -1 * speed;
+		right.z *= -1 * speed;
+		m_player.move(right);
+	}
 }
 
 void App::Render()
@@ -596,7 +639,7 @@ void App::loadEntities()
 	m_Cube.loadModel(m_Mh.getModel("SkyBox"));			//The cube model
 	m_player.loadModel(m_Mh.getModel("Dog"));		//The dog model
 	m_Soviet.loadModel(m_Mh.getModel("Soviet"));
-	m_Terrain2.initTerrainViaHeightMap("HeightMap/Mountain2.data", "Mountain", 15.0f, 2048, 2048, 0.5f);
+	m_Terrain2.initTerrainViaHeightMap("HeightMap/m.data", "Mountain", 1.0f, 100, 100, 0.5f);
 	m_Terrain2.setTerrainTexture(L"HeightMap/sand.dds", m_Device);
 
 	//<TEST>
@@ -615,8 +658,8 @@ void App::loadEntities()
 	m_Terrain2.setProjectionMatrix(m_projectionMatrix);
 	m_Terrain2.cameraMoved(m_viewMatrix);
 	m_Terrain2.loadBuffers(m_Device);
-	m_Terrain2.setScale(75, 500, 75);
-	//m_Terrain2.setPosition(0.0f, 0.0f, 0.0f);
+	m_Terrain2.setScale(100, 5, 100);
+	m_Terrain2.setPosition(0.0f, 0.0f, 0.0f);
 
 	m_player.bindVertexShader(m_VertexShader);
 	m_player.bindGeometryShader(m_GeometryShader);
@@ -626,8 +669,8 @@ void App::loadEntities()
 	m_player.loadBuffers(m_Device);
 	m_player.setRotation(0.0f, 0.0f, 0.0f, 180.0f);
 	m_player.rotate(0, 1, 0, -90);
-	m_player.setScale(0.05f, 0.05f, 0.05f);
-	m_player.setPosition(-0, 0, 0);
+	m_player.setScale(1);
+	m_player.setPosition(0, 0, 0);
 
 	m_Soviet.bindVertexShader(m_VertexShader);
 	m_Soviet.bindGeometryShader(m_GeometryShader);
@@ -635,8 +678,8 @@ void App::loadEntities()
 	m_Soviet.setProjectionMatrix(m_projectionMatrix);
 	m_Soviet.cameraMoved(m_viewMatrix);
 	m_Soviet.loadBuffers(m_Device);
-	m_Soviet.setPosition(0, 1000, 2000);
-	m_Soviet.setScale(6);
+	m_Soviet.setPosition(0, 0, 2000);
+	//m_Soviet.setScale(6);
 	//</TEST>
 
 }

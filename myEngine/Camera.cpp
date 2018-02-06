@@ -1,4 +1,6 @@
 #include "Camera.hpp"
+#include "Model.hpp"
+#include "Character.h"
 
 using namespace DirectX;
 Cam::Cam(XMFLOAT3 position, XMFLOAT3 lookAt, XMFLOAT3 up)
@@ -7,7 +9,6 @@ Cam::Cam(XMFLOAT3 position, XMFLOAT3 lookAt, XMFLOAT3 up)
 	m_lookAt = lookAt;
 	m_up = up;
 	
-
 	m_rotation.x = 90;
 	m_rotation.y = 0;
 
@@ -23,7 +24,7 @@ Cam::Cam(XMFLOAT3 position, XMFLOAT3 lookAt, XMFLOAT3 up)
 	m_sensitivity = 0.05f;
 
 	m_crouchLock = false;
-	m_flying = true;
+	m_flying = true; 
 }
 
 void Cam::update()
@@ -126,6 +127,26 @@ DirectX::XMMATRIX Cam::getViewMatrixForBackground()
 		XMLoadFloat3(&m_lookAt),
 		XMLoadFloat3(&m_up)
 	);
+}
+
+DirectX::XMFLOAT3 Cam::getPosition() const
+{
+	return m_position; 
+}
+
+DirectX::XMFLOAT3 Cam::getForward() const
+{
+	return m_forward;
+}
+
+DirectX::XMFLOAT3 Cam::getRight() const
+{
+	return m_right;
+}
+
+void Cam::setPosition(DirectX::XMFLOAT3 position)
+{
+	m_position = position; 
 }
 
 void Cam::moveX(int leftOrRight)

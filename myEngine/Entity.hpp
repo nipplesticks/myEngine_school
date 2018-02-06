@@ -41,6 +41,8 @@ public:
 	Model* getModel() const; 
 	ID3D11Buffer* getVertexBuffer() const;
 
+	const DirectX::XMMATRIX& getWorldMatrix() const;
+
 	void draw(ID3D11DeviceContext*& deviceContext) const;
 private:
 	DirectX::XMFLOAT3 add(DirectX::XMFLOAT3 tar, DirectX::XMFLOAT3 adder) const;

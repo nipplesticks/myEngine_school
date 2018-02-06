@@ -2,8 +2,7 @@
 #define TERRAIN_HPP
 #include "Entity.hpp"
 
-class Terrain :
-	public Entity
+class Terrain : public Entity
 {
 public:
 	Terrain();
@@ -14,9 +13,13 @@ public:
 	int getWidith() const;
 	int getHeight() const;
 
+	float** getHightValues() const;
+
 private:
 	int m_width;
 	int m_height;
+	float** m_hightValues;
+
 };
 
 #endif
