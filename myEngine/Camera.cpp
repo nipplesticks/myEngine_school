@@ -6,8 +6,6 @@ Cam::Cam(XMFLOAT3 position, XMFLOAT3 lookAt, XMFLOAT3 up)
 	m_position = position;
 	m_lookAt = lookAt;
 	m_up = up;
-	
-
 	m_rotation.x = 90;
 	m_rotation.y = 0;
 
@@ -18,7 +16,10 @@ Cam::Cam(XMFLOAT3 position, XMFLOAT3 lookAt, XMFLOAT3 up)
 	m_defaultX = (CLIENT_WIDTH) / 2;
 	m_defaultY = (CLIENT_HEIGHT) / 2;
 
-	m_speed = 0.01f;
+	m_speed = 2.0f;
+	m_defaultX = static_cast<int>(CLIENT_WIDTH) / 2;
+	m_defaultY = static_cast<int>(CLIENT_HEIGHT) / 2;
+
 	m_speedChanger = 0.0f;
 	m_sensitivity = 0.05f;
 
@@ -106,7 +107,6 @@ void Cam::update()
 		XMVECTOR newLookAt = XMVector3Normalize(XMLoadFloat3(&la));
 		XMStoreFloat3(&m_lookAt, newLookAt);
 	}
-
 	SetCursorPos((int)m_defaultX, (int)m_defaultY);
 }
 
@@ -128,6 +128,25 @@ DirectX::XMMATRIX Cam::getViewMatrixForBackground()
 	);
 }
 
+DirectX::XMFLOAT3 Cam::getPosition() const
+{
+	return m_position; 
+}
+
+DirectX::XMFLOAT3 Cam::getForward() const
+{
+	return m_forward;
+}
+
+DirectX::XMFLOAT3 Cam::getRight() const
+{
+	return m_right;
+}
+
+void Cam::setPosition(DirectX::XMFLOAT3 position)
+{
+	m_position = position; 
+}
 void Cam::moveX(int leftOrRight)
 {
 	m_position.x += leftOrRight * (m_speed * m_speedChanger * m_right.x);

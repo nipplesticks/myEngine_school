@@ -3,89 +3,17 @@
 
 namespace TerrainLoader
 {
-	std::vector<VERTEX> terrainLoader(std::string path)
-	{
-		//A high anti-sensitivity value means that the colors won't affect the height-values 
-		//as much as a low anti-sensitvity value would. 
-		int anti_sensitivity = 15; 
-		const int size = 800;
-		int offset = size / 2;
-		float textureSize = 0.15f;
-
-		unsigned char heightMap[size][size];
-	    std::vector<VERTEX> vertexVector;
-		std::ifstream heightMapFile;
-		heightMapFile.open(path, std::ifstream::binary);
-
-		if (heightMapFile.is_open())
-		{
-			for (int i = 0; i < size; i++)
-			{
-				heightMapFile.read((char*)heightMap[i], size);
-			}
-
-			for (int i = 0; i < size; i++)
-			{
-				for (int k = 0; k < size; k++)
-				{
-					if (i > 0 && k > 0 && i < (size - 1) && k < (size - 1))
-					{
-						heightMap[i][k] =
-							(heightMap[i - 1][k + 1] + heightMap[i][k + 1] + heightMap[i + 1][k + 1] +
-								heightMap[i - 1][k] + heightMap[i][k] + heightMap[i + 1][k] +
-								heightMap[i - 1][k - 1] + heightMap[i][k - 1] + heightMap[i + 1][k - 1]) / 9;
-					}
-				}
-			}
-			for (int i = 0; i < size - 1; i++)
-			{
-				for (int j = 0; j < size - 1; j++)
-				{
-					VERTEX v;
-					
-					v = VERTEX{ float(j) - offset,(float(heightMap[j][i] - 128) / anti_sensitivity),float(i) - offset };
-					v.u = ((float)j) * textureSize;
-					v.v = ((float)i)* textureSize;
-					vertexVector.push_back(v);
-
-					v = VERTEX{ float(j) - offset,(float(heightMap[j][i + 1] - 128) / anti_sensitivity),float(i + 1) - offset };
-					v.u = ((float)j)* textureSize;
-					v.v = ((float)i + 1)* textureSize;
-					vertexVector.push_back(v);
-
-					v = VERTEX{ float(j + 1) - offset,(float(heightMap[j + 1][i] - 128) / anti_sensitivity),float(i) - offset };
-					v.u = ((float)j + 1)* textureSize;
-					v.v = ((float)i)* textureSize;
-					vertexVector.push_back(v);
-
-					v = VERTEX{ float(j) - offset,(float(heightMap[j][i + 1] - 128) / anti_sensitivity),float(i + 1) - offset };
-					v.u = ((float)j)* textureSize;
-					v.v = ((float)i + 1)* textureSize;
-					vertexVector.push_back(v);
-
-					v = VERTEX{ float(j + 1) - offset,(float(heightMap[j + 1][i + 1] - 128) / anti_sensitivity),float(i + 1) - offset };
-					v.u = ((float)j + 1)* textureSize;
-					v.v = ((float)i + 1)* textureSize;
-					vertexVector.push_back(v);
-
-					v = VERTEX{ float(j + 1) - offset,(float(heightMap[j + 1][i] - 128) / anti_sensitivity),float(i) - offset };
-					v.u = ((float)j + 1)* textureSize;
-					v.v = ((float)i)* textureSize;
-					vertexVector.push_back(v);
-				}
-			}
-			heightMapFile.close();
-		
-		}
-		return vertexVector;
-	}
-
-	std::vector<VERTEX> terrainLoader2(std::string path, float normalizeHeight, int width, int height, float normalizeUV)
+	std::vector<VERTEX> terrainLoader2(std::string path, float normalizeHeight, int width, int height, float normalizeUV, float**& arr)
 	{
 		//A high anti-sensitivity value means that the colors won't affect the height-values 
 		//as much as a low anti-sensitvity value would. 
 		int offsetZ = height / 2;
 		int offsetX = width / 2;
+		int offsetY = 128;
+
+		//TEST
+		offsetZ = 0;
+		offsetX = 0;
 
 		if (normalizeHeight < 1) normalizeHeight = 1.0f;
 
@@ -116,9 +44,6 @@ namespace TerrainLoader
 			}
 
 			
-
-
-
 			for (int i = 0; i < height; i++)
 			{
 				for (int k = 0; k < width; k++)
@@ -132,52 +57,56 @@ namespace TerrainLoader
 					}
 				}
 			}
+
+
 			for (int i = 0; i < height - 1; i++)
 			{
 				for (int j = 0; j < width - 1; j++)
 				{
 					VERTEX v;
 
-					v = VERTEX{ float(j) - offsetX, map[j][i] - 128 / normalizeHeight ,float(i) - offsetZ };
+					v = VERTEX{ float(j) - offsetX, float(map[j][i] - offsetY) / normalizeHeight ,float(i) - offsetZ };
 					v.u = ((float)j) * normalizeUV;
 					v.v = ((float)i)* normalizeUV;
 					vertexVector.push_back(v);
 
-					v = VERTEX{ float(j) - offsetX, map[j][i + 1] - 128 / normalizeHeight, float(i + 1) - offsetZ };
+					v = VERTEX{ float(j) - offsetX, float(map[j][i + 1] - offsetY) / normalizeHeight, float(i + 1) - offsetZ };
 					v.u = ((float)j)* normalizeUV;
 					v.v = ((float)i + 1)* normalizeUV;
 					vertexVector.push_back(v);
 
-					v = VERTEX{ float(j + 1) - offsetX,map[j + 1][i] - 128 / normalizeHeight, float(i) - offsetZ };
+					v = VERTEX{ float(j + 1) - offsetX,float(map[j + 1][i] - offsetY) / normalizeHeight, float(i) - offsetZ };
 					v.u = ((float)j + 1)* normalizeUV;
 					v.v = ((float)i)* normalizeUV;
 					vertexVector.push_back(v);
 
-					v = VERTEX{ float(j) - offsetX, map[j][i + 1] - 128 / normalizeHeight, float(i + 1) - offsetZ };
+					v = VERTEX{ float(j) - offsetX, float(map[j][i + 1] - offsetY) / normalizeHeight, float(i + 1) - offsetZ };
 					v.u = ((float)j)* normalizeUV;
 					v.v = ((float)i + 1)* normalizeUV;
 					vertexVector.push_back(v);
 
-					v = VERTEX{ float(j + 1) - offsetX, map[j + 1][i + 1] - 128 / normalizeHeight, float(i + 1) - offsetZ };
+					v = VERTEX{ float(j + 1) - offsetX, float(map[j + 1][i + 1] - offsetY) / normalizeHeight, float(i + 1) - offsetZ };
 					v.u = ((float)j + 1)* normalizeUV;
 					v.v = ((float)i + 1)* normalizeUV;
 					vertexVector.push_back(v);
 
-					v = VERTEX{ float(j + 1) - offsetX, map[j + 1][i] - 128 / normalizeHeight, float(i) - offsetZ };
+					v = VERTEX{ float(j + 1) - offsetX, float(map[j + 1][i] - offsetY) / normalizeHeight, float(i) - offsetZ };
 					v.u = ((float)j + 1)* normalizeUV;
 					v.v = ((float)i)* normalizeUV;
 					vertexVector.push_back(v);
 				}
 			}
+
+			arr = map;
 			heightMapFile.close();
 
 			for (int i = 0; i < height; i++)
 			{
 				delete[] heightMap[i];
-				delete[] map[i];
+				//delete[] map[i];
 			}
 			delete[] heightMap;
-			delete[] map;
+			//delete[] map;
 
 		}
 		return vertexVector;

@@ -181,13 +181,12 @@ int Model::getTextureSetting() const
 	return m_textureSetting;
 }
 
-void Model::initTerrainViaHeightMap(std::string path, std::string name, float normalizeHeight, int width, int height, float normalizeUV)
+void Model::initTerrainViaHeightMap(std::string path, std::string name, float normalizeHeight, int width, int height, float normalizeUV, float**& arr)
 {
 	m_name = name;
 	m_terrainStatus = true;
 	std::cout << "Importing " << path << std::endl;
-	//std::vector<VERTEX> vertexVector = TerrainLoader::terrainLoader(path);
-	std::vector<VERTEX> vertexVector = TerrainLoader::terrainLoader2(path, normalizeHeight, width, height, normalizeUV);
+	std::vector<VERTEX> vertexVector = TerrainLoader::terrainLoader2(path, normalizeHeight, width, height, normalizeUV, arr);
 	m_nrOfVertices = static_cast<int>(vertexVector.size());
 	m_terrain = new VERTEX[m_nrOfVertices];
 

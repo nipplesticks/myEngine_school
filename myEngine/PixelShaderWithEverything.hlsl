@@ -39,7 +39,8 @@ PS_OUT main(PS_IN input) : SV_Target
 {
 	PS_OUT output;
 	output.diffuse = diffuseTx.Sample(SampleType, input.Tex);
-	output.normal = normalize(mul(normalMap.Sample(SampleType, input.Tex), WorldMatrix));
+	//output.normal = normalize(mul(normalMap.Sample(SampleType, input.Tex), WorldMatrix));
+	output.normal = float4(input.Nor, 1.0f);
 	output.position = input.Pos;
 	output.ambient = ambientTx.Sample(SampleType, input.Tex);
 	output.specularHighlight = specularHighlightTx.Sample(SampleType, input.Tex);

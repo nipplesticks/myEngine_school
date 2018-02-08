@@ -2,8 +2,7 @@
 #define TERRAIN_HPP
 #include "Entity.hpp"
 
-class Terrain :
-	public Entity
+class Terrain : public Entity
 {
 public:
 	Terrain();
@@ -13,10 +12,14 @@ public:
 	void setTerrainTexture(wchar_t* path, ID3D11Device*& device, int textureSetting = 0);
 	int getWidith() const;
 	int getHeight() const;
+	float** getHightValues() const;
+	float getDeltaHight() const;
 
 private:
 	int m_width;
 	int m_height;
+	float m_heigtNormalisor;
+	float** m_hightValues;
 };
 
 #endif

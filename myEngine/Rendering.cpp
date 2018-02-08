@@ -10,9 +10,9 @@ App::App(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCm
 	SetCursorPos(static_cast<int>(CLIENT_WIDTH) / 2, static_cast<int>(CLIENT_HEIGHT) / 2);
 	
 	m_Camera = Cam(
-		DirectX::XMFLOAT3(0.0f, 370.0f, -1.0f),		//pos
+		DirectX::XMFLOAT3(0.0f, 0.0f, -1.0f),		//pos
 		DirectX::XMFLOAT3(0.0f, 0.0f, 1.0f),		// look at dir
-		DirectX::XMFLOAT3(0.0f, 1.0f, 0.0f));		//up)
+		DirectX::XMFLOAT3(0.0f, 1.0f, 0.0f));		//up
 	
 	m_viewMatrix = m_Camera.getViewMatrix();
 
@@ -107,7 +107,7 @@ int App::run()
 
 		if (duration_cast<milliseconds>(steady_clock::now() - timer).count() > 1000)
 		{
-			printf("\rFPS: %d TICK: %d", fpsCounter, updates);
+			//printf("\rFPS: %d TICK: %d", fpsCounter, updates);
 			updates = 0;
 			fpsCounter = 0;
 			timer += milliseconds(1000);
@@ -338,14 +338,52 @@ void App::Update()
 	m_viewMatrix = m_Camera.getViewMatrix();
 	m_Terrain2.cameraMoved(m_viewMatrix);
 	m_Test.cameraMoved(m_viewMatrix);
-
 	m_Skybox.cameraMoved(m_Camera.getViewMatrixForBackground());
-	//m_Skybox.cameraMoved(m_viewMatrix);
+	m_Test.collisionHandling(m_Terrain2, 100);
+
+
+	DirectX::XMFLOAT3 forward = m_Camera.getForward();
+	DirectX::XMFLOAT3 right = m_Camera.getRight();
+
+	float speed = 2;
+
+	if (GetAsyncKeyState(VK_UP))
+	{
+		
+		forward.x *= -1 * speed;
+		forward.y *= -1 * speed;
+		forward.z *= -1 * speed;
+		m_Test.move(forward);
+	}
+	if (GetAsyncKeyState(VK_DOWN))
+	{
+		forward.x *= speed;
+		forward.y *= speed;
+		forward.z *= speed;
+		m_Test.move(forward);
+	}
+	if (GetAsyncKeyState(VK_RIGHT))
+	{
+		right.x *= speed;
+		right.y *= speed;
+		right.z *= speed;
+		m_Test.move(right);
+	}
+	if (GetAsyncKeyState(VK_LEFT))
+	{
+		right.x *= -1 * speed;
+		right.y *= -1 * speed;
+		right.z *= -1 * speed;
+		m_Test.move(right);
+	}
+	DirectX::XMFLOAT3 pos = m_Test.getPosition();
+
+	pos.y += 20.0f;
+	m_Camera.setPosition(pos);
 }
 
 void App::Render()
 {
-	//clrScrn();
 	firstDrawPass();
 	draw();
 	secondDrawPass();
@@ -845,7 +883,7 @@ void App::loadModels()
 void App::loadEntities()
 {
 	m_Test.loadModel(m_Mh.getModel("STSP.obj"));
-	m_Terrain2.initTerrainViaHeightMap("HeightMap/NewHeightMap.data", "Mountain", 15.0f, 100, 100, 10.0f);
+	m_Terrain2.initTerrainViaHeightMap("HeightMap/NewHeightMap.data", "Mountain", 5.0f, 100, 100, 0.5f);
 	m_Terrain2.setTerrainTexture(L"HeightMap/sand.dds", m_Device);
 	m_Skybox.loadModel(m_Mh.getModel("skybox.obj"));
 
@@ -863,7 +901,7 @@ void App::loadEntities()
 	m_Terrain2.setProjectionMatrix(m_projectionMatrix);
 	m_Terrain2.cameraMoved(m_viewMatrix);
 	m_Terrain2.loadBuffers(m_Device);
-	m_Terrain2.setScale(75, 50, 75);
+	m_Terrain2.setScale(30, 50, 30);
 
 	m_Test.setSamplerState(m_samplerState);
 	m_Test.bindVertexShader(m_VertexShaderNoGS);
@@ -871,8 +909,7 @@ void App::loadEntities()
 	m_Test.setProjectionMatrix(m_projectionMatrix);
 	m_Test.cameraMoved(m_viewMatrix);
 	m_Test.loadBuffers(m_Device);
-	m_Test.setPosition(0, 368.56f, 0);
-	//</TEST>
-
+	m_Test.setPosition(0, 0, 0);
+	m_Test.setScale(10);
 }
 

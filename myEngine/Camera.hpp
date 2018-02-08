@@ -15,6 +15,13 @@ public:
 
 	DirectX::XMMATRIX getViewMatrix();
 	DirectX::XMMATRIX getViewMatrixForBackground();
+
+	DirectX::XMFLOAT3 getPosition() const; 
+	DirectX::XMFLOAT3 getForward() const;
+	DirectX::XMFLOAT3 getRight() const;
+
+	void setPosition(DirectX::XMFLOAT3 position); 
+
 private:
 	void moveX(int leftOrRight);
 	void moveZ(int forwardOrBackwards);
