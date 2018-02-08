@@ -1,12 +1,14 @@
 What do do:
 
 [Magnus]
-* Skeletal Animation [ ];
-* Parsing and Rendering an existing model format [ ];
+* Parsing and Rendering an existing model format [X];
+* Deferred Rendering [ ]; (Using phong)
+* Normal mapping [ ];
+* Front to Back rendering [ ];
+* Glow Effect [ ]
 
 [Victor]
-* Height-map terrain rendering, user can walk on the terrain using WASD keys [ ];
-
-
-Core techniques [X]
-Geometry	[X]
+* Height-map terrain rendering, user can walk on the terrain using WASD keys [X];
+* "Shadow mapping"/"Dynamic cubic enviroment mapping"/"Dynamic paraboloid mapping" [ ];
+* Back face culling using Geometry Shader [ ];
+* Mouse Picking [ ]

@@ -24,7 +24,7 @@ VS_OUT main(VS_IN input)
     output.Pos = float4(input.Pos, 1);
     
     output.Pos = mul(output.Pos, WVPMatrix).xyzw;
-    output.Pos.z = output.Pos.w - 0.0000001f;
+	output.Pos.z = output.Pos.w - 0.0000001f;
 
     output.Tex = input.Tex;
 
