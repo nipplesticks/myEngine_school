@@ -34,23 +34,36 @@ private:
 	bool CreateShaders();
 	bool CreateConstantBuffer();
 	bool InitRenderFunction();
-
-	void initTerrain(Model& terrain); 
+	void InitGBuffer();
 
 	void Update();
 	void Render();
+	void firstDrawPass();
+	void draw();
+	void secondDrawPass();
+	void drawSky();
+	
 
+	bool initVertexShader();
 	bool CreateVertexShader();
+	bool initVertexShaderNoGS();
+	bool initSkyboxVertexShader();
+	bool initDeferredVertexShader();
+
 	bool CreateGeometryShader();
+	
+	bool setSamplerState();
+
 	bool CreatePixelShader();
+	bool initDrawTexture();
+	bool initPixelEverything();
+	bool initSkyboxPixelShader();
+	bool initDeferredPixelShader();
 
 	void clrScrn();
 
 	void setMembersToNull();
 
-	bool initDrawNormal();
-	bool initJustBlue();
-	bool initDrawTexture();
 
 	//Remove later
 	void loadModels();
@@ -71,38 +84,42 @@ private:
 
 	ID3D11Buffer*			m_VertexBuffer;
 	ID3D11InputLayout*		m_VertexLayout;
+	ID3D11InputLayout*		m_DeferredVertexLayout;
 	ID3D11VertexShader*		m_VertexShader;
+	ID3D11VertexShader*		m_VertexShaderNoGS;
+	ID3D11VertexShader*		m_VertexShaderSkybox;
+
+	ID3D11SamplerState*		m_samplerState;
+
+
 	ID3D11GeometryShader*	m_GeometryShader;
+
 	ID3D11PixelShader*		m_PixelShader;
-	ID3D11PixelShader*		m_PixelShaderDrawNormal;
-	ID3D11PixelShader*		m_PixelShaderJustBlue;
 	ID3D11PixelShader*		m_PixelShaderTexture;
+	ID3D11PixelShader*		m_PixelShaderEverything;
+	ID3D11PixelShader*		m_PixelShaderSkybox;
+
+	ID3D11VertexShader*		m_DeferredVertexShader;
+	ID3D11PixelShader*		m_DeferredPixelShader;
 
 	ID3D11Buffer*			m_ConstantBuffer;
 
 	//DEPTH BUFFER
 	ID3D11DepthStencilView* m_Dsv; //View
 	ID3D11Texture2D*		m_Dsb; //Buffer
-	
+
+	TEXTURE_RENDER_TARGET m_Gbuffer[GBUFFER_SIZE];
+
 	Cam m_Camera;
 
 	//Test
 	ModelHandler m_Mh;
 	Terrain m_Terrain2;
-	Entity m_Cube;
-	Entity m_Soviet;
-	float m_SovietVobble = 0;
-	Character m_player; 
-
-	
+	Entity m_Test;
+	Entity m_Skybox;
 
 	DirectX::XMMATRIX		m_viewMatrix;
 	DirectX::XMMATRIX		m_projectionMatrix;
-
-	//REMOVE LATER
-	bool m_CrouchLock;
-	bool m_flying;
-
 };
 
 

@@ -9,9 +9,23 @@ struct PS_IN
     float2 Tex : TEXCOORD;
 };
 
-float4 main(PS_IN input) : SV_Target
+struct PS_OUT
 {
-    float3 lightPos = float3(500, 5000, 500);
+	float4 diffuse : SV_Target0;
+	float4 normal : SV_Target1;
+	float4 position : SV_Target2;
+};
+
+PS_OUT main(PS_IN input) : SV_Target
+{
+	PS_OUT output;
+	output.diffuse = Texture.Sample(SampleType, input.Tex);
+	output.normal = float4(input.Normal, 1);
+	output.position = input.Pos;
+
+	return output;
+
+    /*float3 lightPos = float3(500, 5000, 500);
     
     float4 tx = Texture.Sample(SampleType, input.Tex);
     float4 amb = float4(0.2f, 0.2f, 0.2f, 1.0f);
@@ -22,5 +36,5 @@ float4 main(PS_IN input) : SV_Target
 
     float4 finalColor = amb * tx + (angle * tx);
 
-    return float4(finalColor);
+    return float4(finalColor);*/
 };

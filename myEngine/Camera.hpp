@@ -28,8 +28,8 @@ private:
 	DirectX::XMFLOAT3 m_forward;
 	DirectX::XMFLOAT2 m_rotation;
 
-	double m_defaultX;
-	double m_defaultY;
+	float m_defaultX;
+	float m_defaultY;
 
 	float m_speed;
 	float m_speedChanger;

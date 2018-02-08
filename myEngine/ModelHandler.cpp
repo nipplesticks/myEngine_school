@@ -17,11 +17,11 @@ ModelHandler::~ModelHandler()
 	}
 }
 
-void ModelHandler::loadModel(std::string path, std::string name, bool sTexture, bool sNormals, bool sClockwise)
+void ModelHandler::loadModel(std::string path, std::string name, ID3D11Device* device, bool sTexture, bool sNormals, bool sClockwise)
 {
-	Model* m = new Model;
+	Model* m = new Model();
 	m->settings(sTexture, sNormals, sClockwise);
-	m->initModel(path, name);
+	m->initModel(path, name, device);
 	models.push_back(m);
 }
 

@@ -10,6 +10,7 @@
 #define CLIENT_HEIGHT	1080.0f
 #define FOV				75.0f
 #define REFRESH_RATE	60.0f
+#define GBUFFER_SIZE	3
 #pragma comment (lib, "d3d11.lib")
 #pragma comment (lib, "d3dcompiler.lib")
 
@@ -19,17 +20,26 @@ struct CONSTANT_BUFFER
 {
 	DirectX::XMMATRIX WVPMatrix;
 	DirectX::XMMATRIX WorldMatrix;
+	DirectX::XMVECTOR ambient;
+	DirectX::XMVECTOR diffuse;
+	DirectX::XMVECTOR specular;
+	DirectX::XMVECTOR emissive;
+	float dissolve;
+	float opticalDensity;
+	float sharpness;
+};
+
+struct CONSTANT_BUFFER2
+{
+	DirectX::XMMATRIX WVPMatrix;
+	DirectX::XMMATRIX WorldMatrix;
 };
 
 struct VERTEX
 {
 	float x, y, z;
 	float u, v;
-};
-
-struct QUAD
-{
-	
+	float xN, yN, zN;
 };
 
 struct V_IMPORT
@@ -51,6 +61,13 @@ struct F_IMPORT
 struct I_INPUT
 {
 	int arr[3];
+};
+
+struct TEXTURE_RENDER_TARGET
+{
+	ID3D11Texture2D* tx;
+	ID3D11RenderTargetView* rtv;
+	ID3D11ShaderResourceView* rsv;
 };
 
 #endif

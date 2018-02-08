@@ -15,10 +15,10 @@ Cam::Cam(XMFLOAT3 position, XMFLOAT3 lookAt, XMFLOAT3 up)
 	XMVECTOR v2 = XMLoadFloat3(&m_up);
 	XMVECTOR v3 = XMVector3Normalize(XMVector3Cross(v2, v1));
 	XMStoreFloat3(&m_right, v3);
-	m_defaultX = static_cast<int>(CLIENT_WIDTH) / 2;
-	m_defaultY = static_cast<int>(CLIENT_HEIGHT) / 2;
+	m_defaultX = (CLIENT_WIDTH) / 2;
+	m_defaultY = (CLIENT_HEIGHT) / 2;
 
-	m_speed = 2.0f;
+	m_speed = 0.01f;
 	m_speedChanger = 0.0f;
 	m_sensitivity = 0.05f;
 
@@ -86,8 +86,8 @@ void Cam::update()
 	GetCursorPos(&mousePos);
 	if (mousePos.x != m_defaultX || mousePos.y != m_defaultY)
 	{
-		double deltaX = m_defaultX - mousePos.x;
-		double deltaY = m_defaultY - mousePos.y;
+		float deltaX = m_defaultX - mousePos.x;
+		float deltaY = m_defaultY - mousePos.y;
 
 		m_rotation.x += deltaX * m_sensitivity;
 		m_rotation.y += deltaY * m_sensitivity;
@@ -107,7 +107,7 @@ void Cam::update()
 		XMStoreFloat3(&m_lookAt, newLookAt);
 	}
 
-	SetCursorPos(m_defaultX, m_defaultY);
+	SetCursorPos((int)m_defaultX, (int)m_defaultY);
 }
 
 XMMATRIX Cam::getViewMatrix()

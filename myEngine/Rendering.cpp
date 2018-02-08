@@ -10,21 +10,13 @@ App::App(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCm
 	SetCursorPos(static_cast<int>(CLIENT_WIDTH) / 2, static_cast<int>(CLIENT_HEIGHT) / 2);
 	
 	m_Camera = Cam(
-		DirectX::XMFLOAT3(0.0f, 117.0f, 0.0f),		//pos
+		DirectX::XMFLOAT3(0.0f, 370.0f, -1.0f),		//pos
 		DirectX::XMFLOAT3(0.0f, 0.0f, 1.0f),		// look at dir
 		DirectX::XMFLOAT3(0.0f, 1.0f, 0.0f));		//up)
 	
 	m_viewMatrix = m_Camera.getViewMatrix();
 
 	m_projectionMatrix = DirectX::XMMatrixPerspectiveFovLH(DirectX::XMConvertToRadians(FOV), CLIENT_WIDTH / CLIENT_HEIGHT, 0.1f, 100000.0f);
-
-
-	//<TEST>
-	//REMOVE THIS LATER
-	
-	m_CrouchLock = false;
-	m_flying = true;
-	//</TEST>
 
 	setMembersToNull();
 }
@@ -50,6 +42,8 @@ int App::init()
 
 	if (m_wndHandle)
 	{
+		CoInitializeEx(nullptr, COINITBASE_MULTITHREADED);
+
 		HRESULT hr = CreateDirect3DContext();
 		if (FAILED(hr))	return 2;
 		if (!CreateDepthBuffer()) return 3;
@@ -58,7 +52,7 @@ int App::init()
 
 		if (!CreateConstantBuffer()) return 5;
 		if (!InitRenderFunction()) return 6;
-
+		if (!setSamplerState()) return 7;
 
 		loadModels();
 		loadEntities();
@@ -296,41 +290,146 @@ bool App::InitRenderFunction()
 	m_DeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	m_DeviceContext->IASetInputLayout(m_VertexLayout);
 	m_DeviceContext->OMSetRenderTargets(1, &m_BackbufferRTV, m_Dsv);
+	InitGBuffer();
 	return true;
 }
 
-void App::initTerrain(Model & terrain)
+void App::InitGBuffer()
 {
-	
+	D3D11_TEXTURE2D_DESC textureDesc{};
+	textureDesc.Width = CLIENT_WIDTH;
+	textureDesc.Height = CLIENT_HEIGHT;
+	textureDesc.MipLevels = 1;
+	textureDesc.ArraySize = 1;
+	textureDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+	textureDesc.SampleDesc.Count = 1;
+	textureDesc.Usage = D3D11_USAGE_DEFAULT;
+	textureDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
+
+	for (size_t i = 0; i < GBUFFER_SIZE; i++)
+	{
+		m_Device->CreateTexture2D(&textureDesc, NULL, &m_Gbuffer[i].tx);
+	}
+
+	D3D11_RENDER_TARGET_VIEW_DESC renderTargetViewDesc{};
+	renderTargetViewDesc.Format = textureDesc.Format;
+	renderTargetViewDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
+
+
+	for (size_t i = 0; i < GBUFFER_SIZE; i++)
+	{
+		m_Device->CreateRenderTargetView(m_Gbuffer[i].tx, &renderTargetViewDesc, &m_Gbuffer[i].rtv);
+	}
+
+	D3D11_SHADER_RESOURCE_VIEW_DESC shaderResourceViewDesc{};
+	shaderResourceViewDesc.Format = textureDesc.Format;
+	shaderResourceViewDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+	shaderResourceViewDesc.Texture2D.MipLevels = 1;
+
+	for (size_t i = 0; i < GBUFFER_SIZE; i++)
+	{
+		m_Device->CreateShaderResourceView(m_Gbuffer[i].tx, &shaderResourceViewDesc, &m_Gbuffer[i].rsv);
+	}
 }
 
 void App::Update()
 {
 	m_Camera.update();
 	m_viewMatrix = m_Camera.getViewMatrix();
-
-	m_Cube.cameraMoved(m_Camera.getViewMatrixForBackground());
-	//m_Cube.cameraMoved(m_viewMatrix);
 	m_Terrain2.cameraMoved(m_viewMatrix);
-	m_player.cameraMoved(m_viewMatrix); 
-	m_Soviet.rotate(0, 1, 0, 0.25f);
-	m_SovietVobble += 0.05f;
-	float newPos = DirectX::XMScalarCos(m_SovietVobble) * 2;
-	m_Soviet.move(0, newPos, 0);
-	m_Soviet.cameraMoved(m_viewMatrix);
+	m_Test.cameraMoved(m_viewMatrix);
+
+	m_Skybox.cameraMoved(m_Camera.getViewMatrixForBackground());
+	//m_Skybox.cameraMoved(m_viewMatrix);
 }
 
 void App::Render()
 {
-	clrScrn();
-	m_Soviet.draw(m_DeviceContext);
-	m_player.draw(m_DeviceContext); 
-	m_Terrain2.draw(m_DeviceContext); 
-	m_Cube.draw(m_DeviceContext);
+	//clrScrn();
+	firstDrawPass();
+	draw();
+	secondDrawPass();
 
+	drawSky();
+}
+
+void App::firstDrawPass()
+{
+	m_DeviceContext->IASetInputLayout(m_VertexLayout);
+	m_DeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	float c1[4]{ 0.0f, 0.0f, 1.0f, 1.0f };
+	float c2[4]{ 0.0f, 0.0f, 0.0f, 1.0f };
+	ID3D11RenderTargetView* renderTargets[GBUFFER_SIZE];
+
+	for (int i = 0; i < GBUFFER_SIZE; i++)
+	{
+		renderTargets[i] = m_Gbuffer[i].rtv;
+	}
+
+	m_DeviceContext->OMSetRenderTargets(GBUFFER_SIZE, renderTargets, m_Dsv);
+
+
+	m_DeviceContext->ClearRenderTargetView(m_Gbuffer[0].rtv, c1);
+
+	for (int i = 1; i < GBUFFER_SIZE; i++)
+	{
+		m_DeviceContext->ClearRenderTargetView(m_Gbuffer[i].rtv, c2);
+	}
+
+	m_DeviceContext->ClearDepthStencilView(m_Dsv, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+}
+
+void App::draw()
+{
+	m_Test.draw(m_DeviceContext);
+	m_Terrain2.draw(m_DeviceContext);
+	m_Skybox.draw(m_DeviceContext);
+}
+
+void App::secondDrawPass()
+{
+	m_DeviceContext->IASetInputLayout(m_DeferredVertexLayout);
+	m_DeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+	float c[4]{ 0.0f, 0.0f, 1.0f, 1.0f };
+
+	m_DeviceContext->VSSetShader(m_DeferredVertexShader, nullptr, 0);
+	m_DeviceContext->HSSetShader(nullptr, nullptr, 0);
+	m_DeviceContext->DSSetShader(nullptr, nullptr, 0);
+	m_DeviceContext->GSSetShader(nullptr, nullptr, 0);
+	m_DeviceContext->PSSetShader(m_DeferredPixelShader, nullptr, 0);
+
+	m_DeviceContext->OMSetRenderTargets(1, &m_BackbufferRTV, NULL);
+	m_DeviceContext->ClearRenderTargetView(m_BackbufferRTV, c);
+
+
+	for (int i = 0; i < GBUFFER_SIZE; i++)
+	{
+		m_DeviceContext->PSSetShaderResources(i, 1, &m_Gbuffer[i].rsv);
+	}
+
+	m_DeviceContext->Draw(4, 0);
+}
+
+void App::drawSky()
+{
+	
 }
 
 bool App::CreateVertexShader()
+{
+	if (!initVertexShader())
+		return false;
+	if (!initVertexShaderNoGS())
+		return false;
+	if (!initSkyboxVertexShader())
+		return false;
+	if (!initDeferredVertexShader())
+		return false;
+
+	return true;
+}
+
+bool App::initVertexShader()
 {
 	ID3DBlob* pVS = nullptr;
 	ID3DBlob* error = nullptr;
@@ -362,7 +461,8 @@ bool App::CreateVertexShader()
 	//create input layout (verified using vertex shader)
 	D3D11_INPUT_ELEMENT_DESC inputDesc[] = {
 		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 }
+		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "NORMAL", 0, DXGI_FORMAT_R32G32_FLOAT, 12, 4, D3D11_INPUT_PER_VERTEX_DATA, 0 }
 	};
 	if (FAILED(m_Device->CreateInputLayout(inputDesc, ARRAYSIZE(inputDesc), pVS->GetBufferPointer(), pVS->GetBufferSize(), &m_VertexLayout)))
 	{
@@ -371,6 +471,199 @@ bool App::CreateVertexShader()
 	}
 
 	pVS->Release();
+	return true;
+}
+
+bool App::initVertexShaderNoGS()
+{
+	ID3DBlob* pVS = nullptr;
+	ID3DBlob* error = nullptr;
+	HRESULT hr = D3DCompileFromFile(
+		L"VertexShaderNoGeometryShader.hlsl", // filename
+		nullptr,		// optional macros
+		nullptr,		// optional include files
+		"main",			// entry point
+		"vs_5_0",		// shader model (target)
+		0,				// shader compile options			// here DEBUGGING OPTIONS
+		0,				// effect compile options
+		&pVS,			// double pointer to ID3DBlob		
+		&error			// pointer for Error Blob messages.
+						// how to use the Error blob, see here
+						// https://msdn.microsoft.com/en-us/library/windows/desktop/hh968107(v=vs.85).aspx
+	);
+	if (FAILED(hr))
+	{
+		pVS->Release();
+		OutputDebugString((char*)error->GetBufferPointer());
+		return false;
+	}
+	if (FAILED(m_Device->CreateVertexShader(pVS->GetBufferPointer(), pVS->GetBufferSize(), nullptr, &m_VertexShaderNoGS)))
+	{
+		pVS->Release();
+		return false;
+	}
+
+	//create input layout (verified using vertex shader)
+	D3D11_INPUT_ELEMENT_DESC inputDesc[] = {
+		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "NORMAL", 0, DXGI_FORMAT_R32G32_FLOAT, 12, 4, D3D11_INPUT_PER_VERTEX_DATA, 0 }
+	};
+	if (FAILED(m_Device->CreateInputLayout(inputDesc, ARRAYSIZE(inputDesc), pVS->GetBufferPointer(), pVS->GetBufferSize(), &m_VertexLayout)))
+	{
+		pVS->Release();
+		return false;
+	}
+
+	pVS->Release();
+	return true;
+}
+
+bool App::initSkyboxPixelShader()
+{
+	//create pixel shader
+	ID3DBlob* pPS = nullptr;
+	ID3DBlob* error = nullptr;
+	HRESULT hr = D3DCompileFromFile(
+		L"PixelShaderSkyBox.hlsl", // filename
+		nullptr,			// optional macros
+		nullptr,			// optional include files
+		"main",				// entry point
+		"ps_5_0",			// shader model (target)
+		0,					// shader compile options
+		0,					// effect compile options
+		&pPS,				// double pointer to ID3DBlob		
+		&error				// pointer for Error Blob messages.
+							// how to use the Error blob, see here
+							// https://msdn.microsoft.com/en-us/library/windows/desktop/hh968107(v=vs.85).aspx
+	);
+	if (FAILED(hr))
+	{
+		OutputDebugString((char*)error->GetBufferPointer());
+		pPS->Release();
+		return false;
+	}
+	if (FAILED(m_Device->CreatePixelShader(pPS->GetBufferPointer(), pPS->GetBufferSize(), nullptr, &m_PixelShaderSkybox)))
+	{
+		pPS->Release();
+		return false;
+	}
+
+	pPS->Release();
+
+	return true;
+}
+
+bool App::initDeferredPixelShader()
+{
+	//create pixel shader
+	ID3DBlob* pPS = nullptr;
+	ID3DBlob* error = nullptr;
+	HRESULT hr = D3DCompileFromFile(
+		L"DeferredPixelShader.hlsl", // filename
+		nullptr,			// optional macros
+		nullptr,			// optional include files
+		"main",				// entry point
+		"ps_5_0",			// shader model (target)
+		0,					// shader compile options
+		0,					// effect compile options
+		&pPS,				// double pointer to ID3DBlob		
+		&error				// pointer for Error Blob messages.
+							// how to use the Error blob, see here
+							// https://msdn.microsoft.com/en-us/library/windows/desktop/hh968107(v=vs.85).aspx
+	);
+	if (FAILED(hr))
+	{
+		OutputDebugString((char*)error->GetBufferPointer());
+		pPS->Release();
+		return false;
+	}
+	if (FAILED(m_Device->CreatePixelShader(pPS->GetBufferPointer(), pPS->GetBufferSize(), nullptr, &m_DeferredPixelShader)))
+	{
+		pPS->Release();
+		return false;
+	}
+
+	pPS->Release();
+
+	return true;
+}
+
+bool App::initSkyboxVertexShader()
+{
+	ID3DBlob* pVS = nullptr;
+	ID3DBlob* error = nullptr;
+	HRESULT hr = D3DCompileFromFile(
+		L"VertexShaderSkyBox.hlsl", // filename
+		nullptr,		// optional macros
+		nullptr,		// optional include files
+		"main",			// entry point
+		"vs_5_0",		// shader model (target)
+		0,				// shader compile options			// here DEBUGGING OPTIONS
+		0,				// effect compile options
+		&pVS,			// double pointer to ID3DBlob		
+		&error			// pointer for Error Blob messages.
+						// how to use the Error blob, see here
+						// https://msdn.microsoft.com/en-us/library/windows/desktop/hh968107(v=vs.85).aspx
+	);
+	if (FAILED(hr))
+	{
+		pVS->Release();
+		OutputDebugString((char*)error->GetBufferPointer());
+		return false;
+	}
+	if (FAILED(m_Device->CreateVertexShader(pVS->GetBufferPointer(), pVS->GetBufferSize(), nullptr, &m_VertexShaderSkybox)))
+	{
+		pVS->Release();
+		return false;
+	}
+
+	pVS->Release();
+	return true;
+}
+
+bool App::initDeferredVertexShader()
+{
+	ID3DBlob* pVS = nullptr;
+	ID3DBlob* error = nullptr;
+	HRESULT hr = D3DCompileFromFile(
+		L"DeferredVertexShader.hlsl", // filename
+		nullptr,		// optional macros
+		nullptr,		// optional include files
+		"main",			// entry point
+		"vs_5_0",		// shader model (target)
+		0,				// shader compile options			// here DEBUGGING OPTIONS
+		0,				// effect compile options
+		&pVS,			// double pointer to ID3DBlob		
+		&error			// pointer for Error Blob messages.
+						// how to use the Error blob, see here
+						// https://msdn.microsoft.com/en-us/library/windows/desktop/hh968107(v=vs.85).aspx
+	);
+	if (FAILED(hr))
+	{
+		pVS->Release();
+		OutputDebugString((char*)error->GetBufferPointer());
+		return false;
+	}
+	if (FAILED(m_Device->CreateVertexShader(pVS->GetBufferPointer(), pVS->GetBufferSize(), nullptr, &m_DeferredVertexShader)))
+	{
+		pVS->Release();
+		return false;
+	}
+	//create input layout (verified using vertex shader)
+	D3D11_INPUT_ELEMENT_DESC inputDesc[] = {
+		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 }
+	};
+	if (FAILED(m_Device->CreateInputLayout(inputDesc, ARRAYSIZE(inputDesc), pVS->GetBufferPointer(), pVS->GetBufferSize(), &m_DeferredVertexLayout)))
+	{
+		pVS->Release();
+		return false;
+	}
+
+
+	pVS->Release();
+
 	return true;
 }
 
@@ -408,43 +701,39 @@ bool App::CreateGeometryShader()
 	return true;
 }
 
+bool App::setSamplerState()
+{
+	D3D11_SAMPLER_DESC samplerDesc;
+	samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+	samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+	samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+	samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+	samplerDesc.MipLODBias = 0.0f;
+	samplerDesc.MaxAnisotropy = 1;
+	samplerDesc.ComparisonFunc = D3D11_COMPARISON_ALWAYS;
+	samplerDesc.BorderColor[0] = 0;
+	samplerDesc.BorderColor[1] = 0;
+	samplerDesc.BorderColor[2] = 0;
+	samplerDesc.BorderColor[3] = 0;
+	samplerDesc.MinLOD = 0;
+	samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
+	HRESULT hr = m_Device->CreateSamplerState(&samplerDesc, &m_samplerState);
+
+	return SUCCEEDED(hr);
+}
+
 bool App::CreatePixelShader()
 {
-	//create pixel shader
-	ID3DBlob* pPS = nullptr;
-	ID3DBlob* error = nullptr;
-	HRESULT hr = D3DCompileFromFile(
-		L"PixelShader.hlsl", // filename
-		nullptr,			// optional macros
-		nullptr,			// optional include files
-		"main",				// entry point
-		"ps_5_0",			// shader model (target)
-		0,					// shader compile options
-		0,					// effect compile options
-		&pPS,				// double pointer to ID3DBlob		
-		&error				// pointer for Error Blob messages.
-							// how to use the Error blob, see here
-							// https://msdn.microsoft.com/en-us/library/windows/desktop/hh968107(v=vs.85).aspx
-	);
-	if (FAILED(hr))
-	{
-		OutputDebugString((char*)error->GetBufferPointer());
-		pPS->Release();
+	if (!initDrawTexture())
 		return false;
-	}
-	if (FAILED(m_Device->CreatePixelShader(pPS->GetBufferPointer(), pPS->GetBufferSize(), nullptr, &m_PixelShader)))
-	{
-		pPS->Release();
+	if (!initPixelEverything())
 		return false;
-	}
-	
-	pPS->Release();
+	if (!initSkyboxPixelShader())
+		return false;
+	if (!initDeferredPixelShader())
+		return false;
 
-	bool f = initDrawNormal();
-	f = initJustBlue();
-	f = initDrawTexture();
-
-	return f;
+	return true;
 }
 
 void App::clrScrn()
@@ -466,82 +755,15 @@ void App::setMembersToNull()
 	m_VertexShader = nullptr;
 	m_GeometryShader = nullptr;
 	m_PixelShader = nullptr;
-	m_PixelShaderDrawNormal = nullptr;
 
 	m_ConstantBuffer = nullptr;
+	m_samplerState = nullptr;
+	m_DeferredPixelShader = nullptr;
+	m_DeferredVertexLayout = nullptr;
+	m_DeferredVertexShader = nullptr;
 
 	m_Dsv = nullptr;
 	m_Dsb = nullptr;
-}
-
-bool App::initDrawNormal()
-{
-	//create pixel shader
-	ID3DBlob* pPS = nullptr;
-	ID3DBlob* error = nullptr;
-	HRESULT hr = D3DCompileFromFile(
-		L"PixelShaderDrawNormals.hlsl", // filename
-		nullptr,			// optional macros
-		nullptr,			// optional include files
-		"main",				// entry point
-		"ps_5_0",			// shader model (target)
-		0,					// shader compile options
-		0,					// effect compile options
-		&pPS,				// double pointer to ID3DBlob		
-		&error				// pointer for Error Blob messages.
-							// how to use the Error blob, see here
-							// https://msdn.microsoft.com/en-us/library/windows/desktop/hh968107(v=vs.85).aspx
-	);
-	if (FAILED(hr))
-	{
-		OutputDebugString((char*)error->GetBufferPointer());
-		pPS->Release();
-		return false;
-	}
-	if (FAILED(m_Device->CreatePixelShader(pPS->GetBufferPointer(), pPS->GetBufferSize(), nullptr, &m_PixelShaderDrawNormal)))
-	{
-		pPS->Release();
-		return false;
-	}
-
-	pPS->Release();
-
-	return true;
-}
-
-bool App::initJustBlue()
-{
-	//create pixel shader
-	ID3DBlob* pPS = nullptr;
-	ID3DBlob* error = nullptr;
-	HRESULT hr = D3DCompileFromFile(
-		L"PixelShaderJustBlue.hlsl", // filename
-		nullptr,			// optional macros
-		nullptr,			// optional include files
-		"main",				// entry point
-		"ps_5_0",			// shader model (target)
-		0,					// shader compile options
-		0,					// effect compile options
-		&pPS,				// double pointer to ID3DBlob		
-		&error				// pointer for Error Blob messages.
-							// how to use the Error blob, see here
-							// https://msdn.microsoft.com/en-us/library/windows/desktop/hh968107(v=vs.85).aspx
-	);
-	if (FAILED(hr))
-	{
-		OutputDebugString((char*)error->GetBufferPointer());
-		pPS->Release();
-		return false;
-	}
-	if (FAILED(m_Device->CreatePixelShader(pPS->GetBufferPointer(), pPS->GetBufferSize(), nullptr, &m_PixelShaderJustBlue)))
-	{
-		pPS->Release();
-		return false;
-	}
-
-	pPS->Release();
-
-	return true;
 }
 
 bool App::initDrawTexture()
@@ -579,64 +801,77 @@ bool App::initDrawTexture()
 	return true;
 }
 
+bool App::initPixelEverything()
+{
+	//create pixel shader
+	ID3DBlob* pPS = nullptr;
+	ID3DBlob* error = nullptr;
+	HRESULT hr = D3DCompileFromFile(
+		L"PixelShaderWithEverything.hlsl", // filename
+		nullptr,			// optional macros
+		nullptr,			// optional include files
+		"main",				// entry point
+		"ps_5_0",			// shader model (target)
+		0,					// shader compile options
+		0,					// effect compile options
+		&pPS,				// double pointer to ID3DBlob		
+		&error				// pointer for Error Blob messages.
+							// how to use the Error blob, see here
+							// https://msdn.microsoft.com/en-us/library/windows/desktop/hh968107(v=vs.85).aspx
+	);
+	if (FAILED(hr))
+	{
+		OutputDebugString((char*)error->GetBufferPointer());
+		pPS->Release();
+		return false;
+	}
+	if (FAILED(m_Device->CreatePixelShader(pPS->GetBufferPointer(), pPS->GetBufferSize(), nullptr, &m_PixelShaderEverything)))
+	{
+		pPS->Release();
+		return false;
+	}
+
+	pPS->Release();
+
+	return true;
+}
+
 void App::loadModels()
 {
-	m_Mh.loadModel("models/Cube.obj", "SkyBox", true, true, false);
-	m_Mh.getModel("SkyBox")->initTexture(L"models/SkyBox3.dds", m_Device);
-
-	m_Mh.loadModel("models/dog.obj", "Dog", true, true);
-
-	m_Mh.loadModel("models/soviet.obj", "Soviet", true, true);
-	m_Mh.getModel("Soviet")->initTexture(L"models/soviet.dds", m_Device);
+	m_Mh.loadModel("models/shadowTeam/", "STSP.obj", m_Device, true, true);
+	m_Mh.loadModel("models/SkyBox/", "skybox.obj", m_Device, true, true, false);
 }
 
 void App::loadEntities()
 {
-	
-	m_Cube.loadModel(m_Mh.getModel("SkyBox"));			//The cube model
-	m_player.loadModel(m_Mh.getModel("Dog"));		//The dog model
-	m_Soviet.loadModel(m_Mh.getModel("Soviet"));
-	m_Terrain2.initTerrainViaHeightMap("HeightMap/Mountain2.data", "Mountain", 15.0f, 2048, 2048, 0.5f);
+	m_Test.loadModel(m_Mh.getModel("STSP.obj"));
+	m_Terrain2.initTerrainViaHeightMap("HeightMap/NewHeightMap.data", "Mountain", 15.0f, 100, 100, 10.0f);
 	m_Terrain2.setTerrainTexture(L"HeightMap/sand.dds", m_Device);
+	m_Skybox.loadModel(m_Mh.getModel("skybox.obj"));
 
-	//<TEST>
-	m_Cube.bindVertexShader(m_VertexShader);
-	m_Cube.bindGeometryShader(m_GeometryShader);
-	m_Cube.bindPixelShader(m_PixelShaderJustBlue);
-	m_Cube.setProjectionMatrix(m_projectionMatrix);
-	m_Cube.cameraMoved(m_viewMatrix);
-	m_Cube.loadBuffers(m_Device);
-	m_Cube.setPosition(-35000.0f, -35000.0f, -35000.0f);
-	m_Cube.setScale(70000.0f);
+	m_Skybox.setSamplerState(m_samplerState);
+	m_Skybox.bindVertexShader(m_VertexShaderSkybox);
+	m_Skybox.bindPixelShader(m_PixelShaderSkybox);
+	m_Skybox.setProjectionMatrix(m_projectionMatrix);
+	m_Skybox.cameraMoved(m_viewMatrix);
+	m_Skybox.loadBuffers(m_Device);
 
+	m_Terrain2.setSamplerState(m_samplerState);
 	m_Terrain2.bindVertexShader(m_VertexShader);
 	m_Terrain2.bindGeometryShader(m_GeometryShader);
 	m_Terrain2.bindPixelShader(m_PixelShaderTexture);
 	m_Terrain2.setProjectionMatrix(m_projectionMatrix);
 	m_Terrain2.cameraMoved(m_viewMatrix);
 	m_Terrain2.loadBuffers(m_Device);
-	m_Terrain2.setScale(75, 500, 75);
-	//m_Terrain2.setPosition(0.0f, 0.0f, 0.0f);
+	m_Terrain2.setScale(75, 50, 75);
 
-	m_player.bindVertexShader(m_VertexShader);
-	m_player.bindGeometryShader(m_GeometryShader);
-	m_player.bindPixelShader(m_PixelShader);
-	m_player.setProjectionMatrix(m_projectionMatrix);
-	m_player.cameraMoved(m_viewMatrix);
-	m_player.loadBuffers(m_Device);
-	m_player.setRotation(0.0f, 0.0f, 0.0f, 180.0f);
-	m_player.rotate(0, 1, 0, -90);
-	m_player.setScale(0.05f, 0.05f, 0.05f);
-	m_player.setPosition(-0, 0, 0);
-
-	m_Soviet.bindVertexShader(m_VertexShader);
-	m_Soviet.bindGeometryShader(m_GeometryShader);
-	m_Soviet.bindPixelShader(m_PixelShaderTexture);
-	m_Soviet.setProjectionMatrix(m_projectionMatrix);
-	m_Soviet.cameraMoved(m_viewMatrix);
-	m_Soviet.loadBuffers(m_Device);
-	m_Soviet.setPosition(0, 1000, 2000);
-	m_Soviet.setScale(6);
+	m_Test.setSamplerState(m_samplerState);
+	m_Test.bindVertexShader(m_VertexShaderNoGS);
+	m_Test.bindPixelShader(m_PixelShaderEverything);
+	m_Test.setProjectionMatrix(m_projectionMatrix);
+	m_Test.cameraMoved(m_viewMatrix);
+	m_Test.loadBuffers(m_Device);
+	m_Test.setPosition(0, 368.56f, 0);
 	//</TEST>
 
 }

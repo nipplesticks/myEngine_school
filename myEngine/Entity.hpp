@@ -37,11 +37,13 @@ public:
 	void setProjectionMatrix(DirectX::XMMATRIX projection);
 	void cameraMoved(DirectX::XMMATRIX view);
 
+	void setSamplerState(ID3D11SamplerState* ss);
+
 	int getNrOfVertices() const;
 	Model* getModel() const; 
 	ID3D11Buffer* getVertexBuffer() const;
 
-	void draw(ID3D11DeviceContext*& deviceContext) const;
+	void draw(ID3D11DeviceContext*& deviceContext);
 private:
 	DirectX::XMFLOAT3 add(DirectX::XMFLOAT3 tar, DirectX::XMFLOAT3 adder) const;
 	DirectX::XMFLOAT3 multiply(DirectX::XMFLOAT3 tar, DirectX::XMFLOAT3 adder) const;
@@ -52,6 +54,11 @@ private:
 	void setShaders(ID3D11DeviceContext *& deviceContext) const;
 
 private:
+
+	std::vector<ID3D11Buffer*> m_vertexBufferVector;
+	ID3D11SamplerState*			m_samplerState;
+
+
 	ID3D11Buffer*			m_vertexBuffer;
 	ID3D11Buffer*			m_constantBuffer;
 	ID3D11VertexShader*		m_vertexShader;

@@ -9,7 +9,7 @@ public:
 	ModelHandler();
 	~ModelHandler();
 
-	void loadModel(std::string path, std::string name, bool sTexture, bool sNormals, bool sClockwise = true);
+	void loadModel(std::string path, std::string name, ID3D11Device* device, bool sTexture, bool sNormals, bool sClockwise = true);
 	Model* getModel(std::string name);
 
 private:

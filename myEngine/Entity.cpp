@@ -21,16 +21,46 @@ void Entity::loadModel(Model * m)
 
 void Entity::loadBuffers(ID3D11Device*& device)
 {
-	// Vertex Buffer
-	D3D11_BUFFER_DESC vBufferDesc;
-	memset(&vBufferDesc, 0, sizeof(vBufferDesc));
-	vBufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-	vBufferDesc.Usage = D3D11_USAGE_DEFAULT;
-	vBufferDesc.ByteWidth = sizeof(VERTEX) * m_model->getNrOfVertices();
+	if (!m_model->isTerrain())
+	{
+		const std::vector<Mesh> mesh = m_model->getMeshes();
+		size_t nrOfMeshes = mesh.size();
+	
+		for (size_t i = 0; i < nrOfMeshes; i++)
+		{
+			// Vertex Buffer
+			D3D11_BUFFER_DESC vBufferDesc;
+			memset(&vBufferDesc, 0, sizeof(vBufferDesc));
+			vBufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+			vBufferDesc.Usage = D3D11_USAGE_DEFAULT;
+			//vBufferDesc.ByteWidth = sizeof(VERTEX) * m_model->getNrOfVertices();
+			vBufferDesc.ByteWidth = sizeof(VERTEX) * static_cast<UINT>(mesh[i].getVertices().size());
 
-	D3D11_SUBRESOURCE_DATA vData;
-	vData.pSysMem = m_model->getMesh();
-	HRESULT hr = device->CreateBuffer(&vBufferDesc, &vData, &m_vertexBuffer);
+			ID3D11Buffer* pBuffer = nullptr;
+			D3D11_SUBRESOURCE_DATA vData;
+			vData.pSysMem = m_model->getMeshes()[i].getVertices().data();
+			//HRESULT hr = device->CreateBuffer(&vBufferDesc, &vData, &m_vertexBuffer);
+			HRESULT hr = device->CreateBuffer(&vBufferDesc, &vData, &pBuffer);
+			m_vertexBufferVector.push_back(pBuffer);
+		}
+	}
+	else
+	{
+		// Vertex Buffer
+		D3D11_BUFFER_DESC vBufferDesc;
+		memset(&vBufferDesc, 0, sizeof(vBufferDesc));
+		vBufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+		vBufferDesc.Usage = D3D11_USAGE_DEFAULT;
+		//vBufferDesc.ByteWidth = sizeof(VERTEX) * m_model->getNrOfVertices();
+		vBufferDesc.ByteWidth = sizeof(VERTEX) * static_cast<UINT>(m_model->getNrOfVertices());
+
+		ID3D11Buffer* pBuffer = nullptr;
+		D3D11_SUBRESOURCE_DATA vData;
+		vData.pSysMem = m_model->getTerrainMesh();
+		//HRESULT hr = device->CreateBuffer(&vBufferDesc, &vData, &m_vertexBuffer);
+		HRESULT hr = device->CreateBuffer(&vBufferDesc, &vData, &pBuffer);
+		m_vertexBufferVector.push_back(pBuffer);
+	}
 
 	D3D11_BUFFER_DESC cBufferDesc;
 	cBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
@@ -41,7 +71,7 @@ void Entity::loadBuffers(ID3D11Device*& device)
 	cBufferDesc.StructureByteStride = 0;
 
 	// check if the creation failed for any reason
-	hr = device->CreateBuffer(&cBufferDesc, nullptr, &m_constantBuffer);
+	HRESULT hr = device->CreateBuffer(&cBufferDesc, nullptr, &m_constantBuffer);
 }
 
 void Entity::bindVertexShader(ID3D11VertexShader * vertexShader)
@@ -188,40 +218,100 @@ void Entity::cameraMoved(DirectX::XMMATRIX view)
 	buildMatrix();
 }
 
-void Entity::draw(ID3D11DeviceContext *& deviceContext) const
+void Entity::setSamplerState(ID3D11SamplerState * ss)
+{
+	m_samplerState = ss;
+}
+
+void Entity::draw(ID3D11DeviceContext *& deviceContext)
 {
 	setShaders(deviceContext);
-	
-	UINT32 vertexSize = sizeof(float) * 5;
+	UINT32 vertexSize = sizeof(VERTEX);
 	UINT offset = 0;
-	deviceContext->IASetVertexBuffers(0, 1, &m_vertexBuffer, &vertexSize, &offset);
 
-	ID3D11ShaderResourceView* texture = m_model->getTextureResourceView();
-	if (m_model->getTextureSetting() == 0)
+	size_t nrOfDrawCalls = m_vertexBufferVector.size();
+	
+	std::vector<Mesh> mesh = m_model->getMeshes();
+
+
+	for (size_t i = 0; i < nrOfDrawCalls; i++)
 	{
-		ID3D11SamplerState* sampleState = m_model->getSampleState();
-		deviceContext->PSSetSamplers(0, 1, &sampleState);
+		if (!m_model->isTerrain())
+		{
+			Material m = mesh[i].getMaterial();
+			m_cBuffer.ambient = m.getAmbientLevel();
+			m_cBuffer.diffuse = m.getDiffuseLevel();
+			m_cBuffer.specular = m.getSpecularLevel();
+			m_cBuffer.emissive = m.getEmissiveColor();
+			m_cBuffer.dissolve = m.getDissolveLevel();
+			m_cBuffer.opticalDensity = m.getOpticalDensity();
+			m_cBuffer.sharpness = m.getSharpness();
+
+		
+
+
+			ID3D11ShaderResourceView* ambientTexture = mesh[i].getMaterial().getAmbientTexture();
+			ID3D11ShaderResourceView* diffuseTexture = mesh[i].getMaterial().getDiffuseTexture();
+			ID3D11ShaderResourceView* specularHighlightComponent = mesh[i].getMaterial().getSpecularHighlightComponent();
+			ID3D11ShaderResourceView* normalMap = mesh[i].getMaterial().getSpecularHighlightComponent();
+			deviceContext->PSSetShaderResources(0, 1, &ambientTexture);
+			deviceContext->PSSetShaderResources(1, 1, &diffuseTexture);
+			deviceContext->PSSetShaderResources(2, 1, &specularHighlightComponent);
+			deviceContext->PSSetShaderResources(3, 1, &normalMap);
+		}
+		else
+		{
+			ID3D11ShaderResourceView* texture = m_model->getTextureResourceView();
+			deviceContext->PSSetShaderResources(0, 1, &texture);
+		}
+		deviceContext->IASetVertexBuffers(0, 1, &m_vertexBufferVector[i], &vertexSize, &offset);
+		D3D11_MAPPED_SUBRESOURCE dataPtr;
+		deviceContext->Map(m_constantBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &dataPtr);
+		//	Copy memory from CPU to GPU
+		memcpy(dataPtr.pData, &m_cBuffer, sizeof(CONSTANT_BUFFER));
+		// Unmap constant buffer so that we can use it again in the GPU
+		deviceContext->Unmap(m_constantBuffer, 0);
+		// set resources to shaders
+		deviceContext->VSSetConstantBuffers(0, 1, &m_constantBuffer);
+		deviceContext->GSSetConstantBuffers(0, 1, &m_constantBuffer);
+		deviceContext->PSSetConstantBuffers(0, 1, &m_constantBuffer);
+
+
+		deviceContext->PSSetSamplers(0, 1, &m_samplerState);
+		
+		if (!m_model->isTerrain())
+			deviceContext->Draw(static_cast<UINT>(mesh[i].getVertices().size()), 0);
+		else
+			deviceContext->Draw(static_cast<UINT>(m_model->getNrOfVertices()), 0);
 	}
-
-	deviceContext->PSSetShaderResources(0, 1, &texture);
-
 	
 
-	D3D11_MAPPED_SUBRESOURCE dataPtr;
-	deviceContext->Map(m_constantBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &dataPtr);
+	//UINT32 vertexSize = sizeof(VERTEX);
+	//UINT offset = 0;
+	//deviceContext->IASetVertexBuffers(0, 1, &m_vertexBuffer, &vertexSize, &offset);
+	//ID3D11ShaderResourceView* texture = m_model->getTextureResourceView();
+	//if (m_model->getTextureSetting() == 0)
+	//{
+	//	ID3D11SamplerState* sampleState = m_model->getSampleState();
+	//	deviceContext->PSSetSamplers(0, 1, &sampleState);
+	//}
 
-	//	Copy memory from CPU to GPU
-	memcpy(dataPtr.pData, &m_cBuffer, sizeof(CONSTANT_BUFFER));
+	//deviceContext->PSSetShaderResources(0, 1, &texture);
 
-	// Unmap constant buffer so that we can use it again in the GPU
-	deviceContext->Unmap(m_constantBuffer, 0);
-	// set resources to shaders
-	deviceContext->VSSetConstantBuffers(0, 1, &m_constantBuffer);
-	deviceContext->GSSetConstantBuffers(0, 1, &m_constantBuffer);
-	deviceContext->PSSetConstantBuffers(0, 1, &m_constantBuffer);
-	
+	//D3D11_MAPPED_SUBRESOURCE dataPtr;
+	//deviceContext->Map(m_constantBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &dataPtr);
 
-	deviceContext->Draw(m_model->getNrOfVertices(), 0);
+	////	Copy memory from CPU to GPU
+	//memcpy(dataPtr.pData, &m_cBuffer, sizeof(CONSTANT_BUFFER));
+
+	//// Unmap constant buffer so that we can use it again in the GPU
+	//deviceContext->Unmap(m_constantBuffer, 0);
+	//// set resources to shaders
+	//deviceContext->VSSetConstantBuffers(0, 1, &m_constantBuffer);
+	//deviceContext->GSSetConstantBuffers(0, 1, &m_constantBuffer);
+	//deviceContext->PSSetConstantBuffers(0, 1, &m_constantBuffer);
+
+	//deviceContext->Draw(m_model->getNrOfVertices(), 0);
 }
 
 XMFLOAT3 Entity::add(XMFLOAT3 tar, XMFLOAT3 adder) const

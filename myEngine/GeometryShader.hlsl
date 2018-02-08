@@ -8,14 +8,15 @@ struct GS_IN
 {
     float4 Pos : SV_POSITION;
     float2 Tex : TEXCOORD;
+    float3 Nor : NORMAL;
 };
 
 struct GS_OUT
 {
-    float4 Pos      : SV_POSITION;
-    float4 worldPos : WORLDPOS;
-    float3 Normal   : NORMAL;
-    float2 Tex      : TEXCOORD;
+	float4 Pos : SV_POSITION;
+	float4 worldPos : WORLDPOS;
+	float3 Normal : NORMAL;
+	float2 Tex : TEXCOORD;
 };
 
 
@@ -36,8 +37,8 @@ void main(triangle GS_IN input[3], inout TriangleStream<GS_OUT> fragmentShaderIn
     for (uint i = 0; i < 3; i++)
     {
         output.Pos = mul(input[i].Pos, WVPMatrix);
-        output.worldPos = mul(input[i].Pos, WorldMatrix);
-        //output.Normal = normalize(mul(float4(n, 0), WorldMatrix).xyz);
+        //output.worldPos = mul(input[i].Pos, WorldMatrix);
+        output.Normal = normalize(mul(float4(n, 0), WorldMatrix).xyz);
 		output.Normal = n;
         output.Tex = input[i].Tex;
         fragmentShaderInput.Append(output);
