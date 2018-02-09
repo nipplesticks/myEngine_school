@@ -52,6 +52,9 @@ int App::init()
 		if (!CreateConstantBuffer()) return 5;
 		if (!InitRenderFunction()) return 6;
 		if (!setSamplerState()) return 7;
+		if (!initRasterizer()) return 8; 
+		if (!createCameraBuffer()) return 9; 
+
 
 		loadModels();
 		loadEntities();
@@ -343,7 +346,7 @@ void App::Update()
 
 	DirectX::XMFLOAT3 forward = m_Camera.getForward();
 	DirectX::XMFLOAT3 right = m_Camera.getRight();
-
+	
 	float speed = 2;
 
 	if (GetAsyncKeyState(VK_UP))
@@ -378,7 +381,18 @@ void App::Update()
 	DirectX::XMFLOAT3 pos = m_Test.getPosition();
 
 	pos.y += 20.0f;
-	m_Camera.setPosition(pos);
+	//m_Camera.setPosition(pos);
+
+	DirectX::XMStoreFloat3(&m_Camera.getPosition(), m_Camera.getCamBuffer().pos);
+	DirectX::XMStoreFloat3(&m_Camera.getLookAt(), m_Camera.getCamBuffer().lookAt); 
+
+	D3D11_MAPPED_SUBRESOURCE dataPtr; 
+
+	m_DeviceContext->Map(m_CameraBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &dataPtr);
+	memcpy(dataPtr.pData, &m_Camera.getCamBuffer(), sizeof(CAMERA_BUFFER)); 
+	m_DeviceContext->Unmap(m_CameraBuffer, 0); 
+
+	m_DeviceContext->GSGetConstantBuffers(1, 1, &m_CameraBuffer); 
 }
 
 void App::Render()
@@ -437,7 +451,6 @@ void App::secondDrawPass()
 
 	m_DeviceContext->OMSetRenderTargets(1, &m_BackbufferRTV, NULL);
 	m_DeviceContext->ClearRenderTargetView(m_BackbufferRTV, c);
-
 
 	for (int i = 0; i < GBUFFER_SIZE; i++)
 	{
@@ -629,6 +642,56 @@ bool App::initDeferredPixelShader()
 	return true;
 }
 
+bool App::initRasterizer()
+{
+	D3D11_RASTERIZER_DESC  rasDesc; 
+	rasDesc.FillMode = D3D11_FILL_SOLID; 
+	rasDesc.CullMode = D3D11_CULL_NONE; 
+	rasDesc.FrontCounterClockwise = false;
+	rasDesc.DepthBias = 0; 
+	rasDesc.SlopeScaledDepthBias = 0.0f; 
+	rasDesc.DepthBiasClamp = 0.0f; 
+	rasDesc.DepthClipEnable = true;
+	rasDesc.ScissorEnable = false; 
+	rasDesc.MultisampleEnable = false; 
+	rasDesc.AntialiasedLineEnable = false; 
+	HRESULT hr = m_Device->CreateRasterizerState(&rasDesc, &m_RasterizerState); 
+	if (SUCCEEDED(hr))
+	{
+		m_DeviceContext->RSSetState(m_RasterizerState); 
+	}
+	else
+	{
+		std::cout << "Failed to initialize Rasterizer!" << std::endl; 
+	}
+	return SUCCEEDED(hr);
+}
+
+bool App::createCameraBuffer()
+{
+	D3D11_BUFFER_DESC buffDesc; 
+	buffDesc.Usage = D3D11_USAGE_DYNAMIC;
+	buffDesc.ByteWidth = sizeof(CAMERA_BUFFER);
+	buffDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	buffDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+	buffDesc.MiscFlags = 0;
+	buffDesc.StructureByteStride = 0;
+
+	// check if the creation failed for any reason
+	HRESULT hr = 0;
+	hr = m_Device->CreateBuffer(&buffDesc, nullptr, &m_CameraBuffer); 
+
+	if (FAILED(hr))
+	{
+		std::cout << "Failed to create camera buffer!" << std::endl; 
+		return false;
+	}
+
+	m_DeviceContext->GSSetConstantBuffers(1, 1, &m_CameraBuffer);
+	//USE CAMERA STRUCT INSTEAD? 
+	return true;
+}
+
 bool App::initSkyboxVertexShader()
 {
 	ID3DBlob* pVS = nullptr;
@@ -808,6 +871,7 @@ void App::setMembersToNull()
 	m_PixelShader = nullptr;
 
 	m_ConstantBuffer = nullptr;
+	m_CameraBuffer = nullptr; 
 	m_samplerState = nullptr;
 	m_DeferredPixelShader = nullptr;
 	m_DeferredVertexLayout = nullptr;
