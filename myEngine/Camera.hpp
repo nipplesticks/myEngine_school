@@ -19,8 +19,11 @@ public:
 	DirectX::XMFLOAT3 getPosition() const; 
 	DirectX::XMFLOAT3 getForward() const;
 	DirectX::XMFLOAT3 getRight() const;
+	DirectX::XMFLOAT3 getLookAt() const; 
 
 	void setPosition(DirectX::XMFLOAT3 position); 
+
+	CAMERA_BUFFER& getCamBuffer(); 
 
 private:
 	void moveX(int leftOrRight);
@@ -45,10 +48,8 @@ private:
 	bool m_crouchLock;
 	bool m_flying;
 
+	CAMERA_BUFFER m_camBuffer; 
+
 };
-
-
-
-
 
 #endif

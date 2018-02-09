@@ -16,6 +16,12 @@
 
 #include <vector>
 
+struct CAMERA_BUFFER
+{
+	DirectX::XMVECTOR pos;
+	DirectX::XMVECTOR lookAt;
+};
+
 struct CONSTANT_BUFFER
 {
 	DirectX::XMMATRIX WVPMatrix;

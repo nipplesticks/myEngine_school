@@ -33,6 +33,7 @@ private:
 	void SetViewport();
 	bool CreateShaders();
 	bool CreateConstantBuffer();
+	bool createCameraBuffer();
 	bool InitRenderFunction();
 	void InitGBuffer();
 
@@ -59,6 +60,7 @@ private:
 	bool initPixelEverything();
 	bool initSkyboxPixelShader();
 	bool initDeferredPixelShader();
+	bool initRasterizer(); 
 
 	void clrScrn();
 
@@ -81,6 +83,7 @@ private:
 	ID3D11Device*			m_Device;
 	ID3D11DeviceContext*	m_DeviceContext;
 	ID3D11RenderTargetView* m_BackbufferRTV;
+	ID3D11RasterizerState* m_RasterizerState; 
 
 	ID3D11Buffer*			m_VertexBuffer;
 	ID3D11InputLayout*		m_VertexLayout;
@@ -103,6 +106,8 @@ private:
 	ID3D11PixelShader*		m_DeferredPixelShader;
 
 	ID3D11Buffer*			m_ConstantBuffer;
+	ID3D11Buffer*			m_CameraBuffer; 
+
 
 	//DEPTH BUFFER
 	ID3D11DepthStencilView* m_Dsv; //View
