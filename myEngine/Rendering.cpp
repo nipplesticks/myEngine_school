@@ -388,6 +388,7 @@ void App::Update()
 
 	s.lookAt = XMLoadFloat3(&m_Camera.getLookAt());
 	s.pos = XMLoadFloat3(&m_Camera.getPosition());
+	s.viewMatrix = DirectX::XMMatrixTranspose(m_Camera.getViewMatrix());
 
 	//DirectX::XMStoreFloat3(&m_Camera.getPosition(), m_Camera.getCamBuffer().pos);
 	//DirectX::XMStoreFloat3(&m_Camera.getLookAt(), m_Camera.getCamBuffer().lookAt); 

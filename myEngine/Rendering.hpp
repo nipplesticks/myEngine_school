@@ -115,13 +115,13 @@ private:
 
 	TEXTURE_RENDER_TARGET m_Gbuffer[GBUFFER_SIZE];
 
-
 	//Test
 	ModelHandler m_Mh;
 	Terrain m_Terrain2;
 	Character m_Test;
 	Entity m_Skybox;
 	Cam m_Camera;
+	LIGHT_BUFFER light;
 
 	DirectX::XMMATRIX		m_viewMatrix;
 	DirectX::XMMATRIX		m_projectionMatrix;

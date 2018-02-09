@@ -20,6 +20,7 @@ struct CAMERA_BUFFER
 {
 	DirectX::XMVECTOR pos;
 	DirectX::XMVECTOR lookAt;
+	DirectX::XMMATRIX viewMatrix;
 };
 
 struct CONSTANT_BUFFER
@@ -76,6 +77,13 @@ struct TEXTURE_RENDER_TARGET
 	ID3D11Texture2D* tx;
 	ID3D11RenderTargetView* rtv;
 	ID3D11ShaderResourceView* rsv;
+};
+
+struct LIGHT_BUFFER
+{
+	DirectX::XMVECTOR lightPosition;
+	DirectX::XMVECTOR lightColor;
+	float strength;
 };
 
 #endif
