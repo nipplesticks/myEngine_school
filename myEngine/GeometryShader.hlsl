@@ -6,7 +6,7 @@ cbuffer CONSTANT_BUFFER : register(b0)
 
 cbuffer CAMERA_BUFFER : register(b1)
 {
-	float3 pos; 
+	float3 camPos; 
 	float3 lookAt; 
 }
 
@@ -35,21 +35,29 @@ void main(triangle GS_IN input[3], inout TriangleStream<GS_OUT> fragmentShaderIn
 	float4 p1 = input[1].Pos;
 	float4 p2 = input[2].Pos;
 
-    float3 v0 = mul(p1 - p0, WorldMatrix).xyz;
-    float3 v1 = mul(p2 - p0, WorldMatrix).xyz;
-    float3 n = normalize(cross(v0, v1));
-	float3 normLookAt = normalize(lookAt); 
-	n = normalize(mul(float4(n, 1), WorldMatrix).xyz); 
-	float h = 0.0001f; 
-	float angle = dot(n, normLookAt); 
+    float3 v0 = (p1 - p0).xyz;
+    float3 v1 = (p2 - p0).xyz;
 
-	if (angle > h)
+	//float3 v0 = (p1 - p0).xyz;
+	//float3 v1 = (p2 - p0).xyz;
+
+	float3 triangleDir = camPos - v0;
+
+	float3 n = normalize(cross(v0, v1));
+	n = normalize(mul(float4(n, 1), WorldMatrix)).xyz;
+	//n = normalize(mul(float4(n, 1), WorldMatrix).xyz);
+
+
+	float h = 0.0000000001f; 
+	float angle = dot(n, lookAt); 
+
+	if (angle < 0.0f)
 	{
 		// Apply rotation	
 		for (uint i = 0; i < 3; i++)
 		{
 			output.Pos = mul(input[i].Pos, WVPMatrix);
-			//output.worldPos = mul(input[i].Pos, WorldMatrix);
+			output.worldPos = mul(input[i].Pos, WorldMatrix);
 			output.Normal = n;
 			output.Tex = input[i].Tex;
 			fragmentShaderInput.Append(output);

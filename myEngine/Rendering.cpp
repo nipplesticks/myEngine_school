@@ -337,6 +337,7 @@ void App::InitGBuffer()
 void App::Update()
 {
 	m_Camera.update();
+	m_Terrain2.rotate(0, 1, 0, 0.1f);
 	m_viewMatrix = m_Camera.getViewMatrix();
 	m_Terrain2.cameraMoved(m_viewMatrix);
 	m_Test.cameraMoved(m_viewMatrix);
@@ -383,13 +384,19 @@ void App::Update()
 	pos.y += 20.0f;
 	//m_Camera.setPosition(pos);
 
-	DirectX::XMStoreFloat3(&m_Camera.getPosition(), m_Camera.getCamBuffer().pos);
-	DirectX::XMStoreFloat3(&m_Camera.getLookAt(), m_Camera.getCamBuffer().lookAt); 
+	CAMERA_BUFFER s;
+
+	s.lookAt = XMLoadFloat3(&m_Camera.getLookAt());
+	s.pos = XMLoadFloat3(&m_Camera.getPosition());
+
+	//DirectX::XMStoreFloat3(&m_Camera.getPosition(), m_Camera.getCamBuffer().pos);
+	//DirectX::XMStoreFloat3(&m_Camera.getLookAt(), m_Camera.getCamBuffer().lookAt); 
 
 	D3D11_MAPPED_SUBRESOURCE dataPtr; 
 
 	m_DeviceContext->Map(m_CameraBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &dataPtr);
-	memcpy(dataPtr.pData, &m_Camera.getCamBuffer(), sizeof(CAMERA_BUFFER)); 
+	//memcpy(dataPtr.pData, &m_Camera.getCamBuffer(), sizeof(CAMERA_BUFFER)); 
+	memcpy(dataPtr.pData, &s, sizeof(CAMERA_BUFFER));
 	m_DeviceContext->Unmap(m_CameraBuffer, 0); 
 
 	m_DeviceContext->GSGetConstantBuffers(1, 1, &m_CameraBuffer); 
@@ -987,6 +994,6 @@ void App::loadEntities()
 	m_Test.cameraMoved(m_viewMatrix);
 	m_Test.loadBuffers(m_Device);
 	m_Test.setPosition(0, 0, 0);
-	m_Test.setScale(10);
+	m_Test.setScale(100);
 }
 
