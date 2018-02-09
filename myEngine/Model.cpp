@@ -712,5 +712,6 @@ void Model::loadVertexVector(const std::vector<V_IMPORT>& vertices, const std::v
 	Mesh m;
 	m.setVertices(t_vert);
 	m.setMaterial(m_tempMaterial);
+	m.buildtangentSpace();
 	m_meshes.push_back(m);
 }

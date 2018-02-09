@@ -37,7 +37,6 @@ private:
 	std::string get_textureFile(const std::string & mtllib, const std::string & material);
 	void		import_material(const std::string &path, const std::string &mtllib, const std::string &material, ID3D11Device* device);
 	
-	
 	void import_texture(
 		const std::string &path,
 		ID3D11Device* device,

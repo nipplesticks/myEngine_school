@@ -12,7 +12,7 @@ public:
 	void setMaterial(const Material& material);
 	const std::vector<VERTEX>& getVertices() const;
 	const Material& getMaterial() const;
-
+	void buildtangentSpace();
 
 private:
 	std::vector<VERTEX> m_vertices;

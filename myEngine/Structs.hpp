@@ -40,6 +40,8 @@ struct VERTEX
 	float x, y, z;
 	float u, v;
 	float xN, yN, zN;
+	float xBi, yBi, zBi;
+	float xT, yT, zT;
 };
 
 struct V_IMPORT

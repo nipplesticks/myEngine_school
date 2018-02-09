@@ -37,7 +37,7 @@ struct PS_OUT
 
 PS_OUT main(PS_IN input) : SV_Target
 {
-	PS_OUT output;
+	PS_OUT output = (PS_OUT)0;
 	output.diffuse = diffuseTx.Sample(SampleType, input.Tex);
 	//output.normal = normalize(mul(normalMap.Sample(SampleType, input.Tex), WorldMatrix));
 	output.normal = float4(input.Nor, 1.0f);

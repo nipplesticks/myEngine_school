@@ -4,6 +4,13 @@ What do do:
 * Parsing and Rendering an existing model format [X];
 * Deferred Rendering [ ]; (Using phong)
 * Normal mapping [ ];
+
+
+float4 normalMapValue = 2.0 * (normalmap.Sample(sampletype, input.tx) - 1.0) - 1.0;
+float3 unitNormal = normalize(normalMapValue.rgb);
+
+
+
 * Front to Back rendering [ ];
 * Glow Effect [ ]
 
