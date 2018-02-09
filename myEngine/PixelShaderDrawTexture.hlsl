@@ -21,7 +21,7 @@ PS_OUT main(PS_IN input) : SV_Target
 	PS_OUT output;
 	output.diffuse = Texture.Sample(SampleType, input.Tex);
 	output.normal = float4(input.Normal, 1);
-	output.position = input.Pos;
+	output.position = input.worldPos;
 
 	return output;
 

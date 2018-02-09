@@ -247,16 +247,13 @@ void Entity::draw(ID3D11DeviceContext *& deviceContext)
 			m_cBuffer.opticalDensity = m.getOpticalDensity();
 			m_cBuffer.sharpness = m.getSharpness();
 
-		
-
-
 			ID3D11ShaderResourceView* ambientTexture = mesh[i].getMaterial().getAmbientTexture();
 			ID3D11ShaderResourceView* diffuseTexture = mesh[i].getMaterial().getDiffuseTexture();
-			ID3D11ShaderResourceView* specularHighlightComponent = mesh[i].getMaterial().getSpecularHighlightComponent();
-			ID3D11ShaderResourceView* normalMap = mesh[i].getMaterial().getSpecularHighlightComponent();
+			ID3D11ShaderResourceView* specular = mesh[i].getMaterial().getSpecularColorTexture();
+			ID3D11ShaderResourceView* normalMap = mesh[i].getMaterial().getBumpMap();
 			deviceContext->PSSetShaderResources(0, 1, &ambientTexture);
 			deviceContext->PSSetShaderResources(1, 1, &diffuseTexture);
-			deviceContext->PSSetShaderResources(2, 1, &specularHighlightComponent);
+			deviceContext->PSSetShaderResources(2, 1, &specular);
 			deviceContext->PSSetShaderResources(3, 1, &normalMap);
 		}
 		else

@@ -57,6 +57,7 @@ artifacts/
 !myEngine/models/*.obj
 !myEngine/models/shadowTeam/*.obj
 !myEngine/models/SkyBox/*.obj
+!myEngine/models/cyborg/*.obj
 *.pch
 *.pdb
 *.pgc

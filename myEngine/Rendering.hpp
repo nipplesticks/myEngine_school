@@ -32,8 +32,11 @@ private:
 	bool CreateDepthBuffer();
 	void SetViewport();
 	bool CreateShaders();
+
 	bool CreateConstantBuffer();
 	bool createCameraBuffer();
+	bool createLightBuffer();
+
 	bool InitRenderFunction();
 	void InitGBuffer();
 
@@ -105,8 +108,8 @@ private:
 	ID3D11VertexShader*		m_DeferredVertexShader;
 	ID3D11PixelShader*		m_DeferredPixelShader;
 
-	ID3D11Buffer*			m_ConstantBuffer;
 	ID3D11Buffer*			m_CameraBuffer; 
+	ID3D11Buffer*			m_LightBuffer;
 
 
 	//DEPTH BUFFER
@@ -121,8 +124,8 @@ private:
 	Character m_Test;
 	Entity m_Skybox;
 	Cam m_Camera;
-	LIGHT_BUFFER light;
-
+	LIGHT_BUFFER m_Light;
+	CAMERA_BUFFER m_CameraStruct;
 	DirectX::XMMATRIX		m_viewMatrix;
 	DirectX::XMMATRIX		m_projectionMatrix;
 };

@@ -618,7 +618,7 @@ void Model::import_material(const std::string & path, const std::string & mtllib
 
 									aMaterial.setAlphaMap(rw, r);
 								}
-								else if (type == "map_bump" || type == "bump")
+								else if (type == "map_Bump" || type == "Bump")
 								{
 									std::string texturePath = "";
 									stream >> texturePath;

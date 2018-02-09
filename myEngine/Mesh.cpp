@@ -78,10 +78,11 @@ void Mesh::buildtangentSpace()
 			int index = i + counter;
 			m_vertices[index].xBi = XMVectorGetX(bitangent);
 			m_vertices[index].yBi = XMVectorGetY(bitangent);
-			m_vertices[index].yBi = XMVectorGetZ(bitangent);
+			m_vertices[index].zBi = XMVectorGetZ(bitangent);
+
 			m_vertices[index].xT = XMVectorGetX(tangent);
 			m_vertices[index].yT = XMVectorGetY(tangent);
-			m_vertices[index].yT = XMVectorGetZ(tangent);
+			m_vertices[index].zT = XMVectorGetZ(tangent);
 		}
 	}
 }

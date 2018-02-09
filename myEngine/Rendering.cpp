@@ -18,6 +18,15 @@ App::App(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCm
 
 	m_projectionMatrix = DirectX::XMMatrixPerspectiveFovLH(DirectX::XMConvertToRadians(FOV), CLIENT_WIDTH / CLIENT_HEIGHT, 0.1f, 100000.0f);
 
+
+
+
+	m_Light.lightColor = DirectX::XMVectorSet(0.8f, 0.4f, 0.4f, 1.0f);
+	m_Light.lightPosition = DirectX::XMVectorSet(0.0f, 500.0f, 0.0f, 1);
+	m_Light.strength = 5.0f;
+
+
+
 	setMembersToNull();
 }
 
@@ -53,8 +62,6 @@ int App::init()
 		if (!InitRenderFunction()) return 6;
 		if (!setSamplerState()) return 7;
 		if (!initRasterizer()) return 8; 
-		if (!createCameraBuffer()) return 9; 
-
 
 		loadModels();
 		loadEntities();
@@ -266,23 +273,12 @@ bool App::CreateShaders()
 
 bool App::CreateConstantBuffer()
 {
-	D3D11_BUFFER_DESC bufferDesc;
-	bufferDesc.Usage = D3D11_USAGE_DYNAMIC;
-	bufferDesc.ByteWidth = sizeof(CONSTANT_BUFFER);
-	bufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-	bufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-	bufferDesc.MiscFlags = 0;
-	bufferDesc.StructureByteStride = 0;
 
-	// check if the creation failed for any reason
-	HRESULT hr = 0;
-	hr = m_Device->CreateBuffer(&bufferDesc, nullptr, &m_ConstantBuffer);
-	if (FAILED(hr))
-	{
-		// handle the error, could be fatal or a warning...
-		//exit(-1);
+	if (!createCameraBuffer())
 		return false;
-	}
+	if (!createLightBuffer())
+		return false;
+
 	return true;
 }
 
@@ -337,7 +333,7 @@ void App::InitGBuffer()
 void App::Update()
 {
 	m_Camera.update();
-	m_Terrain2.rotate(0, 1, 0, 0.1f);
+	//m_Terrain2.rotate(0, 1, 0, 1.0f);
 	m_viewMatrix = m_Camera.getViewMatrix();
 	m_Terrain2.cameraMoved(m_viewMatrix);
 	m_Test.cameraMoved(m_viewMatrix);
@@ -381,26 +377,32 @@ void App::Update()
 	}
 	DirectX::XMFLOAT3 pos = m_Test.getPosition();
 
+
+
 	pos.y += 20.0f;
 	//m_Camera.setPosition(pos);
-
-	CAMERA_BUFFER s;
-
-	s.lookAt = XMLoadFloat3(&m_Camera.getLookAt());
-	s.pos = XMLoadFloat3(&m_Camera.getPosition());
-	s.viewMatrix = DirectX::XMMatrixTranspose(m_Camera.getViewMatrix());
-
-	//DirectX::XMStoreFloat3(&m_Camera.getPosition(), m_Camera.getCamBuffer().pos);
-	//DirectX::XMStoreFloat3(&m_Camera.getLookAt(), m_Camera.getCamBuffer().lookAt); 
-
-	D3D11_MAPPED_SUBRESOURCE dataPtr; 
-
-	m_DeviceContext->Map(m_CameraBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &dataPtr);
-	//memcpy(dataPtr.pData, &m_Camera.getCamBuffer(), sizeof(CAMERA_BUFFER)); 
-	memcpy(dataPtr.pData, &s, sizeof(CAMERA_BUFFER));
+	m_CameraStruct.lookAt = XMLoadFloat3(&m_Camera.getLookAt());
+	m_CameraStruct.pos = XMLoadFloat3(&m_Camera.getPosition());
+	m_CameraStruct.viewMatrix = DirectX::XMMatrixTranspose(m_Camera.getViewMatrix());
+	D3D11_MAPPED_SUBRESOURCE CamDataPtr;
+	m_DeviceContext->Map(m_CameraBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &CamDataPtr);
+	memcpy(CamDataPtr.pData, &m_CameraStruct, sizeof(CAMERA_BUFFER));
 	m_DeviceContext->Unmap(m_CameraBuffer, 0); 
+	
+	if (GetAsyncKeyState(int('U')))
+	{
+		m_Light.strength += 0.01f;
+	}
+	if (GetAsyncKeyState(int('J')))
+	{
+		m_Light.strength -= 0.01f;
+	}
 
-	m_DeviceContext->GSGetConstantBuffers(1, 1, &m_CameraBuffer); 
+	D3D11_MAPPED_SUBRESOURCE LightDataPtr;
+	m_DeviceContext->Map(m_LightBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &LightDataPtr);
+	memcpy(LightDataPtr.pData, &m_Light, sizeof(LIGHT_BUFFER));
+	m_DeviceContext->Unmap(m_LightBuffer, 0);
+
 }
 
 void App::Render()
@@ -654,6 +656,7 @@ bool App::initRasterizer()
 {
 	D3D11_RASTERIZER_DESC  rasDesc; 
 	rasDesc.FillMode = D3D11_FILL_SOLID; 
+	//rasDesc.FillMode = D3D11_FILL_WIREFRAME;
 	rasDesc.CullMode = D3D11_CULL_NONE; 
 	rasDesc.FrontCounterClockwise = false;
 	rasDesc.DepthBias = 0; 
@@ -694,8 +697,34 @@ bool App::createCameraBuffer()
 		std::cout << "Failed to create camera buffer!" << std::endl; 
 		return false;
 	}
-
+	m_DeviceContext->VSSetConstantBuffers(1, 1, &m_CameraBuffer);
 	m_DeviceContext->GSSetConstantBuffers(1, 1, &m_CameraBuffer);
+	m_DeviceContext->PSSetConstantBuffers(1, 1, &m_CameraBuffer);
+	return true;
+}
+
+bool App::createLightBuffer()
+{
+	D3D11_BUFFER_DESC buffDesc;
+	buffDesc.Usage = D3D11_USAGE_DYNAMIC;
+	buffDesc.ByteWidth = sizeof(LIGHT_BUFFER);
+	buffDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	buffDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+	buffDesc.MiscFlags = 0;
+	buffDesc.StructureByteStride = 0;
+
+	// check if the creation failed for any reason
+	HRESULT hr = 0;
+	hr = m_Device->CreateBuffer(&buffDesc, nullptr, &m_LightBuffer);
+
+	if (FAILED(hr))
+	{
+		std::cout << "Failed to create light buffer!" << std::endl;
+		return false;
+	}
+
+	m_DeviceContext->VSSetConstantBuffers(2, 1, &m_LightBuffer);
+	m_DeviceContext->PSSetConstantBuffers(2, 1, &m_LightBuffer);
 	//USE CAMERA STRUCT INSTEAD? 
 	return true;
 }
@@ -878,8 +907,8 @@ void App::setMembersToNull()
 	m_GeometryShader = nullptr;
 	m_PixelShader = nullptr;
 
-	m_ConstantBuffer = nullptr;
 	m_CameraBuffer = nullptr; 
+	m_LightBuffer = nullptr;
 	m_samplerState = nullptr;
 	m_DeferredPixelShader = nullptr;
 	m_DeferredVertexLayout = nullptr;
@@ -961,13 +990,13 @@ bool App::initPixelEverything()
 
 void App::loadModels()
 {
-	m_Mh.loadModel("models/shadowTeam/", "STSP.obj", m_Device, true, true);
+	m_Mh.loadModel("models/cyborg/", "cyborg.obj", m_Device, true, true);
 	m_Mh.loadModel("models/SkyBox/", "skybox.obj", m_Device, true, true, false);
 }
 
 void App::loadEntities()
 {
-	m_Test.loadModel(m_Mh.getModel("STSP.obj"));
+	m_Test.loadModel(m_Mh.getModel("cyborg.obj"));
 	m_Terrain2.initTerrainViaHeightMap("HeightMap/NewHeightMap.data", "Mountain", 5.0f, 100, 100, 0.5f);
 	m_Terrain2.setTerrainTexture(L"HeightMap/sand.dds", m_Device);
 	m_Skybox.loadModel(m_Mh.getModel("skybox.obj"));
@@ -995,6 +1024,6 @@ void App::loadEntities()
 	m_Test.cameraMoved(m_viewMatrix);
 	m_Test.loadBuffers(m_Device);
 	m_Test.setPosition(0, 0, 0);
-	m_Test.setScale(100);
+	//m_Test.setScale(75);
 }
 

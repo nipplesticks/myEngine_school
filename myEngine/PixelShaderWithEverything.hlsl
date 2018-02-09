@@ -22,28 +22,39 @@ cbuffer CONSTANT_BUFFER : register(b0)
 struct PS_IN
 {
 	float4 Pos : SV_POSITION;
+	float4 wPos : WORLDPOS;
 	float3 Nor : NORMAL;
 	float2 Tex : TEXCOORD;
+	float3 TLightPos : TANGENTLIGHTPOS;
+	float3 TViewPos : TANGENTVIEWPOS;
+	float3 TPos : TANGENTPOS;
 };
 
 struct PS_OUT
 {
 	float4 diffuse				: SV_Target0;
 	float4 normal				: SV_Target1;
-	float4 position				: SV_Target2;
+	float4 wPosition			: SV_Target2;
 	float4 ambient				: SV_target3;
 	float4 specularHighlight	: SV_target4;
+	float4 TLightPos			: SV_Target5;
+	float4 TViewPos				: SV_Target6;
+	float4 TPos					: SV_Target7;
 };
 
 PS_OUT main(PS_IN input) : SV_Target
 {
 	PS_OUT output = (PS_OUT)0;
 	output.diffuse = diffuseTx.Sample(SampleType, input.Tex);
-	//output.normal = normalize(mul(normalMap.Sample(SampleType, input.Tex), WorldMatrix));
-	output.normal = float4(input.Nor, 1.0f);
-	output.position = input.Pos;
+	output.normal = normalMap.Sample(SampleType, input.Tex);
+	output.wPosition = input.wPos;
 	output.ambient = ambientTx.Sample(SampleType, input.Tex);
 	output.specularHighlight = specularHighlightTx.Sample(SampleType, input.Tex);
+
+	output.TLightPos = float4(input.TLightPos, 1);
+	output.TViewPos = float4(input.TViewPos, 1);
+	output.TPos = float4(input.TPos, 1);
+
 
 	return output;
 };

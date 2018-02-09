@@ -24,5 +24,7 @@ VS_OUT main(VS_IN input)
 
     output.Pos = float4(input.Pos, 1);
     output.Tex = input.Tex;
+	output.Nor = mul(float4(input.Nor, 1), WorldMatrix).xyz;
+
     return output;
 }
