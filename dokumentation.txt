@@ -17,5 +17,5 @@ float3 unitNormal = normalize(normalMapValue.rgb);
 [Victor]
 * Height-map terrain rendering, user can walk on the terrain using WASD keys [X];
 * "Shadow mapping"/"Dynamic cubic enviroment mapping"/"Dynamic paraboloid mapping" [ ];
-* Back face culling using Geometry Shader [ ];
+* Back face culling using Geometry Shader [X];
 * Mouse Picking [ ]

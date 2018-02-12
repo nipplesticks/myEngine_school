@@ -36,8 +36,8 @@ void main(triangle GS_IN input[3], inout TriangleStream<GS_OUT> fragmentShaderIn
 	float4 p1 = mul(input[1].Pos, WorldMatrix);
 	float4 p2 = mul(input[2].Pos, WorldMatrix);
 
-    float3 v0 = (p1 - p0).xyz;
-    float3 v1 = (p2 - p0).xyz;
+	float3 v0 = (p1 - p0).xyz;
+	float3 v1 = (p2 - p0).xyz;
 	float3 n = normalize(cross(v0, v1));
 
 	float4 vP0 = mul(p0, viewMatrix);

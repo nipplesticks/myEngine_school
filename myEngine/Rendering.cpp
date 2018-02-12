@@ -1,5 +1,6 @@
 #include "Rendering.hpp"
 #include "Character.h"
+#include "SphereIntersect.hpp"
 
 App::App(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCmdShow)
 {
@@ -25,7 +26,7 @@ App::App(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCm
 	m_Light.lightPosition = DirectX::XMVectorSet(0.0f, 500.0f, 0.0f, 1);
 	m_Light.strength = 5.0f;
 
-
+	m_sphereTest = SphereIntersect(50, DirectX::XMFLOAT3(0, 0, 0));
 
 	setMembersToNull();
 }
@@ -339,7 +340,7 @@ void App::Update()
 	m_Test.cameraMoved(m_viewMatrix);
 	m_Skybox.cameraMoved(m_Camera.getViewMatrixForBackground());
 	m_Test.collisionHandling(m_Terrain2, 100);
-
+	m_Cat.cameraMoved(m_viewMatrix); 
 
 	DirectX::XMFLOAT3 forward = m_Camera.getForward();
 	DirectX::XMFLOAT3 right = m_Camera.getRight();
@@ -403,6 +404,20 @@ void App::Update()
 	memcpy(LightDataPtr.pData, &m_Light, sizeof(LIGHT_BUFFER));
 	m_DeviceContext->Unmap(m_LightBuffer, 0);
 
+	m_Cat.collisionHandling(m_Terrain2, 0); 
+	m_sphereTest.setPosition(m_Cat.getPosition()); 
+	bool intersect = false;
+	if (GetAsyncKeyState(int('K')))
+		intersect = m_sphereTest.checkIntersection(m_Camera.getPosition(), m_Camera.getLookAt()); 
+	if (intersect)
+	{
+		DirectX::XMFLOAT3 moveOffset = DirectX::XMFLOAT3(5, 0, 5); 
+		m_Cat.move(m_Camera.getForward().x * moveOffset.x,m_Camera.getForward().y * moveOffset.y, m_Camera.getForward().z * moveOffset.z); 
+		std::cout << "HIT" << std::endl; 
+	}
+	
+
+
 }
 
 void App::Render()
@@ -442,6 +457,7 @@ void App::firstDrawPass()
 
 void App::draw()
 {
+	m_Cat.draw(m_DeviceContext); 
 	m_Test.draw(m_DeviceContext);
 	m_Terrain2.draw(m_DeviceContext);
 	m_Skybox.draw(m_DeviceContext);
@@ -992,6 +1008,7 @@ void App::loadModels()
 {
 	m_Mh.loadModel("models/cyborg/", "cyborg.obj", m_Device, true, true);
 	m_Mh.loadModel("models/SkyBox/", "skybox.obj", m_Device, true, true, false);
+	m_Mh.loadModel("models/Cat/", "cat.obj", m_Device, true, false, true); 
 }
 
 void App::loadEntities()
@@ -1000,6 +1017,7 @@ void App::loadEntities()
 	m_Terrain2.initTerrainViaHeightMap("HeightMap/NewHeightMap.data", "Mountain", 5.0f, 100, 100, 0.5f);
 	m_Terrain2.setTerrainTexture(L"HeightMap/sand.dds", m_Device);
 	m_Skybox.loadModel(m_Mh.getModel("skybox.obj"));
+	m_Cat.loadModel(m_Mh.getModel("cat.obj")); 
 
 	m_Skybox.setSamplerState(m_samplerState);
 	m_Skybox.bindVertexShader(m_VertexShaderSkybox);
@@ -1025,5 +1043,13 @@ void App::loadEntities()
 	m_Test.loadBuffers(m_Device);
 	m_Test.setPosition(0, 0, 0);
 	//m_Test.setScale(75);
+
+	m_Cat.setSamplerState(m_samplerState); 
+	m_Cat.bindVertexShader(m_VertexShaderNoGS); 
+	m_Cat.bindPixelShader(m_PixelShaderEverything); 
+	m_Cat.setProjectionMatrix(m_projectionMatrix); 
+	m_Cat.cameraMoved(m_viewMatrix); 
+	m_Cat.loadBuffers(m_Device); 
+	m_Cat.setPosition(DirectX::XMFLOAT3(250, 0, 250)); 
 }
 

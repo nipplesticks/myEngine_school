@@ -20,6 +20,7 @@ public:
 	DirectX::XMFLOAT3 getForward() const;
 	DirectX::XMFLOAT3 getRight() const;
 	DirectX::XMFLOAT3 getLookAt() const; 
+	DirectX::XMFLOAT3 getUp() const; 
 
 	void setPosition(DirectX::XMFLOAT3 position); 
 

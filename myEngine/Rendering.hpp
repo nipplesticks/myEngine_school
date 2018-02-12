@@ -6,6 +6,7 @@
 #include "ModelHandler.hpp"
 #include "Camera.hpp"
 #include <istream>
+#include "SphereIntersect.hpp"
 
 class App
 {
@@ -122,12 +123,15 @@ private:
 	ModelHandler m_Mh;
 	Terrain m_Terrain2;
 	Character m_Test;
+	Character m_Cat; 
 	Entity m_Skybox;
 	Cam m_Camera;
 	LIGHT_BUFFER m_Light;
 	CAMERA_BUFFER m_CameraStruct;
 	DirectX::XMMATRIX		m_viewMatrix;
 	DirectX::XMMATRIX		m_projectionMatrix;
+	SphereIntersect m_sphereTest; 
+	//MousePicker m_Mp; 
 };
 
 

@@ -148,6 +148,11 @@ DirectX::XMFLOAT3 Cam::getLookAt() const
 	return m_lookAt; 
 }
 
+DirectX::XMFLOAT3 Cam::getUp() const
+{
+	return m_up;
+}
+
 void Cam::setPosition(DirectX::XMFLOAT3 position)
 {
 	m_position = position; 
