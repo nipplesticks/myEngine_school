@@ -26,7 +26,7 @@ App::App(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCm
 	m_Light.lightPosition = DirectX::XMVectorSet(0.0f, 500.0f, 0.0f, 1);
 	m_Light.strength = 5.0f;
 
-	m_sphereTest = SphereIntersect(50, DirectX::XMFLOAT3(0, 0, 0));
+	m_sphereTest = SphereIntersect(100, DirectX::XMFLOAT3(0, 0, 0));
 
 	setMembersToNull();
 }
@@ -134,6 +134,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	case WM_DESTROY:
 		PostQuitMessage(0);
 		break;
+	//case WM_LBUTTONDOWN: 
+		
+
 	}
 
 	return DefWindowProc(hWnd, message, wParam, lParam);
@@ -274,7 +277,6 @@ bool App::CreateShaders()
 
 bool App::CreateConstantBuffer()
 {
-
 	if (!createCameraBuffer())
 		return false;
 	if (!createLightBuffer())
@@ -376,9 +378,19 @@ void App::Update()
 		right.z *= -1 * speed;
 		m_Test.move(right);
 	}
+
+	if (GetAsyncKeyState(VK_LBUTTON))
+	{
+		bool intersect = false;
+		intersect = m_sphereTest.checkIntersection(m_Camera.getPosition(), m_Camera.getLookAt());
+		if (intersect)
+		{
+			DirectX::XMFLOAT3 moveOffset = DirectX::XMFLOAT3(5, 0, 5);
+			m_Cat.move(m_Camera.getForward().x * moveOffset.x, m_Camera.getForward().y * moveOffset.y, m_Camera.getForward().z * moveOffset.z);
+		}
+	}
+
 	DirectX::XMFLOAT3 pos = m_Test.getPosition();
-
-
 
 	pos.y += 20.0f;
 	//m_Camera.setPosition(pos);
@@ -405,18 +417,7 @@ void App::Update()
 	m_DeviceContext->Unmap(m_LightBuffer, 0);
 
 	m_Cat.collisionHandling(m_Terrain2, 0); 
-	m_sphereTest.setPosition(m_Cat.getPosition()); 
-	bool intersect = false;
-	if (GetAsyncKeyState(int('K')))
-		intersect = m_sphereTest.checkIntersection(m_Camera.getPosition(), m_Camera.getLookAt()); 
-	if (intersect)
-	{
-		DirectX::XMFLOAT3 moveOffset = DirectX::XMFLOAT3(5, 0, 5); 
-		m_Cat.move(m_Camera.getForward().x * moveOffset.x,m_Camera.getForward().y * moveOffset.y, m_Camera.getForward().z * moveOffset.z); 
-		std::cout << "HIT" << std::endl; 
-	}
-	
-
+	m_sphereTest.setPosition(m_Cat.getPosition());
 
 }
 

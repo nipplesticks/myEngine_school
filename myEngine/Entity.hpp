@@ -34,6 +34,8 @@ public:
 	void scale(float s);
 	DirectX::XMFLOAT3 getScale() const;
 
+	void makeSphere(); 
+
 	void setProjectionMatrix(DirectX::XMMATRIX projection);
 	void cameraMoved(DirectX::XMMATRIX view);
 

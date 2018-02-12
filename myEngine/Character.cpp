@@ -10,6 +10,7 @@ Character::Character(std::string modelName, Model* model) : Entity()
 
 Character::Character() : Entity()
 {
+
 }
 
 Character::~Character()

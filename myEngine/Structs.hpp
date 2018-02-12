@@ -34,6 +34,8 @@ struct CONSTANT_BUFFER
 	float dissolve;
 	float opticalDensity;
 	float sharpness;
+	float sphereRadius;
+	DirectX::XMVECTOR spherePos; 
 };
 
 struct CONSTANT_BUFFER2

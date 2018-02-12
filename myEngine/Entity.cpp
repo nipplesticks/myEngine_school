@@ -207,6 +207,32 @@ DirectX::XMFLOAT3 Entity::getScale() const
 	return m_scale;
 }
 
+void Entity::makeSphere()
+{
+	std::vector<Mesh> m = m_model->getMeshes();
+	for (size_t i = 0; i < m.size(); i++)
+	{
+		std::vector<VERTEX> v = m[i].getVertices();
+		for (size_t k = 0; k < v.size(); k++)
+		{
+			VERTEX ver = v[i];
+			DirectX::XMFLOAT3 f3Vert = XMFLOAT3(ver.x, ver.y, ver.z);
+			DirectX::XMVECTOR Vvert = DirectX::XMLoadFloat3(&f3Vert); 
+			DirectX::XMVECTOR normalizedVert = DirectX::XMVector3Normalize(Vvert); 
+			/*v[i].x = XMVectorGetX(normalizedVert); 
+			v[i].y = XMVectorGetY(normalizedVert);
+			v[i].z = XMVectorGetZ(normalizedVert);*/
+
+			v[i].x = 0;
+			v[i].y = 0; 
+			v[i].z = 0; 
+		}
+
+	}
+
+
+}
+
 void Entity::setProjectionMatrix(DirectX::XMMATRIX projection)
 {
 	m_projectionMatrix = projection;
