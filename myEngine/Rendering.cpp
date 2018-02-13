@@ -22,9 +22,9 @@ App::App(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCm
 
 
 
-	m_Light.lightColor = DirectX::XMVectorSet(0.8f, 0.4f, 0.4f, 1.0f);
-	m_Light.lightPosition = DirectX::XMVectorSet(0.0f, 500.0f, 0.0f, 1);
-	m_Light.strength = 5.0f;
+	m_Light.lightColor = DirectX::XMVectorSet(212.0f / 255, 235.0f / 255, 255.0f / 255, 1.0f);
+	m_Light.lightPosition = DirectX::XMVectorSet(25.0f, 10.0f, 25.0f, 1);
+	m_Light.strength = 1.0f;
 
 	m_sphereTest = SphereIntersect(50, DirectX::XMFLOAT3(0, 0, 0));
 
@@ -333,13 +333,19 @@ void App::InitGBuffer()
 void App::Update()
 {
 	m_Camera.update();
-	//m_Terrain2.rotate(0, 1, 0, 1.0f);
 	m_viewMatrix = m_Camera.getViewMatrix();
+	m_Sphere.setScale(m_Light.strength * 10);
+	DirectX::XMFLOAT3 p;
+	DirectX::XMStoreFloat3(&p, m_Light.lightPosition);
+	m_Sphere.setPosition(p);
+
+	//m_Terrain2.rotate(0, 1, 0, 1.0f);
 	m_Terrain2.cameraMoved(m_viewMatrix);
 	m_Test.cameraMoved(m_viewMatrix);
 	m_Skybox.cameraMoved(m_Camera.getViewMatrixForBackground());
 	m_Test.collisionHandling(m_Terrain2, 100);
 	m_Cat.cameraMoved(m_viewMatrix); 
+	m_Sphere.cameraMoved(m_viewMatrix);
 
 	DirectX::XMFLOAT3 forward = m_Camera.getForward();
 	DirectX::XMFLOAT3 right = m_Camera.getRight();
@@ -377,9 +383,11 @@ void App::Update()
 	}
 
 	if (GetAsyncKeyState(int('M')))
-		m_Test.rotate(0, 1, 0, 0.2);
+		m_Test.rotate(0, 1, 0, 0.4);
 	if (GetAsyncKeyState(int('N')))
-		m_Test.rotate(0, 1, 0, -0.2);
+		m_Test.rotate(0, 1, 0, -0.4);
+	if (GetAsyncKeyState(int('L')))
+		m_Camera.setPosition(p);
 
 	DirectX::XMFLOAT3 pos = m_Test.getPosition();
 
@@ -397,11 +405,11 @@ void App::Update()
 	
 	if (GetAsyncKeyState(int('U')))
 	{
-		m_Light.strength += 0.01f;
+		m_Light.strength += 0.1f;
 	}
 	if (GetAsyncKeyState(int('J')))
 	{
-		m_Light.strength -= 0.01f;
+		m_Light.strength -= 0.1f;
 	}
 
 	D3D11_MAPPED_SUBRESOURCE LightDataPtr;
@@ -469,6 +477,7 @@ void App::draw()
 		e->draw(m_DeviceContext);
 	}
 	//std::cout << "----------------------\n";
+	m_Sphere.draw(m_DeviceContext);
 	m_Terrain2.draw(m_DeviceContext);
 	m_Skybox.draw(m_DeviceContext);
 	//std::cout << "----------------------\n";
@@ -636,6 +645,40 @@ bool App::initSkyboxPixelShader()
 		return false;
 	}
 	if (FAILED(m_Device->CreatePixelShader(pPS->GetBufferPointer(), pPS->GetBufferSize(), nullptr, &m_PixelShaderSkybox)))
+	{
+		pPS->Release();
+		return false;
+	}
+	pPS->Release();
+
+	return true;
+}
+
+bool App::initPixelShaderColor()
+{
+	//create pixel shader
+	ID3DBlob* pPS = nullptr;
+	ID3DBlob* error = nullptr;
+	HRESULT hr = D3DCompileFromFile(
+		L"PixelShaderColor.hlsl", // filename
+		nullptr,			// optional macros
+		nullptr,			// optional include files
+		"main",				// entry point
+		"ps_5_0",			// shader model (target)
+		0,					// shader compile options
+		0,					// effect compile options
+		&pPS,				// double pointer to ID3DBlob		
+		&error				// pointer for Error Blob messages.
+							// how to use the Error blob, see here
+							// https://msdn.microsoft.com/en-us/library/windows/desktop/hh968107(v=vs.85).aspx
+	);
+	if (FAILED(hr))
+	{
+		OutputDebugString((char*)error->GetBufferPointer());
+		pPS->Release();
+		return false;
+	}
+	if (FAILED(m_Device->CreatePixelShader(pPS->GetBufferPointer(), pPS->GetBufferSize(), nullptr, &m_PixelShaderColor)))
 	{
 		pPS->Release();
 		return false;
@@ -932,6 +975,8 @@ bool App::CreatePixelShader()
 		return false;
 	if (!initDeferredPixelShader())
 		return false;
+	if (!initPixelShaderColor())
+		return false;
 
 	return true;
 }
@@ -1065,6 +1110,7 @@ void App::loadModels()
 	m_Mh.loadModel("models/cyborg/", "cyborg.obj", m_Device, true, true);
 	m_Mh.loadModel("models/SkyBox/", "skybox.obj", m_Device, true, true, false);
 	m_Mh.loadModel("models/Cat/", "cat.obj", m_Device, true, false, true); 
+	m_Mh.loadModel("models/SkyBox/", "Sphere.obj", m_Device, false, true);
 }
 
 void App::loadEntities()
@@ -1074,6 +1120,7 @@ void App::loadEntities()
 	m_Terrain2.setTerrainTexture(L"HeightMap/sand.dds", m_Device);
 	m_Skybox.loadModel(m_Mh.getModel("skybox.obj"));
 	m_Cat.loadModel(m_Mh.getModel("cat.obj")); 
+	m_Sphere.loadModel(m_Mh.getModel("Sphere.obj"));
 
 	m_Skybox.setSamplerState(m_samplerState);
 	m_Skybox.bindVertexShader(m_VertexShaderSkybox);
@@ -1081,6 +1128,19 @@ void App::loadEntities()
 	m_Skybox.setProjectionMatrix(m_projectionMatrix);
 	m_Skybox.cameraMoved(m_viewMatrix);
 	m_Skybox.loadBuffers(m_Device);
+
+	m_Sphere.setSamplerState(m_samplerState);
+	m_Sphere.bindVertexShader(m_VertexShaderNoGS);
+	m_Sphere.bindPixelShader(m_PixelShaderColor);
+	m_Sphere.setProjectionMatrix(m_projectionMatrix);
+	m_Sphere.cameraMoved(m_viewMatrix);
+	m_Sphere.loadBuffers(m_Device);
+	m_Sphere.cameraMoved(m_viewMatrix);
+	m_Sphere.setScale(m_Light.strength);
+	DirectX::XMFLOAT3 p;
+	DirectX::XMStoreFloat3(&p, m_Light.lightPosition);
+	m_Sphere.setPosition(p);
+
 
 	m_Terrain2.setSamplerState(m_samplerState);
 	m_Terrain2.bindVertexShader(m_VertexShader);
@@ -1103,8 +1163,9 @@ void App::loadEntities()
 	m_renderingQueue.push_back(&m_Test);
 
 	m_Cat.setSamplerState(m_samplerState); 
-	m_Cat.bindVertexShader(m_VertexShaderNoGS); 
-	m_Cat.bindPixelShader(m_PixelShaderEverything); 
+	m_Cat.bindVertexShader(m_VertexShader);
+	m_Cat.bindGeometryShader(m_GeometryShader);
+	m_Cat.bindPixelShader(m_PixelShaderTexture);
 	m_Cat.setProjectionMatrix(m_projectionMatrix); 
 	m_Cat.cameraMoved(m_viewMatrix); 
 	m_Cat.loadBuffers(m_Device); 

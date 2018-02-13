@@ -63,6 +63,7 @@ private:
 	bool initDrawTexture();
 	bool initPixelEverything();
 	bool initSkyboxPixelShader();
+	bool initPixelShaderColor();
 	bool initDeferredPixelShader();
 	bool initRasterizer(); 
 
@@ -94,15 +95,14 @@ private:
 	ID3D11DeviceContext*	m_DeviceContext;
 	ID3D11RenderTargetView* m_BackbufferRTV;
 	ID3D11RasterizerState* m_RasterizerState; 
-
 	ID3D11Buffer*			m_VertexBuffer;
 	ID3D11InputLayout*		m_VertexLayout;
 	ID3D11InputLayout*		m_DeferredVertexLayout;
 	ID3D11VertexShader*		m_VertexShader;
 	ID3D11VertexShader*		m_VertexShaderNoGS;
 	ID3D11VertexShader*		m_VertexShaderSkybox;
-
 	ID3D11SamplerState*		m_samplerState;
+
 
 
 	ID3D11GeometryShader*	m_GeometryShader;
@@ -111,6 +111,8 @@ private:
 	ID3D11PixelShader*		m_PixelShaderTexture;
 	ID3D11PixelShader*		m_PixelShaderEverything;
 	ID3D11PixelShader*		m_PixelShaderSkybox;
+
+	ID3D11PixelShader*		m_PixelShaderColor;
 
 	ID3D11VertexShader*		m_DeferredVertexShader;
 	ID3D11PixelShader*		m_DeferredPixelShader;
@@ -133,6 +135,7 @@ private:
 	Character m_Test;
 	Character m_Cat; 
 	Entity m_Skybox;
+	Entity m_Sphere;
 	Cam m_Camera;
 	LIGHT_BUFFER m_Light;
 	CAMERA_BUFFER m_CameraStruct;

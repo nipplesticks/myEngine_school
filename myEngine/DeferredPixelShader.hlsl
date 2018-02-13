@@ -41,23 +41,23 @@ float4 main(VS_OUT input) : SV_Target
 	float3 lightDir = gTexLightDir.Sample(sampAni, input.Tex).rgb;
 	float3 viewer = gTexViewer.Sample(sampAni, input.Tex).rgb;
 
-if (length(normal) > 0.0f)
-{
-	float3 lightDir = normalize(lightPosition - position);
-	float lambertian = max(dot(lightDir, normal), 0.0f);
-	float specular = 0;
-	[flatten]
-	if (lambertian > 0.0f)
-	{
-		float3 halfDir = normalize(lightDir + viewer);
-		float specAngle = max(dot(halfDir, normal), 0.0f);
-		specular = pow(specAngle, 16) * specLevel;
-	}
+    if (length(normal) > 0.0f)
+    {
+	    float3 lightDir = normalize(lightPosition - position);
+	    float lambertian = max(dot(lightDir, normal), 0.0f);
+	    float specular = 0;
+	    [flatten]
+	    if (lambertian > 0.0f)
+	    {
+		    float3 halfDir = normalize(lightDir + viewer);
+		    float specAngle = max(dot(halfDir, normal), 0.0f);
+		    specular = pow(specAngle, 16) * specLevel;
+	    }
 
-	float3 colorLinear = lambertian * diffuseColor + specular * float3(1.0f, 1.0f, 1.0f);
-	pOut = float4(0.2 * diffuseColor, 0) + float4(pow(colorLinear, float3(1.0f / 2.2f, 1.0f / 2.2f, 1.0f / 2.2f)), 1.0f);
-	return pOut;
-}
+        float3 colorLinear =  strength * lightColor * (lambertian * diffuseColor + specular);
+	    pOut = float4(0.2 * diffuseColor, 0) + float4(pow(colorLinear, float3(1.0f / 2.2f, 1.0f / 2.2f, 1.0f / 2.2f)), 1.0f);
+	    return pOut;
+    }
 
 pOut = float4(diffuseColor, 1.0f);
 return pOut;

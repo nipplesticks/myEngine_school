@@ -264,7 +264,7 @@ void Entity::draw(ID3D11DeviceContext *& deviceContext)
 		else
 		{
 			ID3D11ShaderResourceView* texture = m_model->getTextureResourceView();
-			deviceContext->PSSetShaderResources(0, 1, &texture);
+			deviceContext->PSSetShaderResources(1, 1, &texture);
 		}
 		deviceContext->IASetVertexBuffers(0, 1, &m_vertexBufferVector[i], &vertexSize, &offset);
 		D3D11_MAPPED_SUBRESOURCE dataPtr;
