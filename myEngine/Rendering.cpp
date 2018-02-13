@@ -26,7 +26,7 @@ App::App(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCm
 	m_Light.lightPosition = DirectX::XMVectorSet(0.0f, 500.0f, 0.0f, 1);
 	m_Light.strength = 5.0f;
 
-	m_sphereTest = SphereIntersect(100, DirectX::XMFLOAT3(0, 0, 0));
+	m_sphereTest = SphereIntersect(50, DirectX::XMFLOAT3(0, 0, 0));
 
 	setMembersToNull();
 }
@@ -134,9 +134,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	case WM_DESTROY:
 		PostQuitMessage(0);
 		break;
-	//case WM_LBUTTONDOWN: 
-		
-
 	}
 
 	return DefWindowProc(hWnd, message, wParam, lParam);
@@ -199,7 +196,7 @@ HRESULT App::CreateDirect3DContext()
 	HRESULT hr = D3D11CreateDeviceAndSwapChain(NULL,
 		D3D_DRIVER_TYPE_HARDWARE,
 		NULL,
-		NULL,
+		D3D11_CREATE_DEVICE_DEBUG,
 		NULL,
 		NULL,
 		D3D11_SDK_VERSION,
@@ -277,6 +274,7 @@ bool App::CreateShaders()
 
 bool App::CreateConstantBuffer()
 {
+
 	if (!createCameraBuffer())
 		return false;
 	if (!createLightBuffer())
@@ -290,7 +288,6 @@ bool App::InitRenderFunction()
 
 	m_DeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	m_DeviceContext->IASetInputLayout(m_VertexLayout);
-	m_DeviceContext->OMSetRenderTargets(1, &m_BackbufferRTV, m_Dsv);
 	InitGBuffer();
 	return true;
 }
@@ -298,8 +295,8 @@ bool App::InitRenderFunction()
 void App::InitGBuffer()
 {
 	D3D11_TEXTURE2D_DESC textureDesc{};
-	textureDesc.Width = CLIENT_WIDTH;
-	textureDesc.Height = CLIENT_HEIGHT;
+	textureDesc.Width = (UINT)CLIENT_WIDTH;
+	textureDesc.Height = (UINT)CLIENT_HEIGHT;
 	textureDesc.MipLevels = 1;
 	textureDesc.ArraySize = 1;
 	textureDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
@@ -379,18 +376,14 @@ void App::Update()
 		m_Test.move(right);
 	}
 
-	if (GetAsyncKeyState(VK_LBUTTON))
-	{
-		bool intersect = false;
-		intersect = m_sphereTest.checkIntersection(m_Camera.getPosition(), m_Camera.getLookAt());
-		if (intersect)
-		{
-			DirectX::XMFLOAT3 moveOffset = DirectX::XMFLOAT3(5, 0, 5);
-			m_Cat.move(m_Camera.getForward().x * moveOffset.x, m_Camera.getForward().y * moveOffset.y, m_Camera.getForward().z * moveOffset.z);
-		}
-	}
+	if (GetAsyncKeyState(int('M')))
+		m_Test.rotate(0, 1, 0, 0.2);
+	if (GetAsyncKeyState(int('N')))
+		m_Test.rotate(0, 1, 0, -0.2);
 
 	DirectX::XMFLOAT3 pos = m_Test.getPosition();
+
+
 
 	pos.y += 20.0f;
 	//m_Camera.setPosition(pos);
@@ -417,14 +410,27 @@ void App::Update()
 	m_DeviceContext->Unmap(m_LightBuffer, 0);
 
 	m_Cat.collisionHandling(m_Terrain2, 0); 
-	m_sphereTest.setPosition(m_Cat.getPosition());
+	m_sphereTest.setPosition(m_Cat.getPosition()); 
+	bool intersect = false;
+	if (GetAsyncKeyState(int('K')))
+		intersect = m_sphereTest.checkIntersection(m_Camera.getPosition(), m_Camera.getLookAt()); 
+	if (intersect)
+	{
+		DirectX::XMFLOAT3 moveOffset = DirectX::XMFLOAT3(5, 0, 5); 
+		m_Cat.move(m_Camera.getForward().x * moveOffset.x,m_Camera.getForward().y * moveOffset.y, m_Camera.getForward().z * moveOffset.z); 
+		std::cout << "HIT" << std::endl; 
+	}
+	
+
 
 }
 
 void App::Render()
 {
+	clearShaderResources();
 	firstDrawPass();
 	draw();
+	clearTargets(); //Clear rendertargets
 	secondDrawPass();
 
 	drawSky();
@@ -442,9 +448,7 @@ void App::firstDrawPass()
 	{
 		renderTargets[i] = m_Gbuffer[i].rtv;
 	}
-
 	m_DeviceContext->OMSetRenderTargets(GBUFFER_SIZE, renderTargets, m_Dsv);
-
 
 	m_DeviceContext->ClearRenderTargetView(m_Gbuffer[0].rtv, c1);
 
@@ -458,10 +462,17 @@ void App::firstDrawPass()
 
 void App::draw()
 {
-	m_Cat.draw(m_DeviceContext); 
-	m_Test.draw(m_DeviceContext);
+	sortRenderingQueue();
+
+	for (Entity* e : m_renderingQueue)
+	{
+		e->draw(m_DeviceContext);
+	}
+	//std::cout << "----------------------\n";
 	m_Terrain2.draw(m_DeviceContext);
 	m_Skybox.draw(m_DeviceContext);
+	//std::cout << "----------------------\n";
+	//system("cls");
 }
 
 void App::secondDrawPass()
@@ -695,6 +706,27 @@ bool App::initRasterizer()
 	return SUCCEEDED(hr);
 }
 
+void App::sortRenderingQueue()
+{
+	int minIndex = 0;
+	for (int i = 0; i < m_renderingQueue.size() - 1; i++)
+	{
+		for (int k = i + 1; k < m_renderingQueue.size(); k++)
+		{
+			float d1 = getDistance(m_renderingQueue[k]->getPosition(), m_Camera.getPosition());
+			float d2 = getDistance(m_renderingQueue[minIndex]->getPosition(), m_Camera.getPosition());
+			if (d1 < d2)
+			{
+				minIndex = k;
+			}
+		}
+
+		Entity* temp = m_renderingQueue[i];
+		m_renderingQueue[i] = m_renderingQueue[minIndex];
+		m_renderingQueue[minIndex] = temp;
+	}
+}
+
 bool App::createCameraBuffer()
 {
 	D3D11_BUFFER_DESC buffDesc; 
@@ -911,6 +943,29 @@ void App::clrScrn()
 	m_DeviceContext->ClearDepthStencilView(m_Dsv, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 }
 
+void App::clearTargets()
+{
+	ID3D11RenderTargetView* renderTargets[GBUFFER_SIZE] = { nullptr };
+
+	m_DeviceContext->OMSetRenderTargets(GBUFFER_SIZE, renderTargets, NULL);
+}
+
+void App::clearShaderResources()
+{
+	ID3D11ShaderResourceView* renderTargets[GBUFFER_SIZE] = { nullptr };
+	m_DeviceContext->PSSetShaderResources(0, GBUFFER_SIZE, renderTargets);
+}
+
+float App::getDistance(DirectX::XMFLOAT3 p1, DirectX::XMFLOAT3 p2)
+{
+	DirectX::XMVECTOR v1 = DirectX::XMLoadFloat3(&p1);
+	DirectX::XMVECTOR v2 = DirectX::XMLoadFloat3(&p2);
+	DirectX::XMVECTOR distanceVector = DirectX::XMVectorSubtract(v1, v2);
+	DirectX::XMVECTOR length = DirectX::XMVector3Length(distanceVector);
+	
+	return abs(DirectX::XMVectorGetX(length));
+}
+
 void App::setMembersToNull()
 {
 	m_SwapChain = nullptr;
@@ -1015,7 +1070,7 @@ void App::loadModels()
 void App::loadEntities()
 {
 	m_Test.loadModel(m_Mh.getModel("cyborg.obj"));
-	m_Terrain2.initTerrainViaHeightMap("HeightMap/NewHeightMap.data", "Mountain", 5.0f, 100, 100, 0.5f);
+	m_Terrain2.initTerrainViaHeightMap("HeightMap/NewHeightMap.data", "Mountain", 15.0f, 100, 100, 0.5f);
 	m_Terrain2.setTerrainTexture(L"HeightMap/sand.dds", m_Device);
 	m_Skybox.loadModel(m_Mh.getModel("skybox.obj"));
 	m_Cat.loadModel(m_Mh.getModel("cat.obj")); 
@@ -1043,7 +1098,9 @@ void App::loadEntities()
 	m_Test.cameraMoved(m_viewMatrix);
 	m_Test.loadBuffers(m_Device);
 	m_Test.setPosition(0, 0, 0);
-	//m_Test.setScale(75);
+	m_Test.setScale(20);
+
+	m_renderingQueue.push_back(&m_Test);
 
 	m_Cat.setSamplerState(m_samplerState); 
 	m_Cat.bindVertexShader(m_VertexShaderNoGS); 
@@ -1051,6 +1108,8 @@ void App::loadEntities()
 	m_Cat.setProjectionMatrix(m_projectionMatrix); 
 	m_Cat.cameraMoved(m_viewMatrix); 
 	m_Cat.loadBuffers(m_Device); 
-	m_Cat.setPosition(DirectX::XMFLOAT3(250, 0, 250)); 
+	m_Cat.setPosition(250, 0, 250);
+
+	m_renderingQueue.push_back(&m_Cat);
 }
 

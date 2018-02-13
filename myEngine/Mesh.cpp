@@ -33,7 +33,7 @@ const Material & Mesh::getMaterial() const
 using namespace DirectX;
 void Mesh::buildtangentSpace()
 {
-	for (size_t i = 0; i < m_vertices.size(); i += 3)
+	for (int i = 0; i < (int)m_vertices.size(); i += 3)
 	{
 		int j = i + 1;
 		int k = i + 2;

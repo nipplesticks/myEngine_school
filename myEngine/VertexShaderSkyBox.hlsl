@@ -6,9 +6,11 @@ cbuffer CONSTANT_BUFFER : register(b0)
 
 struct VS_IN
 {
-    float3 Pos : POSITION;
-    float2 Tex : TEXCOORD;
-    float3 Nor : NORMAL;
+	float3 Pos : POSITION;
+	float2 Tex : TEXCOORD;
+	float3 Nor : NORMAL;
+	float3 bi  : BITANGENT;
+	float3 tan : TANGENT;
 };
 
 struct VS_OUT

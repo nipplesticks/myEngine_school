@@ -39,7 +39,6 @@ namespace TerrainLoader
 				for (int k = 0; k < width; k++)
 				{
 					map[k][i] = (float)heightMap[k][i];
-					map[k][i] = map[k][i] / normalizeHeight;
 				}
 			}
 

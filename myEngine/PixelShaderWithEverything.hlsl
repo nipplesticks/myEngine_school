@@ -9,6 +9,24 @@ cbuffer CONSTANT_BUFFER : register(b0)
 {
 	matrix WVPMatrix;
 	matrix WorldMatrix;
+};
+
+cbuffer CAMERA_BUFFER : register(b1)
+{
+	float3 camPos;
+	float3 lookAt;
+	matrix viewMatrix;
+}
+
+cbuffer LIGHT_BUFFER : register(b2)
+{
+	float3 lightPosition;
+	float3 lightColor;
+	float strength;
+}
+
+cbuffer CONSTANT_BUFFER2 : register(b3)
+{
 	float3 ambientLevel;
 	float3 diffuseLevel;
 	float4 specularLevel;
@@ -24,37 +42,41 @@ struct PS_IN
 	float4 Pos : SV_POSITION;
 	float4 wPos : WORLDPOS;
 	float3 Nor : NORMAL;
-	float2 Tex : TEXCOORD;
-	float3 TLightPos : TANGENTLIGHTPOS;
-	float3 TViewPos : TANGENTVIEWPOS;
-	float3 TPos : TANGENTPOS;
+	float2 Tex : TEXCOORD0;
+	float3 View : TEXCOORD1;
+	float3x3 WorldToTangentSpace : TEXCOORD2;
 };
 
 struct PS_OUT
 {
-	float4 diffuse				: SV_Target0;
-	float4 normal				: SV_Target1;
-	float4 wPosition			: SV_Target2;
-	float4 ambient				: SV_target3;
-	float4 specularHighlight	: SV_target4;
-	float4 TLightPos			: SV_Target5;
-	float4 TViewPos				: SV_Target6;
-	float4 TPos					: SV_Target7;
+	float4 diffuse					: SV_Target0;
+	float4 normal					: SV_Target1;
+	float4 wPosition				: SV_Target2;
+	float4 ambient					: SV_target3;
+	float4 specularHighlight		: SV_target4;
+	float4 LightPosInTangentSpace	: SV_target5;
+	float4 LightDirInTangentSpace	: SV_target6;
+	float4 ViewerInTangentSpace		: SV_target7;
 };
 
 PS_OUT main(PS_IN input) : SV_Target
 {
 	PS_OUT output = (PS_OUT)0;
-	output.diffuse = diffuseTx.Sample(SampleType, input.Tex);
-	output.normal = normalMap.Sample(SampleType, input.Tex);
+	
+	float3 normal = (2.0f * normalMap.Sample(SampleType, input.Tex) - 1.0).xyz;
+	normal = normalize(mul(normal, input.WorldToTangentSpace));
+	output.normal = float4(normal, 1.0f);
+
 	output.wPosition = input.wPos;
-	output.ambient = ambientTx.Sample(SampleType, input.Tex);
+
+	output.diffuse = diffuseTx.Sample(SampleType, input.Tex);
 	output.specularHighlight = specularHighlightTx.Sample(SampleType, input.Tex);
+	output.ambient = ambientTx.Sample(SampleType, input.Tex);
 
-	output.TLightPos = float4(input.TLightPos, 1);
-	output.TViewPos = float4(input.TViewPos, 1);
-	output.TPos = float4(input.TPos, 1);
-
+	output.LightPosInTangentSpace = float4(mul(lightPosition, input.WorldToTangentSpace), 1);
+	output.LightDirInTangentSpace = float4(normalize(mul((lightPosition - input.wPos.xyz), input.WorldToTangentSpace)), 0);
+	float3 view = normalize(camPos - input.wPos.xyz);
+	output.ViewerInTangentSpace = float4(normalize(mul(view, input.WorldToTangentSpace)),0);
 
 	return output;
 };

@@ -29,25 +29,22 @@ DirectX::XMFLOAT3 SphereIntersect::getPosition() const
 using namespace DirectX;
 bool SphereIntersect::checkIntersection(DirectX::XMFLOAT3 rayOrigin, DirectX::XMFLOAT3 rayDir)
 {
-	//Vector from cameraPos to center.
-	DirectX::XMFLOAT3 fromCamPosToCenter = DirectX::XMFLOAT3(m_position.x - rayOrigin.x,m_position.y - rayOrigin.y, m_position.z - rayOrigin.z);
-	DirectX::XMVECTOR VfromCamPosToCenter; 
-	DirectX::XMVECTOR VrayDir; 
-	VfromCamPosToCenter = DirectX::XMLoadFloat3(&fromCamPosToCenter); 
-	VrayDir = DirectX::XMLoadFloat3(&rayDir);
+	bool intersection = false; 
+	float det, b, i1, i2; 
+	XMVECTOR diffRaySphere = XMVectorSubtract(XMLoadFloat3(&rayOrigin),XMLoadFloat3(&m_position));
+	b = XMVectorGetX(XMVector3Dot(diffRaySphere, XMLoadFloat3(&rayDir))) * - 1; 
+	det = b * b - XMVectorGetX(XMVector3Dot(diffRaySphere, diffRaySphere)) + m_radius * m_radius; 
+	if (det < 0)
+		return false; 
+	det = (float)sqrt(det); 
+	i1 = b - det; 
+	i2 = b + det; 
+	//Intersecting with ray?
+	if (i2 < 0)
+		return false; 
+	if (i1 < 0) 
+		i1 = 0; 
 
-	//Lenght of raydir to the point where it is ortogonal to the sphere centre.
-	 float lengthOfRayDir = DirectX::XMVectorGetX(DirectX::XMVector3Dot(VfromCamPosToCenter, VrayDir));
-
-	//If lenght of raydir is less than zero, we would not be looking at the sphere. 
-	if (lengthOfRayDir < 0) return -1;
-
-	//Knowing the lenght of raydir and the lenght of camPosToCentre, we can figure out the distance from the sphere
-	//centre point up to the ortogonally connected point on raydir. We call the distcane dPow2.
-	float dPow2 = (DirectX::XMVectorGetX(DirectX::XMVector3Dot(VfromCamPosToCenter, VfromCamPosToCenter)) - (lengthOfRayDir * lengthOfRayDir));
-
-	//If dPow2 is larger than the radius of the sphere, that means we have missed the sphere. 
-	if (dPow2 >(m_radius * m_radius)) return false;
 	return true; 
 }
 

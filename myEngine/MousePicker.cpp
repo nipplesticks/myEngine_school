@@ -7,8 +7,8 @@ DirectX::XMFLOAT3 MousePicker::calculateMouseRay()
 	GetCursorPos(&mousePos);
 	
 	//Mouse position in viewPort space
-	float mouseX = mousePos.x; 
-	float mouseY = mousePos.y; 
+	float mouseX = (float)mousePos.x; 
+	float mouseY = (float)mousePos.y;
 
 	//ViewSpace X and Y 
 	DirectX::XMFLOAT4 viewSpaceXYZ; 

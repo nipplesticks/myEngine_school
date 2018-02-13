@@ -66,7 +66,13 @@ private:
 	bool initDeferredPixelShader();
 	bool initRasterizer(); 
 
+	void sortRenderingQueue();
+
 	void clrScrn();
+	void clearTargets();
+	void clearShaderResources();
+
+	float getDistance(DirectX::XMFLOAT3 p1, DirectX::XMFLOAT3 p2);
 
 	void setMembersToNull();
 
@@ -118,6 +124,8 @@ private:
 	ID3D11Texture2D*		m_Dsb; //Buffer
 
 	TEXTURE_RENDER_TARGET m_Gbuffer[GBUFFER_SIZE];
+
+	std::vector<Entity*> m_renderingQueue;
 
 	//Test
 	ModelHandler m_Mh;

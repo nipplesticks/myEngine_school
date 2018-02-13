@@ -9,13 +9,17 @@ cbuffer CONSTANT_BUFFER : register(b0)
 {
     matrix WVPMatrix;
     matrix WorldMatrix;
-    float3 ambientLevel;
-    float3 diffuseLevel;
-    float4 specularLevel;
-    float3 emissiveLevel;
-    float dissolveLevel;
-    float opticalDensityLevel;
-    float sharpnessLevel;
+};
+
+cbuffer CONSTANT_BUFFER : register(b3)
+{
+	float3 ambientLevel;
+	float3 diffuseLevel;
+	float4 specularLevel;
+	float3 emissiveLevel;
+	float dissolveLevel;
+	float opticalDensityLevel;
+	float sharpnessLevel;
 };
 
 

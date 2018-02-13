@@ -1,0 +1,14 @@
+What do do:
+
+[Magnus]
+* Parsing and Rendering an existing model format [X];
+* Deferred Rendering [X]; (Using phong)
+* Normal mapping [X];
+* Front to Back rendering [X];
+* Glow Effect [ ]
+
+[Victor]
+* Height-map terrain rendering, user can walk on the terrain using WASD keys [X];
+* "Shadow mapping"/"Dynamic cubic enviroment mapping"/"Dynamic paraboloid mapping" [ ];
+* Back face culling using Geometry Shader [X];
+* Mouse Picking [X]

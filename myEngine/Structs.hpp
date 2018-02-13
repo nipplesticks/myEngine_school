@@ -27,6 +27,10 @@ struct CONSTANT_BUFFER
 {
 	DirectX::XMMATRIX WVPMatrix;
 	DirectX::XMMATRIX WorldMatrix;
+};
+
+struct CONSTANT_BUFFER2
+{
 	DirectX::XMVECTOR ambient;
 	DirectX::XMVECTOR diffuse;
 	DirectX::XMVECTOR specular;
@@ -34,14 +38,6 @@ struct CONSTANT_BUFFER
 	float dissolve;
 	float opticalDensity;
 	float sharpness;
-	float sphereRadius;
-	DirectX::XMVECTOR spherePos; 
-};
-
-struct CONSTANT_BUFFER2
-{
-	DirectX::XMMATRIX WVPMatrix;
-	DirectX::XMMATRIX WorldMatrix;
 };
 
 struct VERTEX

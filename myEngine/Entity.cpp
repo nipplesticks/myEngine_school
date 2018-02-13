@@ -70,8 +70,13 @@ void Entity::loadBuffers(ID3D11Device*& device)
 	cBufferDesc.MiscFlags = 0;
 	cBufferDesc.StructureByteStride = 0;
 
-	// check if the creation failed for any reason
 	HRESULT hr = device->CreateBuffer(&cBufferDesc, nullptr, &m_constantBuffer);
+
+	cBufferDesc.ByteWidth = sizeof(CONSTANT_BUFFER2);
+
+	// check if the creation failed for any reason
+	hr = device->CreateBuffer(&cBufferDesc, nullptr, &m_constantBufferValues);
+
 }
 
 void Entity::bindVertexShader(ID3D11VertexShader * vertexShader)
@@ -207,32 +212,6 @@ DirectX::XMFLOAT3 Entity::getScale() const
 	return m_scale;
 }
 
-void Entity::makeSphere()
-{
-	std::vector<Mesh> m = m_model->getMeshes();
-	for (size_t i = 0; i < m.size(); i++)
-	{
-		std::vector<VERTEX> v = m[i].getVertices();
-		for (size_t k = 0; k < v.size(); k++)
-		{
-			VERTEX ver = v[i];
-			DirectX::XMFLOAT3 f3Vert = XMFLOAT3(ver.x, ver.y, ver.z);
-			DirectX::XMVECTOR Vvert = DirectX::XMLoadFloat3(&f3Vert); 
-			DirectX::XMVECTOR normalizedVert = DirectX::XMVector3Normalize(Vvert); 
-			/*v[i].x = XMVectorGetX(normalizedVert); 
-			v[i].y = XMVectorGetY(normalizedVert);
-			v[i].z = XMVectorGetZ(normalizedVert);*/
-
-			v[i].x = 0;
-			v[i].y = 0; 
-			v[i].z = 0; 
-		}
-
-	}
-
-
-}
-
 void Entity::setProjectionMatrix(DirectX::XMMATRIX projection)
 {
 	m_projectionMatrix = projection;
@@ -265,13 +244,13 @@ void Entity::draw(ID3D11DeviceContext *& deviceContext)
 		if (!m_model->isTerrain())
 		{
 			Material m = mesh[i].getMaterial();
-			m_cBuffer.ambient = m.getAmbientLevel();
-			m_cBuffer.diffuse = m.getDiffuseLevel();
-			m_cBuffer.specular = m.getSpecularLevel();
-			m_cBuffer.emissive = m.getEmissiveColor();
-			m_cBuffer.dissolve = m.getDissolveLevel();
-			m_cBuffer.opticalDensity = m.getOpticalDensity();
-			m_cBuffer.sharpness = m.getSharpness();
+			m_cBufferValues.ambient = m.getAmbientLevel();
+			m_cBufferValues.diffuse = m.getDiffuseLevel();
+			m_cBufferValues.specular = m.getSpecularLevel();
+			m_cBufferValues.emissive = m.getEmissiveColor();
+			m_cBufferValues.dissolve = m.getDissolveLevel();
+			m_cBufferValues.opticalDensity = m.getOpticalDensity();
+			m_cBufferValues.sharpness = m.getSharpness();
 
 			ID3D11ShaderResourceView* ambientTexture = mesh[i].getMaterial().getAmbientTexture();
 			ID3D11ShaderResourceView* diffuseTexture = mesh[i].getMaterial().getDiffuseTexture();
@@ -294,11 +273,21 @@ void Entity::draw(ID3D11DeviceContext *& deviceContext)
 		memcpy(dataPtr.pData, &m_cBuffer, sizeof(CONSTANT_BUFFER));
 		// Unmap constant buffer so that we can use it again in the GPU
 		deviceContext->Unmap(m_constantBuffer, 0);
+
+		D3D11_MAPPED_SUBRESOURCE dataPtr2;
+		deviceContext->Map(m_constantBufferValues, 0, D3D11_MAP_WRITE_DISCARD, 0, &dataPtr2);
+		//	Copy memory from CPU to GPU
+		memcpy(dataPtr2.pData, &m_cBufferValues, sizeof(CONSTANT_BUFFER2));
+		// Unmap constant buffer so that we can use it again in the GPU
+		deviceContext->Unmap(m_constantBufferValues, 0);
+
+
 		// set resources to shaders
 		deviceContext->VSSetConstantBuffers(0, 1, &m_constantBuffer);
 		deviceContext->GSSetConstantBuffers(0, 1, &m_constantBuffer);
 		deviceContext->PSSetConstantBuffers(0, 1, &m_constantBuffer);
-
+		
+		deviceContext->PSSetConstantBuffers(3, 1, &m_constantBufferValues);
 
 		deviceContext->PSSetSamplers(0, 1, &m_samplerState);
 		
@@ -306,6 +295,9 @@ void Entity::draw(ID3D11DeviceContext *& deviceContext)
 			deviceContext->Draw(static_cast<UINT>(mesh[i].getVertices().size()), 0);
 		else
 			deviceContext->Draw(static_cast<UINT>(m_model->getNrOfVertices()), 0);
+
+
+		//std::cout << "Drew: " << m_model->getName() << std::endl;
 	}
 	
 

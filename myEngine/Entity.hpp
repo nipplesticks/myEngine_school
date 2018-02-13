@@ -34,8 +34,6 @@ public:
 	void scale(float s);
 	DirectX::XMFLOAT3 getScale() const;
 
-	void makeSphere(); 
-
 	void setProjectionMatrix(DirectX::XMMATRIX projection);
 	void cameraMoved(DirectX::XMMATRIX view);
 
@@ -65,6 +63,7 @@ private:
 
 	ID3D11Buffer*			m_vertexBuffer;
 	ID3D11Buffer*			m_constantBuffer;
+	ID3D11Buffer*			m_constantBufferValues;
 	ID3D11VertexShader*		m_vertexShader;
 	ID3D11GeometryShader*	m_geometryShader;
 	ID3D11PixelShader*		m_pixelShader;
@@ -78,6 +77,7 @@ private:
 	DirectX::XMMATRIX		m_projectionMatrix;
 	DirectX::XMMATRIX		m_worldMatrix;
 	CONSTANT_BUFFER			m_cBuffer;
+	CONSTANT_BUFFER2		m_cBufferValues;
 
 protected:
 	Model*					m_model;

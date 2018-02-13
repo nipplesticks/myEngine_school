@@ -16,7 +16,7 @@ Cam::Cam(XMFLOAT3 position, XMFLOAT3 lookAt, XMFLOAT3 up)
 	m_defaultX = (CLIENT_WIDTH) / 2;
 	m_defaultY = (CLIENT_HEIGHT) / 2;
 
-	m_speed = 2.0f;
+	m_speed = 0.2f;
 	m_defaultX = static_cast<int>(CLIENT_WIDTH) / 2;
 	m_defaultY = static_cast<int>(CLIENT_HEIGHT) / 2;
 

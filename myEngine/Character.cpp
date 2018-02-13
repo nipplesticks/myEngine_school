@@ -10,7 +10,6 @@ Character::Character(std::string modelName, Model* model) : Entity()
 
 Character::Character() : Entity()
 {
-
 }
 
 Character::~Character()
@@ -60,7 +59,7 @@ void Character::collisionHandling(const Terrain& t, int mapWidth)
 		float heightValue = (t.getHightValues()[(int)x][(int)z] - 128) / t.getDeltaHight();
 
 		XMVECTOR worldPosTerrain = XMVector3TransformNormal(XMVectorSet(0, heightValue, 0, 1), terrainWorldMatrix);
-		printf("\r pY: %f", XMVectorGetY(worldPosTerrain));
+		//printf("\r pY: %f", XMVectorGetY(worldPosTerrain));
 
 		setPosition(playerPosX, XMVectorGetY(worldPosTerrain), playerPosZ);
 	}
