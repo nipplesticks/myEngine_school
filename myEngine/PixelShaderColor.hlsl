@@ -31,15 +31,27 @@ cbuffer CONSTANT_BUFFER : register(b3)
 
 struct PS_IN
 {
-    float4 Pos : SV_POSITION;
-    float4 wPos : WORLDPOS;
-    float3 Nor : NORMAL;
-    float2 Tex : TEXCOORD0;
-    float3 View : TEXCOORD1;
-    float3x3 WorldToTangentSpace : TEXCOORD2;
+	float4 Pos : SV_POSITION;
+	float4 wPos : WORLDPOS;
+	float3 Nor : NORMAL;
+	float2 Tex : TEXCOORD0;
+	float3x3 TBN : TEXCOORD2;
 };
 
-float4 main(PS_IN input) : SV_Target
+struct PS_OUT
 {
-    return float4(lightColor, 1);
+	float4 diffuse : SV_Target0;
+	float4 normal : SV_Target1;
+	float4 wPosition : SV_Target2;
+	float4 ambient : SV_target3;
+	float4 specularHighlight : SV_target4;
+};
+
+PS_OUT main(PS_IN input) : SV_Target
+{
+	PS_OUT output = (PS_OUT)0;
+	output.diffuse = float4(lightColor, 1);
+	output.normal = float4(0.0, 0.0, 0.0, 0.0);
+
+	return output;
 };

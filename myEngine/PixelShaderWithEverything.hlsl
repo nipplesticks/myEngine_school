@@ -43,8 +43,7 @@ struct PS_IN
 	float4 wPos : WORLDPOS;
 	float3 Nor : NORMAL;
 	float2 Tex : TEXCOORD0;
-	float3 View : TEXCOORD1;
-	float3x3 WorldToTangentSpace : TEXCOORD2;
+	float3x3 TBN : TEXCOORD2;
 };
 
 struct PS_OUT
@@ -54,9 +53,6 @@ struct PS_OUT
 	float4 wPosition				: SV_Target2;
 	float4 ambient					: SV_target3;
 	float4 specularHighlight		: SV_target4;
-	float4 LightPosInTangentSpace	: SV_target5;
-	float4 LightDirInTangentSpace	: SV_target6;
-	float4 ViewerInTangentSpace		: SV_target7;
 };
 
 PS_OUT main(PS_IN input) : SV_Target
@@ -64,19 +60,16 @@ PS_OUT main(PS_IN input) : SV_Target
 	PS_OUT output = (PS_OUT)0;
 	
 	float3 normal = (2.0f * normalMap.Sample(SampleType, input.Tex) - 1.0).xyz;
-	normal = normalize(mul(normal, input.WorldToTangentSpace));
-	output.normal = float4(normal, 1.0f);
+	normal = normalize(mul(normal, input.TBN));
+	output.normal = float4(normalize(input.Nor + normal), 0.0f);
+
+	//output.normal = float4(input.Nor, 0.0f);
 
 	output.wPosition = input.wPos;
 
 	output.diffuse = diffuseTx.Sample(SampleType, input.Tex);
 	output.specularHighlight = specularHighlightTx.Sample(SampleType, input.Tex);
 	output.ambient = ambientTx.Sample(SampleType, input.Tex);
-
-	output.LightPosInTangentSpace = float4(mul(lightPosition, input.WorldToTangentSpace), 1);
-	output.LightDirInTangentSpace = float4(normalize(mul((lightPosition - input.wPos.xyz), input.WorldToTangentSpace)), 0);
-	float3 view = normalize(camPos - input.wPos.xyz);
-	output.ViewerInTangentSpace = float4(normalize(mul(view, input.WorldToTangentSpace)),0);
 
 	return output;
 };

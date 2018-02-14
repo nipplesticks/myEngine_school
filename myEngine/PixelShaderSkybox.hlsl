@@ -29,9 +29,22 @@ struct PS_IN
     float2 Tex : TEXCOORD;
 };
 
-float4 main(PS_IN input) : SV_Target
+struct PS_OUT
 {
-    float4 tx = diffuse.Sample(SampleType, input.Tex);
+	float4 diffuse : SV_Target0;
+	float4 normal : SV_Target1;
+	float4 wPosition : SV_Target2;
+	float4 ambient : SV_target3;
+	float4 specularHighlight : SV_target4;
+};
 
-    return float4(tx);
+PS_OUT main(PS_IN input) : SV_Target
+{
+	PS_OUT output = (PS_OUT)0;
+    output.diffuse = diffuse.Sample(SampleType, input.Tex);
+	output.normal = float4(0.0, 0.0, 0.0, 0.0);
+
+
+
+    return output;
 };

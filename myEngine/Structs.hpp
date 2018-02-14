@@ -10,7 +10,7 @@
 #define CLIENT_HEIGHT	1080.0f
 #define FOV				75.0f
 #define REFRESH_RATE	60.0f
-#define GBUFFER_SIZE	8
+#define GBUFFER_SIZE	5
 #pragma comment (lib, "d3d11.lib")
 #pragma comment (lib, "d3dcompiler.lib")
 

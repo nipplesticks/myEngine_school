@@ -136,6 +136,7 @@ private:
 	Character m_Cat; 
 	Entity m_Skybox;
 	Entity m_Sphere;
+	Entity m_Box;
 	Cam m_Camera;
 	LIGHT_BUFFER m_Light;
 	CAMERA_BUFFER m_CameraStruct;

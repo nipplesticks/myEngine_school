@@ -23,7 +23,8 @@ App::App(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCm
 
 
 	m_Light.lightColor = DirectX::XMVectorSet(212.0f / 255, 235.0f / 255, 255.0f / 255, 1.0f);
-	m_Light.lightPosition = DirectX::XMVectorSet(25.0f, 10.0f, 25.0f, 1);
+	//m_Light.lightColor = DirectX::XMVectorSet(255.0f / 255, 0.0f / 255, 0.0f / 255, 1.0f);
+	m_Light.lightPosition = DirectX::XMVectorSet(25.0f, 350.0f, 25.0f, 1);
 	m_Light.strength = 1.0f;
 
 	m_sphereTest = SphereIntersect(50, DirectX::XMFLOAT3(0, 0, 0));
@@ -346,6 +347,7 @@ void App::Update()
 	m_Test.collisionHandling(m_Terrain2, 100);
 	m_Cat.cameraMoved(m_viewMatrix); 
 	m_Sphere.cameraMoved(m_viewMatrix);
+	m_Box.cameraMoved(m_viewMatrix);
 
 	DirectX::XMFLOAT3 forward = m_Camera.getForward();
 	DirectX::XMFLOAT3 right = m_Camera.getRight();
@@ -383,9 +385,15 @@ void App::Update()
 	}
 
 	if (GetAsyncKeyState(int('M')))
+	{
 		m_Test.rotate(0, 1, 0, 0.4);
+		m_Box.rotate(0, 1, 0, 0.4);
+	}
 	if (GetAsyncKeyState(int('N')))
+	{
 		m_Test.rotate(0, 1, 0, -0.4);
+		m_Box.rotate(0, 1, 0, -0.4);
+	}
 	if (GetAsyncKeyState(int('L')))
 		m_Camera.setPosition(p);
 
@@ -1111,6 +1119,7 @@ void App::loadModels()
 	m_Mh.loadModel("models/SkyBox/", "skybox.obj", m_Device, true, true, false);
 	m_Mh.loadModel("models/Cat/", "cat.obj", m_Device, true, false, true); 
 	m_Mh.loadModel("models/SkyBox/", "Sphere.obj", m_Device, false, true);
+	m_Mh.loadModel("models/", "wall.obj", m_Device, true, true);
 }
 
 void App::loadEntities()
@@ -1121,6 +1130,7 @@ void App::loadEntities()
 	m_Skybox.loadModel(m_Mh.getModel("skybox.obj"));
 	m_Cat.loadModel(m_Mh.getModel("cat.obj")); 
 	m_Sphere.loadModel(m_Mh.getModel("Sphere.obj"));
+	m_Box.loadModel(m_Mh.getModel("wall.obj"));
 
 	m_Skybox.setSamplerState(m_samplerState);
 	m_Skybox.bindVertexShader(m_VertexShaderSkybox);
@@ -1149,7 +1159,7 @@ void App::loadEntities()
 	m_Terrain2.setProjectionMatrix(m_projectionMatrix);
 	m_Terrain2.cameraMoved(m_viewMatrix);
 	m_Terrain2.loadBuffers(m_Device);
-	m_Terrain2.setScale(30, 50, 30);
+	m_Terrain2.setScale(10, 20, 10);
 
 	m_Test.setSamplerState(m_samplerState);
 	m_Test.bindVertexShader(m_VertexShaderNoGS);
@@ -1159,8 +1169,19 @@ void App::loadEntities()
 	m_Test.loadBuffers(m_Device);
 	m_Test.setPosition(0, 0, 0);
 	m_Test.setScale(20);
-
+	
 	m_renderingQueue.push_back(&m_Test);
+
+	m_Box.setSamplerState(m_samplerState);
+	m_Box.bindVertexShader(m_VertexShaderNoGS);
+	m_Box.bindPixelShader(m_PixelShaderEverything);
+	m_Box.setProjectionMatrix(m_projectionMatrix);
+	m_Box.cameraMoved(m_viewMatrix);
+	m_Box.loadBuffers(m_Device);
+	m_Box.setPosition(250, 250, 250);
+	m_Box.setScale(50);
+
+	m_renderingQueue.push_back(&m_Box);
 
 	m_Cat.setSamplerState(m_samplerState); 
 	m_Cat.bindVertexShader(m_VertexShader);
