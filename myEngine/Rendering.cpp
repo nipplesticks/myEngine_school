@@ -1,6 +1,7 @@
 #include "Rendering.hpp"
 #include "Character.h"
 #include "SphereIntersect.hpp"
+#include "WICTextureLoader.h"
 
 App::App(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCmdShow)
 {
@@ -27,7 +28,7 @@ App::App(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCm
 	m_Light.lightPosition = DirectX::XMVectorSet(25.0f, 350.0f, 25.0f, 1);
 	m_Light.strength = 1.0f;
 
-	m_sphereTest = SphereIntersect(50, DirectX::XMFLOAT3(0, 0, 0));
+	m_sphereTest = SphereIntersect(20, DirectX::XMFLOAT3(0, 0, 0));
 
 	setMembersToNull();
 }
@@ -118,7 +119,7 @@ int App::run()
 
 		if (duration_cast<milliseconds>(steady_clock::now() - timer).count() > 1000)
 		{
-			//printf("\rFPS: %d TICK: %d", fpsCounter, updates);
+			printf("\rFPS: %d TICK: %d", fpsCounter, updates);
 			updates = 0;
 			fpsCounter = 0;
 			timer += milliseconds(1000);
@@ -197,7 +198,7 @@ HRESULT App::CreateDirect3DContext()
 	HRESULT hr = D3D11CreateDeviceAndSwapChain(NULL,
 		D3D_DRIVER_TYPE_HARDWARE,
 		NULL,
-		D3D11_CREATE_DEVICE_DEBUG,
+		NULL,//D3D11_CREATE_DEVICE_DEBUG,
 		NULL,
 		NULL,
 		D3D11_SDK_VERSION,
@@ -290,6 +291,7 @@ bool App::InitRenderFunction()
 	m_DeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	m_DeviceContext->IASetInputLayout(m_VertexLayout);
 	InitGBuffer();
+	initHud();
 	return true;
 }
 
@@ -334,21 +336,18 @@ void App::InitGBuffer()
 void App::Update()
 {
 	m_Camera.update();
-	m_viewMatrix = m_Camera.getViewMatrix();
-	m_Sphere.setScale(m_Light.strength * 10);
 	DirectX::XMFLOAT3 p;
 	DirectX::XMStoreFloat3(&p, m_Light.lightPosition);
+	m_viewMatrix = m_Camera.getViewMatrix();
 	m_Sphere.setPosition(p);
-
-	//m_Terrain2.rotate(0, 1, 0, 1.0f);
+	m_Sphere.setScale(m_Light.strength * 10);
+	m_Test.collisionHandling(m_Terrain2, 0);
 	m_Terrain2.cameraMoved(m_viewMatrix);
-	m_Test.cameraMoved(m_viewMatrix);
 	m_Skybox.cameraMoved(m_Camera.getViewMatrixForBackground());
-	m_Test.collisionHandling(m_Terrain2, 100);
-	m_Cat.cameraMoved(m_viewMatrix); 
-	m_Sphere.cameraMoved(m_viewMatrix);
-	m_Box.cameraMoved(m_viewMatrix);
-
+	for (Entity* e : m_renderingQueue)
+	{
+		e->cameraMoved(m_viewMatrix);
+	}
 	DirectX::XMFLOAT3 forward = m_Camera.getForward();
 	DirectX::XMFLOAT3 right = m_Camera.getRight();
 	
@@ -394,12 +393,13 @@ void App::Update()
 		m_Test.rotate(0, 1, 0, -0.4);
 		m_Box.rotate(0, 1, 0, -0.4);
 	}
+	/*if (GetAsyncKeyState(int('L')))
+		m_Camera.setPosition(p);*/
 	if (GetAsyncKeyState(int('L')))
-		m_Camera.setPosition(p);
+		m_Camera.setPosition(m_Cage.getPosition());
+
 
 	DirectX::XMFLOAT3 pos = m_Test.getPosition();
-
-
 
 	pos.y += 20.0f;
 	//m_Camera.setPosition(pos);
@@ -424,17 +424,44 @@ void App::Update()
 	m_DeviceContext->Map(m_LightBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &LightDataPtr);
 	memcpy(LightDataPtr.pData, &m_Light, sizeof(LIGHT_BUFFER));
 	m_DeviceContext->Unmap(m_LightBuffer, 0);
+	bool win = true;
 
-	m_Cat.collisionHandling(m_Terrain2, 0); 
-	m_sphereTest.setPosition(m_Cat.getPosition()); 
-	bool intersect = false;
-	if (GetAsyncKeyState(int('K')))
-		intersect = m_sphereTest.checkIntersection(m_Camera.getPosition(), m_Camera.getLookAt()); 
-	if (intersect)
+	DirectX::XMFLOAT3 cagePos = m_Cage.getPosition();
+	DirectX::XMVECTOR vCagePos = DirectX::XMLoadFloat3(&cagePos);
+
+	for (Character* c : m_Cats)
 	{
-		DirectX::XMFLOAT3 moveOffset = DirectX::XMFLOAT3(5, 0, 5); 
-		m_Cat.move(m_Camera.getForward().x * moveOffset.x,m_Camera.getForward().y * moveOffset.y, m_Camera.getForward().z * moveOffset.z); 
-		std::cout << "HIT" << std::endl; 
+		DirectX::XMFLOAT3 cPos = c->getPosition();
+		DirectX::XMVECTOR vcPos = DirectX::XMLoadFloat3(&cPos);
+		DirectX::XMVECTOR vToCage = DirectX::XMVectorSubtract(vCagePos, vcPos);
+		DirectX::XMVECTOR length = DirectX::XMVector3Length(vToCage);
+
+		if (DirectX::XMVectorGetX(length) > 50)
+		{
+			m_sphereTest.setPosition(c->getPosition());
+			bool inter = false;
+			if (GetAsyncKeyState(int('K')))
+				inter = m_sphereTest.checkIntersection(m_Camera.getPosition(), m_Camera.getLookAt());
+			if (inter)
+			{
+				float speed = 5;
+				c->move(m_Camera.getForward().x * speed, m_Camera.getForward().y * speed, m_Camera.getForward().z * speed);
+				std::cout << "HIT" << std::endl;
+			}
+			win = false;
+		}
+		c->collisionHandling(m_Terrain2, 0);
+	}
+
+	if (win)
+	{
+		if (!m_winner)
+		{
+			m_winner = true;
+			m_win->Release();
+			HRESULT hr = DirectX::CreateWICTextureFromFile(m_Device, L"Texture/Win.png", nullptr, &m_win);
+			m_DeviceContext->PSSetShaderResources(11, 1, &m_win);
+		}
 	}
 	
 
@@ -484,8 +511,8 @@ void App::draw()
 	{
 		e->draw(m_DeviceContext);
 	}
+
 	//std::cout << "----------------------\n";
-	m_Sphere.draw(m_DeviceContext);
 	m_Terrain2.draw(m_DeviceContext);
 	m_Skybox.draw(m_DeviceContext);
 	//std::cout << "----------------------\n";
@@ -518,6 +545,17 @@ void App::secondDrawPass()
 void App::drawSky()
 {
 	
+}
+
+bool App::initHud()
+{
+	HRESULT hr = DirectX::CreateWICTextureFromFile(m_Device, L"Texture/Aim.png", nullptr, &m_aim);
+	hr = DirectX::CreateWICTextureFromFile(m_Device, L"Texture/Empty.png", nullptr, &m_win);
+
+	m_DeviceContext->PSSetShaderResources(10, 1, &m_aim);
+	m_DeviceContext->PSSetShaderResources(11, 1, &m_win);
+
+	return false;
 }
 
 bool App::CreateVertexShader()
@@ -756,26 +794,33 @@ bool App::initRasterizer()
 	}
 	return SUCCEEDED(hr);
 }
-
+#include <algorithm>
 void App::sortRenderingQueue()
 {
-	int minIndex = 0;
-	for (int i = 0; i < m_renderingQueue.size() - 1; i++)
+	std::sort(m_renderingQueue.begin(), m_renderingQueue.end(), [&](Entity* e1, Entity* e2)
 	{
-		for (int k = i + 1; k < m_renderingQueue.size(); k++)
-		{
-			float d1 = getDistance(m_renderingQueue[k]->getPosition(), m_Camera.getPosition());
-			float d2 = getDistance(m_renderingQueue[minIndex]->getPosition(), m_Camera.getPosition());
-			if (d1 < d2)
-			{
-				minIndex = k;
-			}
-		}
+		float d1 = getDistance(e1->getPosition(), m_Camera.getPosition());
+		float d2 = getDistance(e2->getPosition(), m_Camera.getPosition());
 
-		Entity* temp = m_renderingQueue[i];
-		m_renderingQueue[i] = m_renderingQueue[minIndex];
-		m_renderingQueue[minIndex] = temp;
-	}
+		return d1 < d2;
+	});
+	//int minIndex = 0;
+	//for (int i = 0; i < m_renderingQueue.size() - 1; i++)
+	//{
+	//	for (int k = i + 1; k < m_renderingQueue.size(); k++)
+	//	{
+	//		float d1 = getDistance(m_renderingQueue[k]->getPosition(), m_Camera.getPosition());
+	//		float d2 = getDistance(m_renderingQueue[minIndex]->getPosition(), m_Camera.getPosition());
+	//		if (d1 < d2)
+	//		{
+	//			minIndex = k;
+	//		}
+	//	}
+
+	//	Entity* temp = m_renderingQueue[i];
+	//	m_renderingQueue[i] = m_renderingQueue[minIndex];
+	//	m_renderingQueue[minIndex] = temp;
+	//}
 }
 
 bool App::createCameraBuffer()
@@ -1120,6 +1165,7 @@ void App::loadModels()
 	m_Mh.loadModel("models/Cat/", "cat.obj", m_Device, true, false, true); 
 	m_Mh.loadModel("models/SkyBox/", "Sphere.obj", m_Device, false, true);
 	m_Mh.loadModel("models/", "wall.obj", m_Device, true, true);
+	m_Mh.loadModel("models/iron_cage/", "iron_cage.obj", m_Device, true, true);
 }
 
 void App::loadEntities()
@@ -1128,9 +1174,33 @@ void App::loadEntities()
 	m_Terrain2.initTerrainViaHeightMap("HeightMap/NewHeightMap.data", "Mountain", 15.0f, 100, 100, 0.5f);
 	m_Terrain2.setTerrainTexture(L"HeightMap/sand.dds", m_Device);
 	m_Skybox.loadModel(m_Mh.getModel("skybox.obj"));
-	m_Cat.loadModel(m_Mh.getModel("cat.obj")); 
 	m_Sphere.loadModel(m_Mh.getModel("Sphere.obj"));
 	m_Box.loadModel(m_Mh.getModel("wall.obj"));
+	m_Cage.loadModel(m_Mh.getModel("iron_cage.obj"));
+
+
+	m_Terrain2.setSamplerState(m_samplerState);
+	m_Terrain2.bindVertexShader(m_VertexShader);
+	m_Terrain2.bindGeometryShader(m_GeometryShader);
+	m_Terrain2.bindPixelShader(m_PixelShaderTexture);
+	m_Terrain2.setProjectionMatrix(m_projectionMatrix);
+	m_Terrain2.cameraMoved(m_viewMatrix);
+	m_Terrain2.loadBuffers(m_Device);
+	m_Terrain2.setScale(10, 20, 10);
+
+	int width = m_Terrain2.getWidith() * m_Terrain2.getScale().x;
+	int height = m_Terrain2.getHeight() * m_Terrain2.getScale().z;
+	m_Cage.setSamplerState(m_samplerState);
+	m_Cage.bindVertexShader(m_VertexShaderNoGS);
+	m_Cage.bindPixelShader(m_PixelShaderEverything);
+	m_Cage.setProjectionMatrix(m_projectionMatrix);
+	m_Cage.cameraMoved(m_viewMatrix);
+	m_Cage.loadBuffers(m_Device);
+	m_Cage.setPosition(rand() % width, 0, rand() % height);
+
+	m_Cage.setScale(25);
+	m_Cage.collisionHandling(m_Terrain2, 0);
+	m_renderingQueue.push_back(&m_Cage);
 
 	m_Skybox.setSamplerState(m_samplerState);
 	m_Skybox.bindVertexShader(m_VertexShaderSkybox);
@@ -1150,16 +1220,7 @@ void App::loadEntities()
 	DirectX::XMFLOAT3 p;
 	DirectX::XMStoreFloat3(&p, m_Light.lightPosition);
 	m_Sphere.setPosition(p);
-
-
-	m_Terrain2.setSamplerState(m_samplerState);
-	m_Terrain2.bindVertexShader(m_VertexShader);
-	m_Terrain2.bindGeometryShader(m_GeometryShader);
-	m_Terrain2.bindPixelShader(m_PixelShaderTexture);
-	m_Terrain2.setProjectionMatrix(m_projectionMatrix);
-	m_Terrain2.cameraMoved(m_viewMatrix);
-	m_Terrain2.loadBuffers(m_Device);
-	m_Terrain2.setScale(10, 20, 10);
+	m_renderingQueue.push_back(&m_Sphere);
 
 	m_Test.setSamplerState(m_samplerState);
 	m_Test.bindVertexShader(m_VertexShaderNoGS);
@@ -1183,15 +1244,22 @@ void App::loadEntities()
 
 	m_renderingQueue.push_back(&m_Box);
 
-	m_Cat.setSamplerState(m_samplerState); 
-	m_Cat.bindVertexShader(m_VertexShader);
-	m_Cat.bindGeometryShader(m_GeometryShader);
-	m_Cat.bindPixelShader(m_PixelShaderTexture);
-	m_Cat.setProjectionMatrix(m_projectionMatrix); 
-	m_Cat.cameraMoved(m_viewMatrix); 
-	m_Cat.loadBuffers(m_Device); 
-	m_Cat.setPosition(250, 0, 250);
+	for (int i = 0; i < 10; i++)
+	{
+		Character* tempCat = new Character;
+		tempCat->loadModel(m_Mh.getModel("cat.obj"));
+		tempCat->setSamplerState(m_samplerState);
+		tempCat->bindVertexShader(m_VertexShader);
+		tempCat->bindGeometryShader(m_GeometryShader);
+		tempCat->bindPixelShader(m_PixelShaderTexture);
+		tempCat->setProjectionMatrix(m_projectionMatrix);
+		tempCat->cameraMoved(m_viewMatrix);
+		tempCat->loadBuffers(m_Device);
 
-	m_renderingQueue.push_back(&m_Cat);
+		tempCat->setPosition(rand() % width, 0, rand() % height);
+
+		m_Cats.push_back(tempCat);
+		m_renderingQueue.push_back(m_Cats[i]);
+	}
 }
 

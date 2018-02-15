@@ -59,6 +59,7 @@ artifacts/
 !myEngine/models/SkyBox/*.obj
 !myEngine/models/cyborg/*.obj
 !myEngine/models/Cat/*.obj
+!myEngine/models/iron_cage/*.obj
 *.pch
 *.pdb
 *.pgc

@@ -2,6 +2,10 @@
 
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCmdShow)
 {
+
+
+	srand(static_cast<unsigned>(time(NULL)));
+
 	//	Activation of Console
 	AllocConsole();
 	FILE* fp;

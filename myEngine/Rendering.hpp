@@ -7,6 +7,7 @@
 #include "Camera.hpp"
 #include <istream>
 #include "SphereIntersect.hpp"
+#include <ctime>
 
 class App
 {
@@ -48,6 +49,7 @@ private:
 	void secondDrawPass();
 	void drawSky();
 	
+	bool initHud();
 
 	bool initVertexShader();
 	bool CreateVertexShader();
@@ -134,6 +136,14 @@ private:
 	Terrain m_Terrain2;
 	Character m_Test;
 	Character m_Cat; 
+	Character m_Cage;
+
+	std::vector<Character*> m_Cats;
+
+
+	ID3D11ShaderResourceView* m_aim = nullptr;
+	ID3D11ShaderResourceView* m_win = nullptr;
+
 	Entity m_Skybox;
 	Entity m_Sphere;
 	Entity m_Box;
@@ -143,6 +153,9 @@ private:
 	DirectX::XMMATRIX		m_viewMatrix;
 	DirectX::XMMATRIX		m_projectionMatrix;
 	SphereIntersect m_sphereTest; 
+
+	bool m_winner = false;
+
 	//MousePicker m_Mp; 
 };
 

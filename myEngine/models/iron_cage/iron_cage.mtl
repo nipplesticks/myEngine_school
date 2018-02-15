@@ -1,0 +1,14 @@
+# 
+# 
+
+newmtl iron_cage
+Ns 96.078431
+Ka 0.000000 0.000000 0.000000
+Kd 0.640000 0.640000 0.640000
+Ks 0.100000 0.100000 0.100000
+Ni 1.000000
+d 1.000000
+illum 2
+map_Kd iron_cage_d.png
+map_Bump iron_cage_n.png
+map_Ks iron_cage_s.png
