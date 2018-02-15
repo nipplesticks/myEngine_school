@@ -44,6 +44,11 @@ App::~App()
 	m_Dsv->Release();
 	m_Dsb->Release();
 
+	for (Entity* e : m_Cats)
+	{
+		delete e;
+	}
+
 	DestroyWindow(m_wndHandle);
 }
 
