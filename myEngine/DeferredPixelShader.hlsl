@@ -5,6 +5,7 @@ Texture2D gTexNormal : register(t1);
 Texture2D gTexPosition : register(t2);
 Texture2D gTexAmbient : register(t3);
 Texture2D gTexSpecular : register(t4);
+Texture2D gTexShadowMap : register(t5);
 
 Texture2D gTexAim : register(t10);
 Texture2D gTexWin : register(t11);
@@ -20,6 +21,9 @@ cbuffer LIGHT_BUFFER : register(b2)
 	float3 lightPosition;
 	float3 lightColor;
 	float strength;
+	matrix lightDir;
+	matrix lightProj;
+	matrix lightView;
 }
 
 struct VS_OUT

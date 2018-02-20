@@ -20,13 +20,12 @@ App::App(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCm
 
 	m_projectionMatrix = DirectX::XMMatrixPerspectiveFovLH(DirectX::XMConvertToRadians(FOV), CLIENT_WIDTH / CLIENT_HEIGHT, 0.1f, 100000.0f);
 
-
-
-
 	m_Light.lightColor = DirectX::XMVectorSet(212.0f / 255, 235.0f / 255, 255.0f / 255, 1.0f);
 	//m_Light.lightColor = DirectX::XMVectorSet(255.0f / 255, 0.0f / 255, 0.0f / 255, 1.0f);
-	m_Light.lightPosition = DirectX::XMVectorSet(25.0f, 350.0f, 25.0f, 1);
+	m_Light.lightPosition = DirectX::XMVectorSet(0.0f, 350.0f, 0.0f, 1);
 	m_Light.strength = 1.0f;
+	m_Light.lightDir = DirectX::XMVector3Normalize(DirectX::XMVectorSet(1.0, -1.0, 1.0, 0));
+	setLightBufferValues();
 
 	m_sphereTest = SphereIntersect(20, DirectX::XMFLOAT3(0, 0, 0));
 
@@ -43,6 +42,15 @@ App::~App()
 	m_DeviceContext->Release();
 	m_Dsv->Release();
 	m_Dsb->Release();
+
+	m_pShadowMapTexture->Release();
+	m_pShadowDepthView->Release();
+	m_pShadowMapShaderResourceView->Release();
+	//m_pComparisionSampler->Release();
+	//m_pLightViewProjectionBuffer->Release();
+	m_pShadowVertexShader->Release();
+	m_pShadowPixelShader->Release();
+
 
 	for (Entity* e : m_Cats)
 	{
@@ -255,7 +263,10 @@ bool App::CreateDepthBuffer()
 		//exit(-1);
 		return false;
 	}
-	return true;
+
+	bool result = createShadowResources();
+
+	return result;
 }
 
 void App::SetViewport()
@@ -477,20 +488,22 @@ void App::Update()
 			m_DeviceContext->PSSetShaderResources(11, 1, &m_win);
 		}
 	}
-	
-
-
 }
 
 void App::Render()
 {
 	clearShaderResources();
+	sortRenderingQueue();
+	//<Shadow Rendering>
+	prepareShadowRendering();
+	drawShadows();
+	//</Shadow Rendering>
+
+	//<Deferred Rendering>
 	firstDrawPass();
-	draw();
 	clearTargets(); //Clear rendertargets
 	secondDrawPass();
-
-	drawSky();
+	//</Deferred Rendering>
 }
 
 void App::firstDrawPass()
@@ -515,18 +528,20 @@ void App::firstDrawPass()
 	}
 
 	m_DeviceContext->ClearDepthStencilView(m_Dsv, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+
+
+	draw();
 }
 
 void App::draw()
 {
-	sortRenderingQueue();
-
 	for (Entity* e : m_renderingQueue)
 	{
 		e->draw(m_DeviceContext);
 	}
 
 	//std::cout << "----------------------\n";
+	m_Sphere.draw(m_DeviceContext);
 	m_Terrain2.draw(m_DeviceContext);
 	m_Skybox.draw(m_DeviceContext);
 	//std::cout << "----------------------\n";
@@ -552,6 +567,7 @@ void App::secondDrawPass()
 	{
 		m_DeviceContext->PSSetShaderResources(i, 1, &m_Gbuffer[i].rsv);
 	}
+	m_DeviceContext->PSSetShaderResources(GBUFFER_SIZE, 1, &m_pShadowMapShaderResourceView);
 
 	m_DeviceContext->Draw(4, 0);
 }
@@ -582,7 +598,8 @@ bool App::CreateVertexShader()
 		return false;
 	if (!initDeferredVertexShader())
 		return false;
-
+	if (!createShadowVertexShader())
+		return false; 
 	return true;
 }
 
@@ -1044,6 +1061,8 @@ bool App::CreatePixelShader()
 		return false;
 	if (!initPixelShaderColor())
 		return false;
+	if (!createShadowPixelShader())
+		return false;
 
 	return true;
 }
@@ -1100,6 +1119,15 @@ void App::setMembersToNull()
 
 	m_Dsv = nullptr;
 	m_Dsb = nullptr;
+
+	m_pShadowMapTexture				= nullptr;
+	m_pShadowDepthView				= nullptr;
+	m_pShadowMapShaderResourceView  = nullptr;
+	//m_pComparisionSampler			= nullptr;
+	//m_pLightViewProjectionBuffer	= nullptr;
+	m_pShadowVertexShader			= nullptr;
+	m_pShadowPixelShader			= nullptr;
+
 }
 
 bool App::initDrawTexture()
@@ -1234,7 +1262,7 @@ void App::loadEntities()
 	DirectX::XMFLOAT3 p;
 	DirectX::XMStoreFloat3(&p, m_Light.lightPosition);
 	m_Sphere.setPosition(p);
-	m_renderingQueue.push_back(&m_Sphere);
+	//m_renderingQueue.push_back(&m_Sphere);
 
 	m_Test.setSamplerState(m_samplerState);
 	m_Test.bindVertexShader(m_VertexShaderNoGS);
@@ -1275,5 +1303,159 @@ void App::loadEntities()
 		m_Cats.push_back(tempCat);
 		m_renderingQueue.push_back(m_Cats[i]);
 	}
+}
+
+void App::setLightBufferValues()
+{
+	m_Light.lightProjectionMatrix = DirectX::XMMatrixTranspose(DirectX::XMMatrixPerspectiveFovLH(DirectX::XMConvertToRadians(45), CLIENT_WIDTH / CLIENT_HEIGHT, 0.1f, 100000.0f));
+	m_Light.lightViewMatrix = DirectX::XMMatrixLookAtLH(
+			m_Light.lightPosition,
+			DirectX::XMVectorAdd(m_Light.lightPosition, m_Light.lightDir),
+			DirectX::XMVectorSet(0, 1, 0, 0)
+	);
+
+	m_Light.lightViewMatrix = DirectX::XMMatrixTranspose(m_Light.lightViewMatrix);
+}
+
+bool App::createShadowPixelShader()
+{
+	//create pixel shader
+	ID3DBlob* pPS = nullptr;
+	ID3DBlob* error = nullptr;
+	HRESULT hr = D3DCompileFromFile(
+		L"ShadowPixelShader.hlsl", // filename
+		nullptr,			// optional macros
+		nullptr,			// optional include files
+		"main",				// entry point
+		"ps_5_0",			// shader model (target)
+		0,					// shader compile options
+		0,					// effect compile options
+		&pPS,				// double pointer to ID3DBlob		
+		&error				// pointer for Error Blob messages.
+							// how to use the Error blob, see here
+							// https://msdn.microsoft.com/en-us/library/windows/desktop/hh968107(v=vs.85).aspx
+	);
+	if (FAILED(hr))
+	{
+		OutputDebugString((char*)error->GetBufferPointer());
+		pPS->Release();
+		return false;
+	}
+	if (FAILED(m_Device->CreatePixelShader(pPS->GetBufferPointer(), pPS->GetBufferSize(), nullptr, &m_pShadowPixelShader)))
+	{
+		pPS->Release();
+		return false;
+	}
+
+	pPS->Release();
+
+	return true;
+}
+
+bool App::createShadowVertexShader()
+{
+	ID3DBlob* pVS = nullptr;
+	ID3DBlob* error = nullptr;
+	HRESULT hr = D3DCompileFromFile(
+		L"ShadowVertexShader.hlsl", // filename
+		nullptr,		// optional macros
+		nullptr,		// optional include files
+		"main",			// entry point
+		"vs_5_0",		// shader model (target)
+		0,				// shader compile options			// here DEBUGGING OPTIONS
+		0,				// effect compile options
+		&pVS,			// double pointer to ID3DBlob		
+		&error			// pointer for Error Blob messages.
+						// how to use the Error blob, see here
+						// https://msdn.microsoft.com/en-us/library/windows/desktop/hh968107(v=vs.85).aspx
+	);
+	if (FAILED(hr))
+	{
+		pVS->Release();
+		OutputDebugString((char*)error->GetBufferPointer());
+		return false;
+	}
+	if (FAILED(m_Device->CreateVertexShader(pVS->GetBufferPointer(), pVS->GetBufferSize(), nullptr, &m_pShadowVertexShader)))
+	{
+		pVS->Release();
+		return false;
+	}
+	//create input layout (verified using vertex shader)
+	D3D11_INPUT_ELEMENT_DESC inputDesc[] = {
+		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 }
+	};
+	hr = m_Device->CreateInputLayout(inputDesc, ARRAYSIZE(inputDesc), pVS->GetBufferPointer(), pVS->GetBufferSize(), &m_ShadowVertexLayout);
+	if (FAILED(hr))
+	{
+		pVS->Release();
+		return false;
+	}
+
+
+	pVS->Release();
+
+	return true;
+}
+
+bool App::createShadowResources()
+{
+	D3D11_TEXTURE2D_DESC textureDesc; 
+	textureDesc.Format = DXGI_FORMAT_R24G8_TYPELESS;
+	textureDesc.MipLevels = 1;
+	textureDesc.ArraySize = 1;
+	textureDesc.SampleDesc.Count = 1;
+	textureDesc.Usage = D3D11_USAGE_DEFAULT;
+	textureDesc.CPUAccessFlags = 0;
+	textureDesc.MiscFlags = 0;
+	textureDesc.SampleDesc.Quality = 0;
+	textureDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL | D3D11_BIND_SHADER_RESOURCE;
+	textureDesc.Height = static_cast<UINT>(CLIENT_HEIGHT);
+	textureDesc.Width = static_cast<UINT>(CLIENT_WIDTH);
+
+	HRESULT hr = 0; 
+
+	hr = m_Device->CreateTexture2D(&textureDesc, nullptr, &m_pShadowMapTexture); 
+
+	D3D11_DEPTH_STENCIL_VIEW_DESC Dsvd; 
+	Dsvd.Flags = 0;
+	Dsvd.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+	Dsvd.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
+	Dsvd.Texture2D.MipSlice = 0;
+
+	hr = m_Device->CreateDepthStencilView(m_pShadowMapTexture, &Dsvd, &m_pShadowDepthView);
+
+	D3D11_SHADER_RESOURCE_VIEW_DESC Srvd;
+	Srvd.Format = DXGI_FORMAT_R24_UNORM_X8_TYPELESS;
+	Srvd.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+	Srvd.Texture2D.MipLevels = 1;
+	Srvd.Texture2D.MostDetailedMip = 0;
+
+	hr = m_Device->CreateShaderResourceView(m_pShadowMapTexture, &Srvd,&m_pShadowMapShaderResourceView);
+
+	return true;
+}
+
+void App::prepareShadowRendering()
+{
+	m_DeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	m_DeviceContext->IASetInputLayout(m_ShadowVertexLayout);
+	m_DeviceContext->VSSetShader(m_pShadowVertexShader, nullptr, 0);
+	m_DeviceContext->HSSetShader(nullptr, nullptr, 0);
+	m_DeviceContext->DSSetShader(nullptr, nullptr, 0);
+	m_DeviceContext->GSSetShader(nullptr, nullptr, 0);
+	m_DeviceContext->PSSetShader(m_pShadowPixelShader, nullptr, 0);
+	//m_DeviceContext->PSSetSamplers(0, 1, &m_pComparisionSampler);
+
+	m_DeviceContext->OMSetRenderTargets(0, NULL, m_pShadowDepthView);
+	m_DeviceContext->ClearDepthStencilView(m_pShadowDepthView, D3D11_CLEAR_DEPTH, 1.0f, 0);
+}
+
+void App::drawShadows()
+{
+	for (Entity* e : m_renderingQueue)
+	{
+		e->drawShadow(m_DeviceContext);
+	}
+	m_Terrain2.drawShadow(m_DeviceContext);
 }
 

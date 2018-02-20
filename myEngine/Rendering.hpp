@@ -153,10 +153,25 @@ private:
 	DirectX::XMMATRIX		m_viewMatrix;
 	DirectX::XMMATRIX		m_projectionMatrix;
 	SphereIntersect m_sphereTest; 
-
 	bool m_winner = false;
 
-	//MousePicker m_Mp; 
+	// THIS NEXT SECTION IS VARS FOR SHADOWMAPPING
+private:
+	ID3D11Texture2D*			m_pShadowMapTexture;
+	ID3D11DepthStencilView*		m_pShadowDepthView;
+	ID3D11ShaderResourceView*	m_pShadowMapShaderResourceView;
+	//ID3D11SamplerState*			m_pComparisionSampler;
+	//ID3D11Buffer*				m_pLightViewProjectionBuffer;
+	ID3D11VertexShader*			m_pShadowVertexShader;
+	ID3D11PixelShader*			m_pShadowPixelShader;
+	ID3D11InputLayout*			m_ShadowVertexLayout;
+private:
+	void setLightBufferValues();
+	bool createShadowPixelShader();
+	bool createShadowVertexShader();
+	bool createShadowResources(); 
+	void prepareShadowRendering();
+	void drawShadows();
 };
 
 

@@ -295,41 +295,49 @@ void Entity::draw(ID3D11DeviceContext *& deviceContext)
 			deviceContext->Draw(static_cast<UINT>(mesh[i].getVertices().size()), 0);
 		else
 			deviceContext->Draw(static_cast<UINT>(m_model->getNrOfVertices()), 0);
-
-
-		//std::cout << "Drew: " << m_model->getName() << std::endl;
 	}
-	
-
-	//UINT32 vertexSize = sizeof(VERTEX);
-	//UINT offset = 0;
-	//deviceContext->IASetVertexBuffers(0, 1, &m_vertexBuffer, &vertexSize, &offset);
-	//ID3D11ShaderResourceView* texture = m_model->getTextureResourceView();
-	//if (m_model->getTextureSetting() == 0)
-	//{
-	//	ID3D11SamplerState* sampleState = m_model->getSampleState();
-	//	deviceContext->PSSetSamplers(0, 1, &sampleState);
-	//}
-
-	//deviceContext->PSSetShaderResources(0, 1, &texture);
-
-	//D3D11_MAPPED_SUBRESOURCE dataPtr;
-	//deviceContext->Map(m_constantBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &dataPtr);
-
-	////	Copy memory from CPU to GPU
-	//memcpy(dataPtr.pData, &m_cBuffer, sizeof(CONSTANT_BUFFER));
-
-	//// Unmap constant buffer so that we can use it again in the GPU
-	//deviceContext->Unmap(m_constantBuffer, 0);
-	//// set resources to shaders
-	//deviceContext->VSSetConstantBuffers(0, 1, &m_constantBuffer);
-	//deviceContext->GSSetConstantBuffers(0, 1, &m_constantBuffer);
-	//deviceContext->PSSetConstantBuffers(0, 1, &m_constantBuffer);
-
-	//deviceContext->Draw(m_model->getNrOfVertices(), 0);
 }
 
-XMFLOAT3 Entity::add(XMFLOAT3 tar, XMFLOAT3 adder) const
+void Entity::drawShadow(ID3D11DeviceContext *& deviceContext)
+{
+	UINT32 vertexSize = sizeof(VERTEX);
+	UINT offset = 0;
+
+	size_t nrOfDrawCalls = m_vertexBufferVector.size();
+
+	std::vector<Mesh> mesh = m_model->getMeshes();
+
+
+	for (size_t i = 0; i < nrOfDrawCalls; i++)
+	{
+		deviceContext->IASetVertexBuffers(0, 1, &m_vertexBufferVector[i], &vertexSize, &offset);
+		D3D11_MAPPED_SUBRESOURCE dataPtr;
+		deviceContext->Map(m_constantBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &dataPtr);
+		//	Copy memory from CPU to GPU
+		memcpy(dataPtr.pData, &m_cBuffer, sizeof(CONSTANT_BUFFER));
+		// Unmap constant buffer so that we can use it again in the GPU
+		deviceContext->Unmap(m_constantBuffer, 0);
+
+		D3D11_MAPPED_SUBRESOURCE dataPtr2;
+		deviceContext->Map(m_constantBufferValues, 0, D3D11_MAP_WRITE_DISCARD, 0, &dataPtr2);
+		//	Copy memory from CPU to GPU
+		memcpy(dataPtr2.pData, &m_cBufferValues, sizeof(CONSTANT_BUFFER2));
+		// Unmap constant buffer so that we can use it again in the GPU
+		deviceContext->Unmap(m_constantBufferValues, 0);
+
+
+		// set resources to shaders
+		deviceContext->VSSetConstantBuffers(0, 1, &m_constantBuffer);
+		deviceContext->PSSetConstantBuffers(0, 1, &m_constantBuffer);
+
+		if (!m_model->isTerrain())
+			deviceContext->Draw(static_cast<UINT>(mesh[i].getVertices().size()), 0);
+		else
+			deviceContext->Draw(static_cast<UINT>(m_model->getNrOfVertices()), 0);
+	}
+}
+
+	XMFLOAT3 Entity::add(XMFLOAT3 tar, XMFLOAT3 adder) const
 {
 	XMFLOAT3 result;
 	result.x = tar.x + adder.x;
