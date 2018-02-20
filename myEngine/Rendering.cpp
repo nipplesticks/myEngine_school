@@ -445,11 +445,20 @@ void App::Update()
 		{
 			m_sphereTest.setPosition(c->getPosition());
 			bool inter = false;
-			if (GetAsyncKeyState(int('K')))
+			float speed = 0;
+			if (GetAsyncKeyState(VK_LBUTTON))
+			{
 				inter = m_sphereTest.checkIntersection(m_Camera.getPosition(), m_Camera.getLookAt());
+				speed = -5;
+			}
+			else if (GetAsyncKeyState(VK_RBUTTON))
+			{
+				inter = m_sphereTest.checkIntersection(m_Camera.getPosition(), m_Camera.getLookAt());
+				speed = 5;
+			}
+			
 			if (inter)
 			{
-				float speed = 5;
 				c->move(m_Camera.getForward().x * speed, m_Camera.getForward().y * speed, m_Camera.getForward().z * speed);
 				std::cout << "HIT" << std::endl;
 			}
