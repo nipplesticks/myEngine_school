@@ -6,8 +6,8 @@ cbuffer CONSTANT_BUFFER : register(b0)
 
 cbuffer CAMERA_BUFFER : register(b1)
 {
-	float3 camPos; 
-	float3 lookAt; 
+	float4 camPos; 
+	float4 lookAt; 
 	matrix viewMatrix;
 }
 

@@ -307,6 +307,7 @@ void Entity::drawShadow(ID3D11DeviceContext *& deviceContext)
 
 	std::vector<Mesh> mesh = m_model->getMeshes();
 
+	//m_cBuffer.WorldMatrix = DirectX::XMMatrixTranspose(DirectX::XMMatrixTranslation(0, 5, 0)); 
 
 	for (size_t i = 0; i < nrOfDrawCalls; i++)
 	{

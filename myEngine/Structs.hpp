@@ -81,10 +81,9 @@ struct LIGHT_BUFFER
 {
 	DirectX::XMVECTOR lightPosition;
 	DirectX::XMVECTOR lightColor;
-	float strength;
 	DirectX::XMVECTOR lightDir;
 	DirectX::XMMATRIX lightProjectionMatrix;
 	DirectX::XMMATRIX lightViewMatrix;
+	float strength;
 };
-
 #endif

@@ -12,10 +12,9 @@ App::App(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCm
 	SetCursorPos(static_cast<int>(CLIENT_WIDTH) / 2, static_cast<int>(CLIENT_HEIGHT) / 2);
 	
 	m_Camera = Cam(
-		DirectX::XMFLOAT3(0.0f, 0.0f, -1.0f),		//pos
+		DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f),		//pos
 		DirectX::XMFLOAT3(0.0f, 0.0f, 1.0f),		// look at dir
 		DirectX::XMFLOAT3(0.0f, 1.0f, 0.0f));		//up
-	
 	m_viewMatrix = m_Camera.getViewMatrix();
 
 	m_projectionMatrix = DirectX::XMMatrixPerspectiveFovLH(DirectX::XMConvertToRadians(FOV), CLIENT_WIDTH / CLIENT_HEIGHT, 0.1f, 100000.0f);
@@ -24,7 +23,8 @@ App::App(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCm
 	//m_Light.lightColor = DirectX::XMVectorSet(255.0f / 255, 0.0f / 255, 0.0f / 255, 1.0f);
 	m_Light.lightPosition = DirectX::XMVectorSet(0.0f, 350.0f, 0.0f, 1);
 	m_Light.strength = 1.0f;
-	m_Light.lightDir = DirectX::XMVector3Normalize(DirectX::XMVectorSet(1.0, -1.0, 1.0, 0));
+	//m_Light.lightDir = DirectX::XMVectorSet( 0.619032f, -0.474856f, 0.625548, 0.0f );
+	m_Light.lightDir = DirectX::XMVector3Normalize(DirectX::XMVectorSet(1.0, -1.0, 1.0, 0.0f));
 	setLightBufferValues();
 
 	m_sphereTest = SphereIntersect(20, DirectX::XMFLOAT3(0, 0, 0));
@@ -46,8 +46,6 @@ App::~App()
 	m_pShadowMapTexture->Release();
 	m_pShadowDepthView->Release();
 	m_pShadowMapShaderResourceView->Release();
-	//m_pComparisionSampler->Release();
-	//m_pLightViewProjectionBuffer->Release();
 	m_pShadowVertexShader->Release();
 	m_pShadowPixelShader->Release();
 
@@ -211,7 +209,7 @@ HRESULT App::CreateDirect3DContext()
 	HRESULT hr = D3D11CreateDeviceAndSwapChain(NULL,
 		D3D_DRIVER_TYPE_HARDWARE,
 		NULL,
-		NULL,//D3D11_CREATE_DEVICE_DEBUG,
+		D3D11_CREATE_DEVICE_DEBUG,
 		NULL,
 		NULL,
 		D3D11_SDK_VERSION,
@@ -292,18 +290,18 @@ bool App::CreateShaders()
 
 bool App::CreateConstantBuffer()
 {
-
 	if (!createCameraBuffer())
 		return false;
 	if (!createLightBuffer())
 		return false;
+	if (!createShadowLightBuffer())
+		return false; 
 
 	return true;
 }
 
 bool App::InitRenderFunction()
 {
-
 	m_DeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	m_DeviceContext->IASetInputLayout(m_VertexLayout);
 	InitGBuffer();
@@ -352,14 +350,62 @@ void App::InitGBuffer()
 void App::Update()
 {
 	m_Camera.update();
-	DirectX::XMFLOAT3 p;
-	DirectX::XMStoreFloat3(&p, m_Light.lightPosition);
 	m_viewMatrix = m_Camera.getViewMatrix();
+
+	//Light stuff
+
+	DirectX::XMFLOAT3 light;
+	DirectX::XMStoreFloat3(&light, m_ShadowLightBuffer.lightPosition);
+
+	if (GetAsyncKeyState(int('I')))
+	{
+		light.z += 5;
+	}
+	if (GetAsyncKeyState(int('K')))
+	{
+		light.z -= 5;
+	}
+	if (GetAsyncKeyState(int('L')))
+	{
+		light.x += 5;
+	}
+	if (GetAsyncKeyState(int('J')))
+	{
+		light.x -= 5;
+	}
+	if (GetAsyncKeyState(int('U')))
+	{
+		light.y -= 5;
+	}
+	if (GetAsyncKeyState(int('O')))
+	{
+		light.y += 5;
+	}
+	m_ShadowLightBuffer.lightPosition = DirectX::XMLoadFloat3(&light);
+	DirectX::XMFLOAT3 scl = m_Terrain2.getScale();
+	DirectX::XMMATRIX view = DirectX::XMMatrixLookAtLH(
+		m_ShadowLightBuffer.lightPosition,
+		DirectX::XMVectorSet(m_Terrain2.getHeight() * scl.x * 0.5, 0.0f, m_Terrain2.getHeight() * scl.z * 0.5f, 0),//DirectX::XMVectorAdd(DirectX::XMVector3Normalize(), m_ShadowLightBuffer.lightPosition),
+		DirectX::XMVECTOR{ 0.0,1.0,0.0,0.0 }
+	);
+
+
+	m_ShadowLightBuffer.lightViewMatrix = DirectX::XMMatrixTranspose(view);
+	D3D11_MAPPED_SUBRESOURCE dataPtr;
+	m_DeviceContext->Map(m_pShadowLightBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &dataPtr);
+	//	Copy memory from CPU to GPU
+	memcpy(dataPtr.pData, &m_ShadowLightBuffer, sizeof(LIGHT_BUFFER));
+	// Unmap constant buffer so that we can use it again in the GPU
+	m_DeviceContext->Unmap(m_pShadowLightBuffer, 0);
+
+	DirectX::XMFLOAT3 p;
+	DirectX::XMStoreFloat3(&p, m_ShadowLightBuffer.lightPosition);
 	m_Sphere.setPosition(p);
-	m_Sphere.setScale(m_Light.strength * 10);
+	
 	m_Test.collisionHandling(m_Terrain2, 0);
 	m_Terrain2.cameraMoved(m_viewMatrix);
 	m_Skybox.cameraMoved(m_Camera.getViewMatrixForBackground());
+	m_Sphere.cameraMoved(m_viewMatrix);
 	for (Entity* e : m_renderingQueue)
 	{
 		e->cameraMoved(m_viewMatrix);
@@ -411,8 +457,8 @@ void App::Update()
 	}
 	/*if (GetAsyncKeyState(int('L')))
 		m_Camera.setPosition(p);*/
-	if (GetAsyncKeyState(int('L')))
-		m_Camera.setPosition(m_Cage.getPosition());
+	/*if (GetAsyncKeyState(int('L')))
+		m_Camera.setPosition(m_Cage.getPosition());*/
 
 
 	DirectX::XMFLOAT3 pos = m_Test.getPosition();
@@ -540,12 +586,9 @@ void App::draw()
 		e->draw(m_DeviceContext);
 	}
 
-	//std::cout << "----------------------\n";
 	m_Sphere.draw(m_DeviceContext);
 	m_Terrain2.draw(m_DeviceContext);
 	m_Skybox.draw(m_DeviceContext);
-	//std::cout << "----------------------\n";
-	//system("cls");
 }
 
 void App::secondDrawPass()
@@ -835,23 +878,6 @@ void App::sortRenderingQueue()
 
 		return d1 < d2;
 	});
-	//int minIndex = 0;
-	//for (int i = 0; i < m_renderingQueue.size() - 1; i++)
-	//{
-	//	for (int k = i + 1; k < m_renderingQueue.size(); k++)
-	//	{
-	//		float d1 = getDistance(m_renderingQueue[k]->getPosition(), m_Camera.getPosition());
-	//		float d2 = getDistance(m_renderingQueue[minIndex]->getPosition(), m_Camera.getPosition());
-	//		if (d1 < d2)
-	//		{
-	//			minIndex = k;
-	//		}
-	//	}
-
-	//	Entity* temp = m_renderingQueue[i];
-	//	m_renderingQueue[i] = m_renderingQueue[minIndex];
-	//	m_renderingQueue[minIndex] = temp;
-	//}
 }
 
 bool App::createCameraBuffer()
@@ -902,6 +928,30 @@ bool App::createLightBuffer()
 	m_DeviceContext->VSSetConstantBuffers(2, 1, &m_LightBuffer);
 	m_DeviceContext->PSSetConstantBuffers(2, 1, &m_LightBuffer);
 	//USE CAMERA STRUCT INSTEAD? 
+	return true;
+}
+
+bool App::createShadowLightBuffer()
+{
+	D3D11_BUFFER_DESC buffDesc;
+	buffDesc.Usage = D3D11_USAGE_DYNAMIC;
+	buffDesc.ByteWidth = sizeof(LIGHT_BUFFER);
+	buffDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	buffDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+	buffDesc.MiscFlags = 0;
+	buffDesc.StructureByteStride = 0;
+
+	// check if the creation failed for any reason
+	HRESULT hr = 0;
+	hr = m_Device->CreateBuffer(&buffDesc, nullptr, &m_pShadowLightBuffer);
+
+	if (FAILED(hr))
+	{
+		std::cout << "Failed to create light buffer!" << std::endl;
+		return false;
+	}
+	m_DeviceContext->VSSetConstantBuffers(5, 1, &m_pShadowLightBuffer);
+	m_DeviceContext->PSSetConstantBuffers(5, 1, &m_pShadowLightBuffer);
 	return true;
 }
 
@@ -1076,8 +1126,9 @@ void App::clrScrn()
 
 void App::clearTargets()
 {
+	/*ID3D11RenderTargetView* renderTargets[GBUFFER_SIZE + 1] = { nullptr };
+	m_DeviceContext->OMSetRenderTargets(GBUFFER_SIZE + 1, renderTargets, NULL);*/
 	ID3D11RenderTargetView* renderTargets[GBUFFER_SIZE] = { nullptr };
-
 	m_DeviceContext->OMSetRenderTargets(GBUFFER_SIZE, renderTargets, NULL);
 }
 
@@ -1085,6 +1136,8 @@ void App::clearShaderResources()
 {
 	ID3D11ShaderResourceView* renderTargets[GBUFFER_SIZE] = { nullptr };
 	m_DeviceContext->PSSetShaderResources(0, GBUFFER_SIZE, renderTargets);
+	ID3D11ShaderResourceView* shadowMap = nullptr;
+	m_DeviceContext->PSSetShaderResources(GBUFFER_SIZE, 1, &shadowMap);
 }
 
 float App::getDistance(DirectX::XMFLOAT3 p1, DirectX::XMFLOAT3 p2)
@@ -1258,10 +1311,11 @@ void App::loadEntities()
 	m_Sphere.cameraMoved(m_viewMatrix);
 	m_Sphere.loadBuffers(m_Device);
 	m_Sphere.cameraMoved(m_viewMatrix);
-	m_Sphere.setScale(m_Light.strength);
+	m_Sphere.setScale(25.0f);
 	DirectX::XMFLOAT3 p;
-	DirectX::XMStoreFloat3(&p, m_Light.lightPosition);
+	DirectX::XMStoreFloat3(&p, m_ShadowLightBuffer.lightPosition);
 	m_Sphere.setPosition(p);
+	//m_Sphere.setPosition(0, 0, 100);
 	//m_renderingQueue.push_back(&m_Sphere);
 
 	m_Test.setSamplerState(m_samplerState);
@@ -1307,14 +1361,27 @@ void App::loadEntities()
 
 void App::setLightBufferValues()
 {
-	m_Light.lightProjectionMatrix = DirectX::XMMatrixTranspose(DirectX::XMMatrixPerspectiveFovLH(DirectX::XMConvertToRadians(45), CLIENT_WIDTH / CLIENT_HEIGHT, 0.1f, 100000.0f));
-	m_Light.lightViewMatrix = DirectX::XMMatrixLookAtLH(
-			m_Light.lightPosition,
-			DirectX::XMVectorAdd(m_Light.lightPosition, m_Light.lightDir),
-			DirectX::XMVectorSet(0, 1, 0, 0)
-	);
+	
+	//m_ShadowLightBuffer.lightDir = DirectX::XMLoadFloat3(&m_Camera.getLookAt());
+	m_ShadowLightBuffer.lightDir = m_Light.lightDir;
+	//m_ShadowLightBuffer.lightPosition = DirectX::XMLoadFloat3(&m_Camera.getPosition()); 
+	m_ShadowLightBuffer.lightPosition = m_Light.lightPosition;
+ 
+	m_ShadowLightBuffer.lightProjectionMatrix = 
+		DirectX::XMMatrixTranspose(
+			DirectX::XMMatrixOrthographicLH(
+				CLIENT_WIDTH, CLIENT_HEIGHT, 1.0, 1000.0f));
+	
 
-	m_Light.lightViewMatrix = DirectX::XMMatrixTranspose(m_Light.lightViewMatrix);
+
+	DirectX::XMMATRIX view = DirectX::XMMatrixLookAtLH(
+		m_Light.lightPosition,
+		DirectX::XMVectorAdd(m_Light.lightDir,m_Light.lightPosition),
+		DirectX::XMVECTOR{ 0.0,1.0,0.0,0.0 }
+	);
+	m_ShadowLightBuffer.lightViewMatrix = DirectX::XMMatrixTranspose(view);
+	m_ShadowLightBuffer.lightColor = m_Light.lightColor;
+	m_ShadowLightBuffer.strength = 1.0f;
 }
 
 bool App::createShadowPixelShader()
@@ -1431,7 +1498,6 @@ bool App::createShadowResources()
 	Srvd.Texture2D.MostDetailedMip = 0;
 
 	hr = m_Device->CreateShaderResourceView(m_pShadowMapTexture, &Srvd,&m_pShadowMapShaderResourceView);
-
 	return true;
 }
 
@@ -1443,10 +1509,9 @@ void App::prepareShadowRendering()
 	m_DeviceContext->HSSetShader(nullptr, nullptr, 0);
 	m_DeviceContext->DSSetShader(nullptr, nullptr, 0);
 	m_DeviceContext->GSSetShader(nullptr, nullptr, 0);
-	m_DeviceContext->PSSetShader(m_pShadowPixelShader, nullptr, 0);
-	//m_DeviceContext->PSSetSamplers(0, 1, &m_pComparisionSampler);
+	m_DeviceContext->PSSetShader(nullptr, nullptr, 0);
 
-	m_DeviceContext->OMSetRenderTargets(0, NULL, m_pShadowDepthView);
+	m_DeviceContext->OMSetRenderTargets(0, NULL,m_pShadowDepthView);
 	m_DeviceContext->ClearDepthStencilView(m_pShadowDepthView, D3D11_CLEAR_DEPTH, 1.0f, 0);
 }
 

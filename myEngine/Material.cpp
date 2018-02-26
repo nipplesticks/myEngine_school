@@ -53,7 +53,7 @@ Material::Material()
 
 Material::~Material()
 {
-	_cleanup();
+	
 }
 
 void Material::setMaterialName(const std::string & name)
@@ -102,8 +102,6 @@ void Material::setSpecularRange(const float & range)
 
 void Material::setDissolveLevel(const float & d)
 {
-	//dissolve = 1.0 - (N*v)(1.0-factor)
-
 	m_dissolve = d;
 }
 
@@ -267,6 +265,11 @@ ID3D11ShaderResourceView * Material::getReflectionMap() const
 	return m_reflectionMap;
 }
 
+void Material::release()
+{
+	_cleanup();
+}
+
 int Material::getIllum() const
 {
 	return m_illum;
@@ -274,48 +277,16 @@ int Material::getIllum() const
 
 void Material::_safeRelease(ID3D11ShaderResourceView * pResourceView)
 {
-	//if (pResourceView != nullptr)
-	//	pResourceView->Release();
+	if (pResourceView != nullptr)
+		pResourceView->Release();
 }
 
 void Material::_safeRelease(ID3D11Resource * pResource)
 {
-	//if (pResource != nullptr)
-	//	pResource->Release();
+	if (pResource != nullptr)
+		pResource->Release();
 }
-//
-//void Material::_copy(const Material & other)
-//{
-//	m_materialName = other.m_materialName;
-//
-//	m_ambient = other.m_ambient;
-//	m_diffuse = other.m_diffuse;
-//	m_specular = other.m_specular;
-//	m_dissolve = other.m_dissolve;
-//	m_ambientTexture = new ID3D11ShaderResourceView(other.m_ambientTexture);
-//	m_diffuseTexture = nullptr;
-//	m_specularColorTexture = nullptr;
-//	m_emessiveTextureMap = nullptr;
-//	m_specularHighlightComponent = nullptr;
-//	m_alphaMap = nullptr;
-//	m_bumpMap = nullptr;
-//	m_displacementMap = nullptr;
-//	m_decalTexture = nullptr;
-//	m_reflectionMap = nullptr;
-//	m_illum = 0;
-//	m_opticalDensity = 1.0f;
-//	m_sharpness = 1.0f;
-//	m_ambientRes = nullptr;
-//	m_diffuseRes = nullptr;
-//	m_specularColorRes = nullptr;
-//	m_emessiveRes = nullptr;
-//	m_specularHighlightRes = nullptr;
-//	m_alphaRes = nullptr;
-//	m_bumpRes = nullptr;
-//	m_displacementRes = nullptr;
-//	m_decalRes = nullptr;
-//	m_reflectionRes = nullptr;
-//}
+
 
 void Material::_cleanup()
 {

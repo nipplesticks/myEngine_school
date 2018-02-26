@@ -5,12 +5,12 @@ cbuffer CONSTANT_BUFFER : register(b0)
 };
 cbuffer LIGHT_BUFFER : register(b2)
 {
-	float3 lightPosition;
-	float3 lightColor;
-	float strength;
-	matrix lightDir;
+	float4 lightPosition;
+	float4 lightColor;
+	float4 lightDir;
 	matrix lightProj;
 	matrix lightView;
+	float strength;
 }
 
 struct INPUT

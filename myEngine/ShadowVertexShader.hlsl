@@ -3,14 +3,14 @@ cbuffer CONSTANT_BUFFER : register(b0)
 	matrix WVPMatrix;
 	matrix WorldMatrix;
 };
-cbuffer LIGHT_BUFFER : register(b2)
+cbuffer LIGHT_BUFFER : register(b5)
 {
-	float3 lightPosition;
-	float3 lightColor;
-	float strength;
-	matrix lightDir;
+	float4 lightPosition;
+	float4 lightColor;
+	float4 lightDir;
 	matrix lightProj;
 	matrix lightView;
+	float strength;
 }
 
 struct INPUT
@@ -22,12 +22,14 @@ struct OUTPUT
 	float4 pos : SV_POSITION;
 };
 
-
 OUTPUT main( INPUT input)
 {
 	OUTPUT output;
-	matrix wvp = lightProj * lightView * WorldMatrix;
-	output.pos = mul(float4(input.pos, 1), wvp);
+	float4 position = float4(input.pos, 1);
+	position = mul(position, WorldMatrix);
+	position = mul(position, lightView);
+	position = mul(position, lightProj);
 
+	output.pos = position;
 	return output;
 }

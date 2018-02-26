@@ -10,9 +10,12 @@ cbuffer CAMERA_BUFFER : register(b1)
 
 cbuffer LIGHT_BUFFER : register(b2)
 {
-    float3 lightPosition;
-    float3 lightColor;
-    float strength;
+	float4 lightPosition;
+	float4 lightColor;
+	float4 lightDir;
+	matrix lightProj;
+	matrix lightView;
+	float strength;
 }
 
 struct PS_IN
@@ -38,7 +41,7 @@ PS_OUT main(PS_IN input) : SV_Target
 	output.diffuse = Texture.Sample(SampleType, input.Tex);
 	output.normal = float4(input.Normal, 1);
 	output.wPosition = input.worldPos;
-    output.specularHighlight = float4(0.5, 0.5, 0.5, 1);
+    output.specularHighlight = float4(float3(0.5, 0.5, 0.5) * lightColor.rgb, 1);
 
 	return output;
 };

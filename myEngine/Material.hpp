@@ -58,10 +58,11 @@ public:
 	ID3D11ShaderResourceView* getDecalTecture() const;
 	ID3D11ShaderResourceView* getReflectionMap() const;
 
+	void release();
+
 private:
 	void _safeRelease(ID3D11ShaderResourceView* pResourceView);
 	void _safeRelease(ID3D11Resource* pResource);
-	void _copy(const Material& other);
 	void _cleanup();
 
 private:

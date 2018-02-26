@@ -38,6 +38,7 @@ private:
 	bool CreateConstantBuffer();
 	bool createCameraBuffer();
 	bool createLightBuffer();
+	bool createShadowLightBuffer(); 
 
 	bool InitRenderFunction();
 	void InitGBuffer();
@@ -121,6 +122,7 @@ private:
 
 	ID3D11Buffer*			m_CameraBuffer; 
 	ID3D11Buffer*			m_LightBuffer;
+	ID3D11Buffer*			m_pShadowLightBuffer;
 
 
 	//DEPTH BUFFER
@@ -149,6 +151,7 @@ private:
 	Entity m_Box;
 	Cam m_Camera;
 	LIGHT_BUFFER m_Light;
+	LIGHT_BUFFER m_ShadowLightBuffer; 
 	CAMERA_BUFFER m_CameraStruct;
 	DirectX::XMMATRIX		m_viewMatrix;
 	DirectX::XMMATRIX		m_projectionMatrix;

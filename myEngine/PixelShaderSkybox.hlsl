@@ -13,10 +13,10 @@ cbuffer CONSTANT_BUFFER : register(b0)
 
 cbuffer CONSTANT_BUFFER : register(b3)
 {
-	float3 ambientLevel;
-	float3 diffuseLevel;
+	float4 ambientLevel;
+	float4 diffuseLevel;
 	float4 specularLevel;
-	float3 emissiveLevel;
+	float4 emissiveLevel;
 	float dissolveLevel;
 	float opticalDensityLevel;
 	float sharpnessLevel;

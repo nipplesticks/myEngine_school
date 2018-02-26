@@ -20,5 +20,6 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 		errorCode = app.run();
 	}
 
+	
 	return errorCode;
 }

@@ -12,9 +12,12 @@ cbuffer CONSTANT_BUFFER : register(b0)
 
 cbuffer LIGHT_BUFFER : register(b2)
 {
-    float3 lightPosition;
-    float3 lightColor;
-    float strength;
+	float4 lightPosition;
+	float4 lightColor;
+	float4 lightDir;
+	matrix lightProj;
+	matrix lightView;
+	float strength;
 }
 
 cbuffer CONSTANT_BUFFER : register(b3)
@@ -50,7 +53,7 @@ struct PS_OUT
 PS_OUT main(PS_IN input) : SV_Target
 {
 	PS_OUT output = (PS_OUT)0;
-	output.diffuse = float4(lightColor, 1);
+	output.diffuse = lightColor;
 	output.normal = float4(0.0, 0.0, 0.0, 0.0);
 
 	return output;

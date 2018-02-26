@@ -24,6 +24,10 @@ Model::~Model()
 	
 	if (m_texture != nullptr) m_texture->Release();
 	if (m_sampleState != nullptr) m_sampleState->Release();
+	for (Mesh m : m_meshes)
+	{
+		m.releaseMaterial();
+	}
 }
 
 void Model::settings(bool texture, bool normals, bool clockwise)

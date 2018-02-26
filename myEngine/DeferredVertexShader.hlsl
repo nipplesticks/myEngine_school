@@ -8,6 +8,7 @@ struct VS_OUT
 {
 	float4 Pos : SV_POSITION;
 	float2 Tex : TEXCOORD;
+	float4 posLightH : TEXCOORD3;
 };
 
 VS_OUT main(VS_IN i, uint id : SV_VertexID)
