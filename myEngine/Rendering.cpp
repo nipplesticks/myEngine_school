@@ -1436,6 +1436,7 @@ bool App::createShadowResources()
 	textureDesc.Height = static_cast<UINT>(CLIENT_HEIGHT);
 	textureDesc.Width = static_cast<UINT>(CLIENT_WIDTH);
 
+
 	HRESULT hr = 0; 
 
 	hr = m_Device->CreateTexture2D(&textureDesc, nullptr, &m_pShadowMapTexture); 

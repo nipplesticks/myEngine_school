@@ -1,6 +1,7 @@
 #ifndef RENDERING_HPP
 #define RENDERING_HPP
 
+
 #include "Terrain.hpp"
 #include "Character.h"
 #include "ModelHandler.hpp"
