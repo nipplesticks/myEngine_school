@@ -46,6 +46,10 @@ public:
 	void draw(ID3D11DeviceContext*& deviceContext);
 	void drawShadow(ID3D11DeviceContext*& deviceContext);
 	const DirectX::XMMATRIX& getWorldMatrix() const;
+
+	//To prove front to back rendering
+	void setName(std::string name) { m_name = name; }
+	std::string getName() { return m_name; }
 private:
 	DirectX::XMFLOAT3 add(DirectX::XMFLOAT3 tar, DirectX::XMFLOAT3 adder) const;
 	DirectX::XMFLOAT3 multiply(DirectX::XMFLOAT3 tar, DirectX::XMFLOAT3 adder) const;
@@ -78,7 +82,7 @@ private:
 	DirectX::XMMATRIX		m_worldMatrix;
 	CONSTANT_BUFFER			m_cBuffer;
 	CONSTANT_BUFFER2		m_cBufferValues;
-
+	std::string m_name = "";
 protected:
 	Model*					m_model;
 };

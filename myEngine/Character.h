@@ -12,7 +12,7 @@ public:
 
 	void collisionHandling(const Terrain& mapModel, int mapWidth); 
 private: 
-
+	
 };
 
 #endif

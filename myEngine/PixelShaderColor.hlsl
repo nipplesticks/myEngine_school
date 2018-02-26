@@ -10,7 +10,7 @@ cbuffer CONSTANT_BUFFER : register(b0)
     matrix WorldMatrix;
 };
 
-cbuffer LIGHT_BUFFER : register(b2)
+cbuffer LIGHT_BUFFER : register(b5)
 {
 	float4 lightPosition;
 	float4 lightColor;

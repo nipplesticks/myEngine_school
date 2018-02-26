@@ -37,7 +37,6 @@ private:
 
 	bool CreateConstantBuffer();
 	bool createCameraBuffer();
-	bool createLightBuffer();
 	bool createShadowLightBuffer(); 
 
 	bool InitRenderFunction();
@@ -121,7 +120,6 @@ private:
 	ID3D11PixelShader*		m_DeferredPixelShader;
 
 	ID3D11Buffer*			m_CameraBuffer; 
-	ID3D11Buffer*			m_LightBuffer;
 	ID3D11Buffer*			m_pShadowLightBuffer;
 
 
@@ -150,7 +148,6 @@ private:
 	Entity m_Sphere;
 	Entity m_Box;
 	Cam m_Camera;
-	LIGHT_BUFFER m_Light;
 	LIGHT_BUFFER m_ShadowLightBuffer; 
 	CAMERA_BUFFER m_CameraStruct;
 	DirectX::XMMATRIX		m_viewMatrix;
@@ -163,8 +160,6 @@ private:
 	ID3D11Texture2D*			m_pShadowMapTexture;
 	ID3D11DepthStencilView*		m_pShadowDepthView;
 	ID3D11ShaderResourceView*	m_pShadowMapShaderResourceView;
-	//ID3D11SamplerState*			m_pComparisionSampler;
-	//ID3D11Buffer*				m_pLightViewProjectionBuffer;
 	ID3D11VertexShader*			m_pShadowVertexShader;
 	ID3D11PixelShader*			m_pShadowPixelShader;
 	ID3D11InputLayout*			m_ShadowVertexLayout;

@@ -35,22 +35,6 @@ Material::Material()
 	m_reflectionRes = nullptr;
 }
 
-//Material::Material(const Material & other)
-//{
-//	_copy(other);
-//}
-
-//Material & Material::operator=(const Material & other)
-//{
-//	if (this != &other)
-//	{
-//		_cleanup();
-//		_copy(other);
-//	}
-//
-//	return *this;
-//}
-
 Material::~Material()
 {
 	

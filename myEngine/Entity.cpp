@@ -33,13 +33,11 @@ void Entity::loadBuffers(ID3D11Device*& device)
 			memset(&vBufferDesc, 0, sizeof(vBufferDesc));
 			vBufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
 			vBufferDesc.Usage = D3D11_USAGE_DEFAULT;
-			//vBufferDesc.ByteWidth = sizeof(VERTEX) * m_model->getNrOfVertices();
 			vBufferDesc.ByteWidth = sizeof(VERTEX) * static_cast<UINT>(mesh[i].getVertices().size());
 
 			ID3D11Buffer* pBuffer = nullptr;
 			D3D11_SUBRESOURCE_DATA vData;
 			vData.pSysMem = m_model->getMeshes()[i].getVertices().data();
-			//HRESULT hr = device->CreateBuffer(&vBufferDesc, &vData, &m_vertexBuffer);
 			HRESULT hr = device->CreateBuffer(&vBufferDesc, &vData, &pBuffer);
 			m_vertexBufferVector.push_back(pBuffer);
 		}
@@ -51,13 +49,11 @@ void Entity::loadBuffers(ID3D11Device*& device)
 		memset(&vBufferDesc, 0, sizeof(vBufferDesc));
 		vBufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
 		vBufferDesc.Usage = D3D11_USAGE_DEFAULT;
-		//vBufferDesc.ByteWidth = sizeof(VERTEX) * m_model->getNrOfVertices();
 		vBufferDesc.ByteWidth = sizeof(VERTEX) * static_cast<UINT>(m_model->getNrOfVertices());
 
 		ID3D11Buffer* pBuffer = nullptr;
 		D3D11_SUBRESOURCE_DATA vData;
 		vData.pSysMem = m_model->getTerrainMesh();
-		//HRESULT hr = device->CreateBuffer(&vBufferDesc, &vData, &m_vertexBuffer);
 		HRESULT hr = device->CreateBuffer(&vBufferDesc, &vData, &pBuffer);
 		m_vertexBufferVector.push_back(pBuffer);
 	}
@@ -74,7 +70,6 @@ void Entity::loadBuffers(ID3D11Device*& device)
 
 	cBufferDesc.ByteWidth = sizeof(CONSTANT_BUFFER2);
 
-	// check if the creation failed for any reason
 	hr = device->CreateBuffer(&cBufferDesc, nullptr, &m_constantBufferValues);
 
 }
@@ -286,9 +281,7 @@ void Entity::draw(ID3D11DeviceContext *& deviceContext)
 		deviceContext->VSSetConstantBuffers(0, 1, &m_constantBuffer);
 		deviceContext->GSSetConstantBuffers(0, 1, &m_constantBuffer);
 		deviceContext->PSSetConstantBuffers(0, 1, &m_constantBuffer);
-		
 		deviceContext->PSSetConstantBuffers(3, 1, &m_constantBufferValues);
-
 		deviceContext->PSSetSamplers(0, 1, &m_samplerState);
 		
 		if (!m_model->isTerrain())
@@ -307,8 +300,6 @@ void Entity::drawShadow(ID3D11DeviceContext *& deviceContext)
 
 	std::vector<Mesh> mesh = m_model->getMeshes();
 
-	//m_cBuffer.WorldMatrix = DirectX::XMMatrixTranspose(DirectX::XMMatrixTranslation(0, 5, 0)); 
-
 	for (size_t i = 0; i < nrOfDrawCalls; i++)
 	{
 		deviceContext->IASetVertexBuffers(0, 1, &m_vertexBufferVector[i], &vertexSize, &offset);
@@ -319,17 +310,8 @@ void Entity::drawShadow(ID3D11DeviceContext *& deviceContext)
 		// Unmap constant buffer so that we can use it again in the GPU
 		deviceContext->Unmap(m_constantBuffer, 0);
 
-		D3D11_MAPPED_SUBRESOURCE dataPtr2;
-		deviceContext->Map(m_constantBufferValues, 0, D3D11_MAP_WRITE_DISCARD, 0, &dataPtr2);
-		//	Copy memory from CPU to GPU
-		memcpy(dataPtr2.pData, &m_cBufferValues, sizeof(CONSTANT_BUFFER2));
-		// Unmap constant buffer so that we can use it again in the GPU
-		deviceContext->Unmap(m_constantBufferValues, 0);
-
-
 		// set resources to shaders
 		deviceContext->VSSetConstantBuffers(0, 1, &m_constantBuffer);
-		deviceContext->PSSetConstantBuffers(0, 1, &m_constantBuffer);
 
 		if (!m_model->isTerrain())
 			deviceContext->Draw(static_cast<UINT>(mesh[i].getVertices().size()), 0);
@@ -360,17 +342,10 @@ void Entity::buildMatrix()
 {
 	XMMATRIX translate = XMMatrixTranslation(m_pos.x, m_pos.y, m_pos.z);
 
-	//XMVECTOR axis = XMLoadFloat3(&m_rot);
-	//XMMATRIX rotation = XMMatrixRotationAxis(axis, m_currentAngle);
-
 	XMMATRIX rotation = XMMatrixRotationRollPitchYawFromVector(XMLoadFloat3(&m_angle));
 	XMVECTOR quat = XMQuaternionRotationMatrix(rotation);
 	XMMATRIX scale = XMMatrixScaling(m_scale.x, m_scale.y, m_scale.z);
 
-	/*
-	XMMATRIX m_worldMatrix = XMMatrixAffineTransformation(
-		XMLoadFloat3(&m_scale), XMVectorZero(), quat, XMLoadFloat3(&m_pos));
-		*/
 	m_worldMatrix = scale * rotation * translate;
 
 	m_cBuffer.WorldMatrix = XMMatrixTranspose(m_worldMatrix);

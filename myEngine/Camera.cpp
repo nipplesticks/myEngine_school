@@ -6,42 +6,63 @@ Cam::Cam(XMFLOAT3 position, XMFLOAT3 lookAt, XMFLOAT3 up)
 	m_position = position;
 	m_lookAt = lookAt;
 	m_up = up;
-	m_rotation.x = 90;
-	m_rotation.y = 0;
 
+	// Here we calculate the start rotation based on the lookAt vector in x rotation
+	m_rotation.x =
+		DirectX::XMConvertToDegrees(
+			DirectX::XMVectorGetX(
+				DirectX::XMVector3Dot(
+					DirectX::XMVectorSet(0.0f, 0.0f, 1.0f, NULL),
+					DirectX::XMLoadFloat3(&lookAt)))
+		);
+	// Here we calculate the start rotation based on the lookAt vector in y rotation
+	m_rotation.y = DirectX::XMConvertToDegrees(
+		DirectX::XMVectorGetX(
+			DirectX::XMVector3Dot(
+				DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, NULL),
+				DirectX::XMLoadFloat3(&lookAt)))
+	);
+
+	// Calculate the right vector
 	XMVECTOR v1 = XMLoadFloat3(&m_lookAt);
 	XMVECTOR v2 = XMLoadFloat3(&m_up);
 	XMVECTOR v3 = XMVector3Normalize(XMVector3Cross(v2, v1));
 	XMStoreFloat3(&m_right, v3);
+
+	// Set the default value to the middle of the screen
 	m_defaultX = (CLIENT_WIDTH) / 2;
 	m_defaultY = (CLIENT_HEIGHT) / 2;
 
-	m_speed = 0.2f;
-	m_defaultX = static_cast<int>(CLIENT_WIDTH) / 2;
-	m_defaultY = static_cast<int>(CLIENT_HEIGHT) / 2;
-
+	// Movement speed and rotation speed
+	m_speed = 5.0f;
 	m_speedChanger = 0.0f;
 	m_sensitivity = 0.05f;
-
 	m_crouchLock = false;
 	m_flying = true;
 }
 
 void Cam::update()
 {
-	m_speedChanger = 10.0f;
-
+	m_speedChanger = 1.0f;
+	
 	XMVECTOR lookAt = XMLoadFloat3(&m_lookAt);
 	XMVECTOR up = XMLoadFloat3(&m_up);
+	
+	// Calculate the right vector
 	XMVECTOR right = XMVector3Normalize(XMVector3Cross(up, lookAt));
 	
+	// Calculate the forward vector
 	XMVECTOR forward = XMVector3Cross(up, right);
 	XMStoreFloat3(&m_right, right);
 	XMStoreFloat3(&m_forward, forward);
 
-	if (GetAsyncKeyState(VK_LSHIFT)) m_speedChanger = m_speed * m_speedChanger;
+
+	// Some movement changing values
+	if (GetAsyncKeyState(VK_LSHIFT)) m_speedChanger = 2.0f;
 	if (!m_flying && GetAsyncKeyState(VK_LCONTROL)) m_speedChanger = 1.0f * 0.4f;
 
+
+	// Movement control
 	if (GetAsyncKeyState(int('A')))
 		moveX(-1);
 	if (GetAsyncKeyState(int('D')))
@@ -83,13 +104,17 @@ void Cam::update()
 		}
 	}
 	
+
+	// Mouse rotation magic
 	POINT mousePos;
 	GetCursorPos(&mousePos);
 	if (mousePos.x != m_defaultX || mousePos.y != m_defaultY)
 	{
+		// Get the delta vectors
 		float deltaX = m_defaultX - mousePos.x;
 		float deltaY = m_defaultY - mousePos.y;
 
+		// Make angle out of the vector
 		m_rotation.x += deltaX * m_sensitivity;
 		m_rotation.y += deltaY * m_sensitivity;
 
@@ -98,8 +123,8 @@ void Cam::update()
 		else if (m_rotation.y < -88.0f)
 			m_rotation.y = -88.0f;
 
+		// Here we calculate the new values of the lookAt vector
 		XMFLOAT3 la;
-
 		la.x = cos(XMConvertToRadians(m_rotation.x)) * cos(XMConvertToRadians(m_rotation.y));
 		la.y = sin(XMConvertToRadians(m_rotation.y));
 		la.z = sin(XMConvertToRadians(m_rotation.x)) * cos(XMConvertToRadians(m_rotation.y));
@@ -107,7 +132,7 @@ void Cam::update()
 		XMVECTOR newLookAt = XMVector3Normalize(XMLoadFloat3(&la));
 		XMStoreFloat3(&m_lookAt, newLookAt);
 	}
-	SetCursorPos((int)m_defaultX, (int)m_defaultY);
+	SetCursorPos((int)m_defaultX, (int)m_defaultY); // Set cursor pos to the middle of the screen
 }
 
 XMMATRIX Cam::getViewMatrix()
@@ -121,6 +146,8 @@ XMMATRIX Cam::getViewMatrix()
 
 DirectX::XMMATRIX Cam::getViewMatrixForBackground()
 {
+	// Returns a view matrix which lets the camera "pretend" it's in origo. This makes objects
+	// "stick" at a position so the camera can never reaches it.
 	return XMMatrixLookAtLH(
 		XMVectorZero(),
 		XMLoadFloat3(&m_lookAt),

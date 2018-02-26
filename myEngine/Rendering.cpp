@@ -11,23 +11,21 @@ App::App(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCm
 	m_nCmdShow = nCmdShow;
 	SetCursorPos(static_cast<int>(CLIENT_WIDTH) / 2, static_cast<int>(CLIENT_HEIGHT) / 2);
 	
+	// The view matrix is created inside the Cam constructor
 	m_Camera = Cam(
-		DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f),		//pos
+		DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f),		// pos
 		DirectX::XMFLOAT3(0.0f, 0.0f, 1.0f),		// look at dir
-		DirectX::XMFLOAT3(0.0f, 1.0f, 0.0f));		//up
+		DirectX::XMFLOAT3(0.0f, 1.0f, 0.0f));		// up
+	
+
+	// Retrive the view matrix so we can initialize all the entities for later
 	m_viewMatrix = m_Camera.getViewMatrix();
 
 	m_projectionMatrix = DirectX::XMMatrixPerspectiveFovLH(DirectX::XMConvertToRadians(FOV), CLIENT_WIDTH / CLIENT_HEIGHT, 0.1f, 100000.0f);
-
-	m_Light.lightColor = DirectX::XMVectorSet(212.0f / 255, 235.0f / 255, 255.0f / 255, 1.0f);
-	//m_Light.lightColor = DirectX::XMVectorSet(255.0f / 255, 0.0f / 255, 0.0f / 255, 1.0f);
-	m_Light.lightPosition = DirectX::XMVectorSet(0.0f, 350.0f, 0.0f, 1);
-	m_Light.strength = 1.0f;
-	//m_Light.lightDir = DirectX::XMVectorSet( 0.619032f, -0.474856f, 0.625548, 0.0f );
-	m_Light.lightDir = DirectX::XMVector3Normalize(DirectX::XMVectorSet(1.0, -1.0, 1.0, 0.0f));
 	setLightBufferValues();
 
-	m_sphereTest = SphereIntersect(20, DirectX::XMFLOAT3(0, 0, 0));
+	//Set the hitbox radius
+	m_sphereTest = SphereIntersect(30, DirectX::XMFLOAT3(0, 0, 0));
 
 	setMembersToNull();
 }
@@ -130,7 +128,7 @@ int App::run()
 
 		if (duration_cast<milliseconds>(steady_clock::now() - timer).count() > 1000)
 		{
-			printf("\rFPS: %d TICK: %d", fpsCounter, updates);
+			//printf("\rFPS: %d TICK: %d", fpsCounter, updates);
 			updates = 0;
 			fpsCounter = 0;
 			timer += milliseconds(1000);
@@ -292,8 +290,6 @@ bool App::CreateConstantBuffer()
 {
 	if (!createCameraBuffer())
 		return false;
-	if (!createLightBuffer())
-		return false;
 	if (!createShadowLightBuffer())
 		return false; 
 
@@ -311,6 +307,8 @@ bool App::InitRenderFunction()
 
 void App::InitGBuffer()
 {
+	//Direct X magic, create empty Gbuffer
+
 	D3D11_TEXTURE2D_DESC textureDesc{};
 	textureDesc.Width = (UINT)CLIENT_WIDTH;
 	textureDesc.Height = (UINT)CLIENT_HEIGHT;
@@ -472,20 +470,6 @@ void App::Update()
 	m_DeviceContext->Map(m_CameraBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &CamDataPtr);
 	memcpy(CamDataPtr.pData, &m_CameraStruct, sizeof(CAMERA_BUFFER));
 	m_DeviceContext->Unmap(m_CameraBuffer, 0); 
-	
-	if (GetAsyncKeyState(int('U')))
-	{
-		m_Light.strength += 0.1f;
-	}
-	if (GetAsyncKeyState(int('J')))
-	{
-		m_Light.strength -= 0.1f;
-	}
-
-	D3D11_MAPPED_SUBRESOURCE LightDataPtr;
-	m_DeviceContext->Map(m_LightBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &LightDataPtr);
-	memcpy(LightDataPtr.pData, &m_Light, sizeof(LIGHT_BUFFER));
-	m_DeviceContext->Unmap(m_LightBuffer, 0);
 	bool win = true;
 
 	DirectX::XMFLOAT3 cagePos = m_Cage.getPosition();
@@ -517,7 +501,7 @@ void App::Update()
 			if (inter)
 			{
 				c->move(m_Camera.getForward().x * speed, m_Camera.getForward().y * speed, m_Camera.getForward().z * speed);
-				std::cout << "HIT" << std::endl;
+				//std::cout << "HIT" << std::endl;
 			}
 			win = false;
 		}
@@ -581,10 +565,13 @@ void App::firstDrawPass()
 
 void App::draw()
 {
+	std::string outputString = "";
 	for (Entity* e : m_renderingQueue)
 	{
 		e->draw(m_DeviceContext);
+		outputString += e->getName() + " ";
 	}
+	printf("\r%s", outputString.c_str());
 
 	m_Sphere.draw(m_DeviceContext);
 	m_Terrain2.draw(m_DeviceContext);
@@ -905,32 +892,6 @@ bool App::createCameraBuffer()
 	return true;
 }
 
-bool App::createLightBuffer()
-{
-	D3D11_BUFFER_DESC buffDesc;
-	buffDesc.Usage = D3D11_USAGE_DYNAMIC;
-	buffDesc.ByteWidth = sizeof(LIGHT_BUFFER);
-	buffDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-	buffDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-	buffDesc.MiscFlags = 0;
-	buffDesc.StructureByteStride = 0;
-
-	// check if the creation failed for any reason
-	HRESULT hr = 0;
-	hr = m_Device->CreateBuffer(&buffDesc, nullptr, &m_LightBuffer);
-
-	if (FAILED(hr))
-	{
-		std::cout << "Failed to create light buffer!" << std::endl;
-		return false;
-	}
-
-	m_DeviceContext->VSSetConstantBuffers(2, 1, &m_LightBuffer);
-	m_DeviceContext->PSSetConstantBuffers(2, 1, &m_LightBuffer);
-	//USE CAMERA STRUCT INSTEAD? 
-	return true;
-}
-
 bool App::createShadowLightBuffer()
 {
 	D3D11_BUFFER_DESC buffDesc;
@@ -1164,7 +1125,6 @@ void App::setMembersToNull()
 	m_PixelShader = nullptr;
 
 	m_CameraBuffer = nullptr; 
-	m_LightBuffer = nullptr;
 	m_samplerState = nullptr;
 	m_DeferredPixelShader = nullptr;
 	m_DeferredVertexLayout = nullptr;
@@ -1292,7 +1252,7 @@ void App::loadEntities()
 	m_Cage.cameraMoved(m_viewMatrix);
 	m_Cage.loadBuffers(m_Device);
 	m_Cage.setPosition(rand() % width, 0, rand() % height);
-
+	m_Cage.setName("CAGE");
 	m_Cage.setScale(25);
 	m_Cage.collisionHandling(m_Terrain2, 0);
 	m_renderingQueue.push_back(&m_Cage);
@@ -1326,7 +1286,8 @@ void App::loadEntities()
 	m_Test.loadBuffers(m_Device);
 	m_Test.setPosition(0, 0, 0);
 	m_Test.setScale(20);
-	
+	m_Test.setName("Cyborg_Gustaf");
+
 	m_renderingQueue.push_back(&m_Test);
 
 	m_Box.setSamplerState(m_samplerState);
@@ -1337,6 +1298,7 @@ void App::loadEntities()
 	m_Box.loadBuffers(m_Device);
 	m_Box.setPosition(250, 250, 250);
 	m_Box.setScale(50);
+	m_Box.setName("Le_box_lol");
 
 	m_renderingQueue.push_back(&m_Box);
 
@@ -1351,9 +1313,8 @@ void App::loadEntities()
 		tempCat->setProjectionMatrix(m_projectionMatrix);
 		tempCat->cameraMoved(m_viewMatrix);
 		tempCat->loadBuffers(m_Device);
-
 		tempCat->setPosition(rand() % width, 0, rand() % height);
-
+		tempCat->setName("Cat_" + std::to_string(i));
 		m_Cats.push_back(tempCat);
 		m_renderingQueue.push_back(m_Cats[i]);
 	}
@@ -1362,25 +1323,21 @@ void App::loadEntities()
 void App::setLightBufferValues()
 {
 	
-	//m_ShadowLightBuffer.lightDir = DirectX::XMLoadFloat3(&m_Camera.getLookAt());
-	m_ShadowLightBuffer.lightDir = m_Light.lightDir;
-	//m_ShadowLightBuffer.lightPosition = DirectX::XMLoadFloat3(&m_Camera.getPosition()); 
-	m_ShadowLightBuffer.lightPosition = m_Light.lightPosition;
- 
+	m_ShadowLightBuffer.lightDir = DirectX::XMVector3Normalize(DirectX::XMVectorSet(1.0, -1.0, 1.0, 0.0f));
+	m_ShadowLightBuffer.lightPosition = DirectX::XMVectorSet(0.0f, 350.0f, 0.0f, 1);
+
 	m_ShadowLightBuffer.lightProjectionMatrix = 
 		DirectX::XMMatrixTranspose(
 			DirectX::XMMatrixOrthographicLH(
 				CLIENT_WIDTH, CLIENT_HEIGHT, 1.0, 1000.0f));
 	
-
-
 	DirectX::XMMATRIX view = DirectX::XMMatrixLookAtLH(
-		m_Light.lightPosition,
-		DirectX::XMVectorAdd(m_Light.lightDir,m_Light.lightPosition),
+		m_ShadowLightBuffer.lightPosition,
+		DirectX::XMVectorAdd(m_ShadowLightBuffer.lightDir, m_ShadowLightBuffer.lightPosition),
 		DirectX::XMVECTOR{ 0.0,1.0,0.0,0.0 }
 	);
 	m_ShadowLightBuffer.lightViewMatrix = DirectX::XMMatrixTranspose(view);
-	m_ShadowLightBuffer.lightColor = m_Light.lightColor;
+	m_ShadowLightBuffer.lightColor = DirectX::XMVectorSet(210.0f / 255, 210.0f / 255, 255.0f / 255, 1.0f);
 	m_ShadowLightBuffer.strength = 1.0f;
 }
 

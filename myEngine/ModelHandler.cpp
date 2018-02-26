@@ -35,7 +35,6 @@ Model * ModelHandler::getModel(std::string name)
 		mName = models[i]->getName();
 		if (mName == name)
 		{
-			//reqModel = new Model(*models[i]);
 			reqModel = models[i];
 			found = true;
 		}

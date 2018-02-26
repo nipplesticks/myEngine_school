@@ -11,7 +11,7 @@ cbuffer CAMERA_BUFFER : register(b1)
 	matrix viewMatrix;
 }
 
-cbuffer LIGHT_BUFFER : register(b2)
+cbuffer LIGHT_BUFFER : register(b5)
 {
 	float4 lightPosition;
 	float4 lightColor;

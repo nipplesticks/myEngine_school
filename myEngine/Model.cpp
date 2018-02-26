@@ -104,36 +104,6 @@ void Model::initModel(std::string path, std::string name, ID3D11Device* device)
 			mod.close();
 
 			loadVertexVector(vertices, normals, texCoords, indices);
-
-		/*	m_nrOfVertices = static_cast<int>(indices.size());
-			m_terrain = new VERTEX[m_nrOfVertices];
-			int indexCounter = 0;
-
-			for (int i = 0; i < m_nrOfVertices; i++)
-			{
-				VERTEX v;
-				int currentVIndex = indices[indexCounter].vIndex - 1;
-
-				v.x = vertices[currentVIndex].x;
-				v.y = vertices[currentVIndex].y;
-				v.z = vertices[currentVIndex].z;
-				if (texCoords.size() > 0)
-				{
-					int currentTXIndex = indices[indexCounter].vtIndex - 1;
-					v.u = texCoords[currentTXIndex].u;
-					v.v = texCoords[currentTXIndex].v;
-				}
-				if (normals.size() > 0)
-				{
-					int currentNIndex = indices[indexCounter].vnIndex - 1;
-					v.xN = normals[currentNIndex].x;
-					v.yN = normals[currentNIndex].y;
-					v.zN = normals[currentNIndex].z;
-				}
-
-				m_terrain[i] = v;
-				indexCounter++;
-			}*/
 		}
 		else
 		{
@@ -684,6 +654,7 @@ void Model::loadVertexVector(const std::vector<V_IMPORT>& vertices, const std::v
 	for (unsigned int i = 0; i < indices.size(); i++)
 	{
 		VERTEX v;
+		// Get current Vertex from indices Vector
 		int currentVIndex = indices[indexCounter].vIndex - 1;
 
 		if (currentVIndex < 0)
@@ -694,6 +665,7 @@ void Model::loadVertexVector(const std::vector<V_IMPORT>& vertices, const std::v
 		v.z = vertices[currentVIndex].z;
 		if (texCoords.size() > 0)
 		{
+			// Get current TexCoord from indices Vector
 			int currentTXIndex = indices[indexCounter].vtIndex - 1;
 			if (currentTXIndex < 0)
 				currentTXIndex *= -1;
@@ -702,6 +674,7 @@ void Model::loadVertexVector(const std::vector<V_IMPORT>& vertices, const std::v
 		}
 		if (normals.size() > 0)
 		{
+			// Get current Normal from indices Vector
 			int currentNIndex = indices[indexCounter].vnIndex - 1;
 			if (currentNIndex < 0)
 				currentNIndex *= -1;
